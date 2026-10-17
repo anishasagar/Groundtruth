@@ -57,6 +57,7 @@ CHECKS = {
     "gust_max_kmh": ("Wind gust", "km/h"),
 }
 RECENT_RAIN_NAME = f"Recent rain ({RECENT_RAIN_DAYS_BEFORE + 1}-day total)"
+RECENT_RAIN_KEY = "recent_rain_mm"
 
 ALWAYS_NOTES = [
     "Check your official weather warnings. Groundtruth never replaces them.",
@@ -172,15 +173,43 @@ def _relative_level(r):
     return "Extreme"
 
 
+def _typical_text(key, value):
+    """Plain wording for a check that comes back Typical (no "how often" line)."""
+    if key == RECENT_RAIN_KEY:
+        return f"No unusual rain in the last {RECENT_RAIN_DAYS_BEFORE + 1} days ({value:.1f} mm)"
+    if key == "rain_mm":
+        return "No rain forecast" if value == 0 else f"Normal rain for here ({value:.1f} mm)"
+    if key == "feels_like_max_c":
+        return f"Normal temperatures for here (feels like {value:.0f} °C)"
+    return f"Normal wind for here (gusts up to {value:.0f} km/h)"
+
+
+def _unusual_text(recent, recent_text, ratio_text, crosses, danger_line, unit):
+    """Wording for a check that comes back Elevated or higher."""
+    if recent["count"]:
+        text = f"{recent_text} in {recent_phrase()}; {ratio_text}"
+    else:
+        text = ratio_text  # already says it wasn't seen recently
+    if crosses:
+        text += f"; at or above the {danger_line} {unit} danger line"
+    return text
+
+
 def _worse(a, b):
     return a if LEVELS.index(a) >= LEVELS.index(b) else b
 
 
-def _check(name, unit, value, dates, values, date, danger_line=None, spell_days=1):
-    """One rarity check (plus the danger line, if there is one)."""
-    result = {"name": name, "unit": unit, "value": value, "danger_line": danger_line, "notes": []}
+def _check(key, name, unit, value, dates, values, date, danger_line=None, spell_days=1):
+    """One rarity check (plus the danger line, if there is one).
+
+    `text` is what the app shows: plain wording when Typical, "how often" and
+    the comparison with the baseline only when Elevated or higher. The full
+    numbers stay in the result either way.
+    """
+    result = {"key": key, "name": name, "unit": unit, "value": value, "danger_line": danger_line, "notes": []}
     if value is None or pd.isna(value):
-        result.update(level=NOT_ENOUGH, decided_by=None, notes=[f"No forecast value. {NOT_ENOUGH_TEXT}."])
+        result.update(level=NOT_ENOUGH, decided_by=None, text=NOT_ENOUGH_TEXT,
+                      notes=[f"No forecast value. {NOT_ENOUGH_TEXT}."])
         return result
 
     base_start, base_end = dt.date(BASELINE_START_YEAR, 1, 1), dt.date(BASELINE_END_YEAR, 12, 31)
@@ -188,7 +217,8 @@ def _check(name, unit, value, dates, values, date, danger_line=None, spell_days=
     base = _rarity(dates, values, value, base_start, base_end, baseline_years(), spell_days)
     recent = _rarity(dates, values, value, rec_start, rec_end, RECENT_WINDOW_YEARS, spell_days)
     if base is None or recent is None:
-        result.update(level=NOT_ENOUGH, decided_by=None, notes=[f"History too thin. {NOT_ENOUGH_TEXT}."])
+        result.update(level=NOT_ENOUGH, decided_by=None, text=NOT_ENOUGH_TEXT,
+                      notes=[f"History too thin. {NOT_ENOUGH_TEXT}."])
         return result
 
     ratio, ratio_text = _ratio(base, recent)
@@ -202,11 +232,18 @@ def _check(name, unit, value, dates, values, date, danger_line=None, spell_days=
     else:
         decided_by = "rarity"
 
+    recent_text = _how_often(recent, f"not seen in those {RECENT_WINDOW_YEARS} years")
+    if level == "Typical":
+        text = _typical_text(key, value)
+    else:
+        text = _unusual_text(recent, recent_text, ratio_text, crosses, danger_line, unit)
+
     result.update(
         baseline=base,
         recent=recent,
         baseline_text=_how_often(base, f"not seen in {baseline_label()}"),
-        recent_text=_how_often(recent, f"not seen in those {RECENT_WINDOW_YEARS} years"),
+        recent_text=recent_text,
+        text=text,
         ratio=ratio,
         ratio_text=ratio_text,
         relative_level=relative,
@@ -263,7 +300,7 @@ def assess(lat, lon, date, today=None):
 
     checks = []
     for key, (name, unit) in CHECKS.items():
-        checks.append(_check(name, unit, fc[key], df["date"], df[key], date, DANGER_LINES[key]))
+        checks.append(_check(key, name, unit, fc[key], df["date"], df[key], date, DANGER_LINES[key]))
 
     # Recent rain: the same rarity check on multi-day totals.
     days = RECENT_RAIN_DAYS_BEFORE + 1
@@ -272,7 +309,8 @@ def assess(lat, lon, date, today=None):
     total = sum(amounts) if have_all else None
     before_total = sum(amounts[:-1]) if all(a is not None for a in amounts[:-1]) else None
     rolling = df["rain_mm"].rolling(days, min_periods=days).sum()
-    rain_check = _check(RECENT_RAIN_NAME, "mm", total, df["date"], rolling, date, spell_days=days)
+    rain_check = _check(RECENT_RAIN_KEY, RECENT_RAIN_NAME, "mm", total, df["date"], rolling, date,
+                        spell_days=days)
     rain_check["before_total"] = before_total
     rain_check["daily_amounts"] = amounts
     rain_check["source"] = rain_source

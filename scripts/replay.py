@@ -37,11 +37,8 @@ def _match(level, lowest, highest):
 
 
 def _cell(check):
-    """Short summary of one check for the main table."""
-    value = _fmt(check["value"], check["unit"])
-    if check["level"] == risk.NOT_ENOUGH:
-        return f"{value} — {risk.NOT_ENOUGH}"
-    return f"{value}: {check['recent_text']} → {check['level']}"
+    """One check for the main table: what the app shows, then the check's level."""
+    return f"{check['text']} → {check['level']}"
 
 
 def _detail(case, result):
@@ -73,6 +70,8 @@ def _detail(case, result):
     lines.append(f"- Rain in the {risk.RECENT_RAIN_DAYS_BEFORE} days before the date: "
                  f"{_fmt(rain['before_total'], 'mm')} (from {rain['source']}); "
                  f"daily amounts: {', '.join(_fmt(a, 'mm') for a in rain['daily_amounts'])}")
+    for c in result["checks"]:
+        lines.append(f"- Shown for {c['name']}: \"{c['text']}\"")
     for c in result["checks"]:
         for note in c["notes"]:
             lines.append(f"- {c['name']}: {note}")
@@ -114,8 +113,8 @@ def main():
         f"Settings: comparison period {risk.baseline_label()}; the level uses {risk.recent_phrase()}; "
         f"recent rain = {risk.RECENT_RAIN_DAYS_BEFORE} days before + the date.",
         "",
-        "Each value cell shows the forecast value, how often a day at least that extreme happened in "
-        f"{risk.recent_phrase()}, and that check's level.",
+        "Each check cell shows the wording the app shows, then that check's level. "
+        "Typical checks show plain wording; the full numbers for every check are in Details.",
         "",
         "| Case | Date | Level | Decided by | Rain (24 h) | Feels-like | Gust | Recent rain "
         f"({risk.RECENT_RAIN_DAYS_BEFORE + 1}-day) | Expected | Matches? |",
