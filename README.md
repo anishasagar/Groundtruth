@@ -9,6 +9,18 @@ pip install -r requirements.txt
 python scripts/paiporta.py
 ```
 
+## Test cases
+
+`tests/cases.csv` lists real events and calm days with the level we expect. Run them all and write the results to `TESTLOG.md`:
+
+```
+python scripts/replay.py
+```
+
+The risk engine is `groundtruth/risk.py`. The time periods (the 1951–1980 comparison and the 30-year window for the level) are in the SETTINGS section at its top.
+
+Downloaded history is saved in `data/history/` (one file per place) and kept in the project, so it isn't downloaded again. Open-Meteo's free service has a daily limit; if it's used up, the replay says so and you can run it again the next day.
+
 ## Known limitations
 
 - **Past forecasts are short-range.** For past dates we use Open-Meteo's Historical Forecast API. It shows what the models predicted a few hours ahead, not what a forecast issued days ahead said.

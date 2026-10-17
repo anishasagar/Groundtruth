@@ -1,0 +1,8 @@
+name,latitude,longitude,date,expect,lowest_expected,highest_expected
+Valencia flash flood,39.43,-0.42,2024-10-29,"Extreme rain, possibly beyond the 30-year record",Extreme,Extreme
+Texas Hill Country flood,30.07,-99.33,2025-07-04,"Elevated or High; forecasts underestimated this rain, so a partial miss is likely",Elevated,High
+Kolkata heat (KK concert),22.57,88.36,2022-05-31,At least High via the heat danger line,High,Extreme
+Bayesian sinking,38.08,13.54,2024-08-19,Probably a miss; a sudden local storm is too small for this data,Typical,Elevated
+Nepal-Tibet glacier-collapse flood,28.16,85.34,2026-08-26,Probably Typical or Elevated; a glacier collapse is invisible to weather data,Typical,Elevated
+"Calm control 1, Paiporta",39.43,-0.42,2024-05-15,Typical,Typical,Typical
+"Calm control 2, Kolkata",22.57,88.36,2022-01-15,Typical,Typical,Typical
