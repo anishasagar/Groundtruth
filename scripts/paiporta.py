@@ -1,4 +1,4 @@
-"""Print the forecast and the 1951-onward history for Paiporta, Spain, on 2024-10-29.
+"""Print the forecast and the history (1951 to the day before) for Paiporta, Spain, on 2024-10-29.
 
 Run from the project folder:  python scripts/paiporta.py
 """
@@ -29,7 +29,7 @@ def main():
     print(f"Paiporta, Spain ({LAT}, {LON}) on {DATE}\n")
 
     fc = get_forecast_day(LAT, LON, DATE)
-    hist = get_history(LAT, LON, DATE)
+    hist = get_history(LAT, LON, dt.date(1951, 1, 1), DATE - dt.timedelta(days=1))
     df = hist["data"]
 
     print("Grid points (the data's nearest model cell, not the exact address):")

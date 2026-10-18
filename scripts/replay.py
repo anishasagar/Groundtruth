@@ -1,0 +1,135 @@
+"""Run every test case in tests/cases.csv and write the results to TESTLOG.md.
+
+Run from the project folder:  python scripts/replay.py
+"""
+
+import datetime as dt
+import sys
+from pathlib import Path
+
+import pandas as pd
+import requests
+
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT))
+
+from groundtruth import risk  # noqa: E402
+from groundtruth.weather import LimitReached, NotAvailable  # noqa: E402
+
+CASES = ROOT / "tests" / "cases.csv"
+TESTLOG = ROOT / "TESTLOG.md"
+ORDER = risk.LEVELS
+
+
+def _fmt(value, unit):
+    return "missing" if value is None or pd.isna(value) else f"{value:.1f} {unit}"
+
+
+def _match(level, lowest, highest):
+    if level not in ORDER:
+        return "no — not enough data"
+    i = ORDER.index(level)
+    if i < ORDER.index(lowest):
+        return "**no — lower than expected**"
+    if i > ORDER.index(highest):
+        return "no — higher than expected"
+    return "yes"
+
+
+def _cell(check):
+    """One check for the main table: what the app shows, then the check's level."""
+    return f"{check['text']} → {check['level']}"
+
+
+def _detail(case, result):
+    lines = [f"### {case['name']} — {case['date']}", ""]
+    lines.append(f"- Level: **{result['level']}** (decided by: {', '.join(result['decided_by']) or '—'})")
+    lines.append(f"- Forecast: {result['forecast_source']}, grid point "
+                 f"{result['forecast_grid_point']['latitude']:.2f}, {result['forecast_grid_point']['longitude']:.2f}")
+    lines.append(f"- History: {result['history_source']}, grid point "
+                 f"{result['history_grid_point']['latitude']:.2f}, {result['history_grid_point']['longitude']:.2f}")
+    lines.append("")
+    lines.append(f"| Check | Value | In {result['recent_label']} ({result['recent_phrase']}) "
+                 f"| In {result['baseline_label']} | Compared with {result['baseline_label']} "
+                 "| Rarity level | Danger line | Check level |")
+    lines.append("|---|---|---|---|---|---|---|---|")
+    for c in result["checks"]:
+        if c["level"] == risk.NOT_ENOUGH:
+            lines.append(f"| {c['name']} | {_fmt(c['value'], c['unit'])} | — | — | — | — | — | {risk.NOT_ENOUGH} |")
+            continue
+        line = "—" if c["danger_line"] is None else (
+            f"{c['danger_line']} {c['unit']}: {'crossed' if c['crosses_danger_line'] else 'not crossed'}")
+        lines.append(
+            f"| {c['name']} | {_fmt(c['value'], c['unit'])} "
+            f"| {c['recent_text']} ({c['recent']['count']} {'spells' if c['name'] == risk.RECENT_RAIN_NAME else 'days'}) "
+            f"| {c['baseline_text']} ({c['baseline']['count']}) | {c['ratio_text']} "
+            f"| {c['relative_level']} | {line} | {c['level']} |"
+        )
+    rain = result["checks"][-1]
+    lines.append("")
+    lines.append(f"- Rain in the {risk.RECENT_RAIN_DAYS_BEFORE} days before the date: "
+                 f"{_fmt(rain['before_total'], 'mm')} (from {rain['source']}); "
+                 f"daily amounts: {', '.join(_fmt(a, 'mm') for a in rain['daily_amounts'])}")
+    for c in result["checks"]:
+        lines.append(f"- Shown for {c['name']}: \"{c['text']}\"")
+    for c in result["checks"]:
+        for note in c["notes"]:
+            lines.append(f"- {c['name']}: {note}")
+    for note in result["notes"][: len(result["notes"]) - len(risk.ALWAYS_NOTES)]:
+        lines.append(f"- {note}")
+    lines.append("")
+    return lines
+
+
+def main():
+    cases = pd.read_csv(CASES, dtype=str)
+    summary, details = [], []
+    for _, case in cases.iterrows():
+        date = dt.date.fromisoformat(case["date"])
+        print(f"{case['name']} ({case['date']}) ...", flush=True)
+        try:
+            result = risk.assess(float(case["latitude"]), float(case["longitude"]), date)
+        except (LimitReached, NotAvailable, requests.RequestException) as e:
+            print(f"  could not run: {e}")
+            summary.append(f"| {case['name']} | {case['date']} | not run | — | — | — | — | — | {case['expect']} | — |")
+            details += [f"### {case['name']} — {case['date']}", "", f"Not run: {e}", ""]
+            continue
+        print(f"  {result['level']} (decided by: {', '.join(result['decided_by']) or '—'})")
+        rain, heat, gust, recent = result["checks"]
+        summary.append(
+            f"| {case['name']} | {case['date']} | **{result['level']}** | {', '.join(result['decided_by']) or '—'} "
+            f"| {_cell(rain)} | {_cell(heat)} | {_cell(gust)} | {_cell(recent)} "
+            f"| {case['expect']} | {_match(result['level'], case['lowest_expected'], case['highest_expected'])} |"
+        )
+        details += _detail(case, result)
+
+    not_run = sum("| not run |" in row for row in summary)
+    out = [
+        "# Test log",
+        "",
+        f"Last run: {dt.date.today().isoformat()} with `python scripts/replay.py`.",
+        *([f"**{not_run} of {len(summary)} cases could not run — see Details. Run the replay again later.**"]
+          if not_run else []),
+        f"Settings: comparison period {risk.baseline_label()}; the level uses {risk.recent_phrase()}; "
+        f"recent rain = {risk.RECENT_RAIN_DAYS_BEFORE} days before + the date.",
+        "",
+        "Each check cell shows the wording the app shows, then that check's level. "
+        "Typical checks show plain wording; the full numbers for every check are in Details.",
+        "",
+        "| Case | Date | Level | Decided by | Rain (24 h) | Feels-like | Gust | Recent rain "
+        f"({risk.RECENT_RAIN_DAYS_BEFORE + 1}-day) | Expected | Matches? |",
+        "|---|---|---|---|---|---|---|---|---|---|",
+        *summary,
+        "",
+        "## Details",
+        "",
+        *details,
+        "Weather data by Open-Meteo.com",
+        "",
+    ]
+    TESTLOG.write_text("\n".join(out))
+    print(f"\nWrote {TESTLOG.relative_to(ROOT)}")
+
+
+if __name__ == "__main__":
+    main()

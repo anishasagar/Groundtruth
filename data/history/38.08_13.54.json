@@ -1,0 +1,7 @@
+{
+ "source": "Open-Meteo Historical Weather API (ERA5)",
+ "grid_point": {
+  "latitude": 38.0,
+  "longitude": 13.5
+ }
+}
