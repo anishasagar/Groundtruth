@@ -1,0 +1,36 @@
+{
+ "source": "Open-Meteo Historical Forecast API",
+ "grid_point": {
+  "latitude": 39.459038,
+  "longitude": -0.45223618
+ },
+ "raw": {
+  "latitude": 39.459038,
+  "longitude": -0.45223618,
+  "generationtime_ms": 27.83524990081787,
+  "utc_offset_seconds": 7200,
+  "timezone": "Europe/Madrid",
+  "timezone_abbreviation": "GMT+2",
+  "elevation": 28.0,
+  "daily_units": {
+   "time": "iso8601",
+   "precipitation_sum": "mm",
+   "apparent_temperature_max": "\u00b0C",
+   "wind_gusts_10m_max": "km/h"
+  },
+  "daily": {
+   "time": [
+    "2024-10-29"
+   ],
+   "precipitation_sum": [
+    202.1
+   ],
+   "apparent_temperature_max": [
+    20.2
+   ],
+   "wind_gusts_10m_max": [
+    61.2
+   ]
+  }
+ }
+}

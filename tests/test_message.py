@@ -38,22 +38,30 @@ def check_result(label, result, place="Somewhere, Far Away Land"):
     assert len(message.sms_text(result, "A" * 300)) <= 160, f"{label}: SMS too long with a very long place name"
 
     if result["level"] in risk.LEVELS:
-        # The level word in the sentence always matches the computed level.
-        found = re.findall(r"Level: (\w+)", sentence)
-        assert found == [result["level"]], f"{label}: sentence says {found}, level is {result['level']}"
-        other = [lv for lv in risk.LEVELS if lv != result["level"] and re.search(rf"\b{lv}\b", sentence)]
-        assert not other, f"{label}: sentence also mentions {other}"
+        # The headline always matches the computed level (and no other level's headline appears).
+        assert_headline(label, sentence, result["level"], today)
         assert re.search(rf"\b{result['level']}\b", sms), f"{label}: SMS level word does not match"
         # No numbers at all in the sentence (so it can't add one that isn't in the facts).
         assert not re.search(r"\d", sentence), f"{label}: sentence contains a number"
         # Action line: none for Typical, otherwise exactly one of the fixed lines.
         actions = [a for a in message.ACTIONS.values() if a in sentence]
         assert len(actions) == (0 if result["level"] == "Typical" else 1), f"{label}: action lines {actions}"
-        # Chart hidden for Typical, shown otherwise.
-        assert (message.chart_frame(result) is None) == (result["level"] == "Typical"), f"{label}: chart rule"
+        # The "how often" lines are hidden for Typical, shown otherwise.
+        assert (message.rarity_rows(result) is None) == (result["level"] == "Typical"), f"{label}: rarity rule"
+        # What decided the level comes first in the Why list.
+        first = bullets[0]
+        assert result["level"] == "Typical" or first.startswith("**") and "Normal" not in first, f"{label}: {first}"
+        assert "ERA5" not in " ".join(bullets), f"{label}: source text belongs in Details"
+        assert "Level:" not in sentence and "See the reasons" not in sentence
     else:
         assert risk.NOT_ENOUGH_TEXT in sentence and risk.NOT_ENOUGH_TEXT.replace("—", "-") in sms
-        assert message.chart_frame(result) is None
+        assert message.rarity_rows(result) is None
+
+
+def assert_headline(label, sentence, level, today):
+    for other, text in message.HEADLINES.items():
+        said = any(sentence.startswith(text.format(when=w)) for w in ("today", "on this day"))
+        assert said == (other == level), f"{label}: headline for {other} {'missing' if other == level else 'present'}"
 
 
 def not_enough_result():
@@ -71,6 +79,14 @@ def main():
         for _, c in cases.iterrows():
             result = risk.assess(float(c["latitude"]), float(c["longitude"]), dt.date.fromisoformat(c["date"]))
             check_result(c["name"], result)
+            if c["name"].startswith("Kolkata heat"):
+                assert message.why_bullets(result)[0] == (
+                    "**Feels like 41 °C** — above the 40 °C danger line. Heat like this is common here "
+                    "(about 48 days a year) and 1.4 times more common than in 1951–1980."), message.why_bullets(result)[0]
+            if result["level"] != "Typical":
+                rows, _ = message.rarity_rows(result)
+                assert [r["label"] for r in rows] == [result["baseline_label"], result["recent_label"]]
+                assert max(r["width"] for r in rows) in (0.0, 1.0)
             print("ok:", c["name"], "->", result["level"])
     check_result("Not enough data", not_enough_result())
     print("ok: Not enough data")
@@ -83,7 +99,7 @@ def main():
             r = {"level": level, "date": dt.date(2025, 1, 1), "checks": [check], "baseline_label": "1951–1980",
                  "recent_label": "1995–2024"}
             sentence = message.template_sentence(r, dt.date(2025, 1, 1))
-            assert re.findall(r"Level: (\w+)", sentence) == [level]
+            assert_headline("synthetic", sentence, level, dt.date(2025, 1, 1))
     print("ok: every level and hazard")
     print("All message checks passed.")
 

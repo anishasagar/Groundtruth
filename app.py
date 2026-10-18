@@ -19,6 +19,7 @@ CASES_FILE = ROOT / "tests" / "cases.csv"
 EARLIEST_DATE = dt.date(2017, 1, 1)  # the past-forecast archive goes back about this far
 NO_REPLAY = "— none, use the search above —"
 LIVE_DOWN = "Live data is temporarily unavailable. Try a replay."
+REPLAY_MISSING = "Replay data for this event isn't saved yet. Please try again later."
 
 # Test cases that are not offered as replays.
 HIDDEN_REPLAY_PREFIX = "Ordinary rain"
@@ -91,6 +92,33 @@ def level_banner(result):
     )
 
 
+LONGEST_BAR = 0.6  # the more frequent period's line, as a share of the track
+OLDER_COLOUR = "#8a929c"
+
+
+def rarity_lines(rows, accent):
+    """Two plain rows: period, a thin line, the engine's words. No axes, grid or scale numbers."""
+    out = [
+        "<style>.gt-rows{display:grid;grid-template-columns:5.5rem 3fr 2fr;gap:0.6rem 0.9rem;align-items:center}"
+        ".gt-track{height:0.55rem}.gt-bar{height:100%;border-radius:0.3rem}"
+        "@media (max-width:600px){.gt-rows{grid-template-columns:5rem 1fr}.gt-words{grid-column:2}"
+        ".gt-label{grid-row-start:auto}}</style><div class=\"gt-rows\">"
+    ]
+    for i, r in enumerate(rows):
+        colour = accent if i == len(rows) - 1 else OLDER_COLOUR  # the last row is the recent period
+        width = r["width"] * LONGEST_BAR * 100
+        if r["per_year"] > 0:
+            width = max(width, 0.5)  # a tiny but real rate still shows
+        out.append(
+            f'<div class="gt-label"><strong>{html.escape(r["label"])}</strong></div>'
+            f'<div class="gt-track" aria-hidden="true"><div class="gt-bar" '
+            f'style="width:{width:.1f}%;background:{colour}"></div></div>'
+            f'<div class="gt-words">{html.escape(r["words"])}</div>'
+        )
+    out.append("</div>")
+    st.markdown("".join(out), unsafe_allow_html=True)
+
+
 def how_sure_box(result):
     rain = result["checks"][-1]
     with st.container(border=True):
@@ -111,6 +139,7 @@ def how_sure_box(result):
                 f"- Compared with {result['baseline_label']}; the level uses {result['recent_label']} "
                 f"({result['recent_phrase']})"
             )
+            st.markdown(f"- Rain in the {risk.RECENT_RAIN_DAYS_BEFORE} days before: from {rain['source']}")
             engine_notes = result["notes"][: len(result["notes"]) - len(risk.ALWAYS_NOTES)]
             engine_notes += [f"{c['name']}: {n}" for c in result["checks"] for n in c["notes"]]
             for n in engine_notes:
@@ -143,17 +172,17 @@ def show_assessment(result, place, replay_name=None):
     st.subheader("Why")
     st.markdown("\n".join(f"- {b}" for b in message.why_bullets(result)))
 
-    chart = message.chart_frame(result)
-    if chart is not None:
-        frame, check_name = chart
+    rarity = message.rarity_rows(result)
+    if rarity is not None:
+        rows, check_name = rarity
         st.subheader("How often a day like this happens")
-        if (frame["Times a year"] == 0).all():
+        if all(r["per_year"] == 0 for r in rows):
             st.markdown(f"**{check_name}:** a day like this was not seen in {result['baseline_label']} "
                         f"or in {result['recent_label']}.")
         else:
-            st.bar_chart(frame, y="Times a year")
-            st.caption(f"{check_name}: days at or beyond this value, per year, in "
-                       f"{result['baseline_label']} and in {result['recent_label']}.")
+            rarity_lines(rows, LEVEL_STYLE[result["level"]][0])
+            st.caption(f"{check_name}: days at or beyond this value. The longer line is the period "
+                       "with more of them.")
 
     st.subheader("Text message version")
     sms = message.sms_text(result, place)
@@ -215,7 +244,7 @@ if lat is not None:
         problem = LIVE_DOWN
     except weather.NotAvailable as e:
         if replay_name != NO_REPLAY:
-            problem = "This replay's saved data is missing. Ask for it to be saved again."
+            problem = REPLAY_MISSING
         else:
             problem = f"No weather data for that place and date ({e}). Try another date, or a replay."
 
