@@ -9,6 +9,20 @@ pip install -r requirements.txt
 python scripts/paiporta.py
 ```
 
+## The app
+
+```
+streamlit run app.py
+```
+
+Search a place and date, or pick a **Replay a past event**. Replays never call Open-Meteo: they use the saved history in `data/history/` and the saved forecasts in `data/forecasts/`. To save the forecasts (needs Open-Meteo reachable, run again after adding a case):
+
+```
+python scripts/save_replay_forecasts.py
+```
+
+Checks on the wording: `python tests/test_message.py`.
+
 ## Test cases
 
 `tests/cases.csv` lists real events and calm days with the level we expect. Run them all and write the results to `TESTLOG.md`:

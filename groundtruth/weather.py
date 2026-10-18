@@ -10,6 +10,8 @@ Three things:
 Missing values stay missing (None / NaN). Nothing is filled in or guessed.
 """
 
+import contextlib
+import contextvars
 import datetime as dt
 import json
 import time
@@ -31,6 +33,7 @@ VARIABLES = {
 
 FORECAST_DAYS_AHEAD = 16  # the Forecast API reaches about this far
 HISTORY_DIR = Path(__file__).resolve().parent.parent / "data" / "history"
+FORECAST_DIR = Path(__file__).resolve().parent.parent / "data" / "forecasts"  # saved for replays
 HISTORY_SOURCE = "Open-Meteo Historical Weather API (ERA5)"
 
 
@@ -42,8 +45,26 @@ class LimitReached(Exception):
     """Open-Meteo refused because the free daily request limit is used up."""
 
 
+_offline = contextvars.ContextVar("groundtruth_offline", default=False)
+
+
+@contextlib.contextmanager
+def offline():
+    """While active, nothing may call Open-Meteo (used by replays).
+
+    Per-visitor (a ContextVar), so one person's replay can't block another's live search.
+    """
+    token = _offline.set(True)
+    try:
+        yield
+    finally:
+        _offline.reset(token)
+
+
 def _get(url, params, tries=4):
     """GET with a few retries on network errors. Raises if it still fails."""
+    if _offline.get():
+        raise NotAvailable("Replay mode never calls Open-Meteo, and this data was not saved.")
     for attempt in range(tries):
         try:
             r = requests.get(url, params=params, timeout=120)
@@ -85,8 +106,33 @@ def _grid_point(data):
     return {"latitude": data.get("latitude"), "longitude": data.get("longitude")}
 
 
+def _forecast_file(lat, lon, start, end):
+    return FORECAST_DIR / f"{lat:.2f}_{lon:.2f}_{start.isoformat()}_{end.isoformat()}.json"
+
+
+def _load_saved_forecast(lat, lon, start, end):
+    path = _forecast_file(lat, lon, start, end)
+    if not path.exists():
+        return None
+    saved = json.loads(path.read_text())
+    return {"source": saved["source"], "grid_point": saved["grid_point"], "data": _to_frame(saved["raw"])}
+
+
+def save_forecast_range(lat, lon, start, end, today=None):
+    """Download a forecast live and save it in data/forecasts/ for replays."""
+    today = today or dt.date.today()
+    raw, source = _fetch_forecast_raw(lat, lon, start, end, today)
+    FORECAST_DIR.mkdir(parents=True, exist_ok=True)
+    path = _forecast_file(lat, lon, start, end)
+    path.write_text(json.dumps({"source": source, "grid_point": _grid_point(raw), "raw": raw}, indent=1))
+    return path
+
+
 def get_forecast_range(lat, lon, start, end, today=None):
     """Forecast for every date from start to end (inclusive).
+
+    A forecast saved in data/forecasts/ (see save_forecast_range) is used first,
+    so replays work without Open-Meteo.
 
     If the last date is today or later -> Forecast API (it also covers recent
     past days, so a run of days around today comes from one forecast).
@@ -98,7 +144,16 @@ def get_forecast_range(lat, lon, start, end, today=None):
     Returns a dict: source, grid_point, and data (one row per date).
     Raises NotAvailable if the dates are outside what the source covers.
     """
+    saved = _load_saved_forecast(lat, lon, start, end)
+    if saved is not None:
+        return saved
     today = today or dt.date.today()
+    data, source = _fetch_forecast_raw(lat, lon, start, end, today)
+    return {"source": source, "grid_point": _grid_point(data), "data": _to_frame(data)}
+
+
+def _fetch_forecast_raw(lat, lon, start, end, today):
+    """The live Open-Meteo call behind get_forecast_range. Returns (raw json, source name)."""
     if end >= today:
         if (end - today).days > FORECAST_DAYS_AHEAD:
             raise NotAvailable(f"Forecasts only reach about {FORECAST_DAYS_AHEAD} days ahead.")
@@ -107,10 +162,9 @@ def get_forecast_range(lat, lon, start, end, today=None):
         url, source = HISTORICAL_FORECAST_URL, "Open-Meteo Historical Forecast API"
 
     data = _get(url, _params(lat, lon, start, end))
-    df = _to_frame(data)
-    if df.empty:
+    if _to_frame(data).empty:
         raise NotAvailable("No forecast data returned for those dates.")
-    return {"source": source, "grid_point": _grid_point(data), "data": df}
+    return data, source
 
 
 def get_forecast_day(lat, lon, date, today=None):
