@@ -26,6 +26,7 @@ RECENT_WINDOW_YEARS = 30
 RECENT_RAIN_DAYS_BEFORE = 5
 
 # Absolute danger lines. Crossing one = at least High.
+# Snow and cold have no fixed line yet (fixed cold lines need research).
 DANGER_LINES = {
     "rain_mm": 150,  # mm in 24 h
     "feels_like_max_c": 40,  # °C
@@ -54,8 +55,12 @@ NOT_ENOUGH_TEXT = "Not enough data — check official sources"
 CHECKS = {
     "rain_mm": ("Rain (24 h)", "mm"),
     "feels_like_max_c": ("Feels-like heat", "°C"),
+    "feels_like_min_c": ("Feels-like cold", "°C"),
+    "snow_cm": ("Snowfall (24 h)", "cm"),
     "gust_max_kmh": ("Wind gust", "km/h"),
 }
+# Checks where "unusual" means low, not high: count days at least this cold.
+LOWER_IS_WORSE = {"feels_like_min_c"}
 RECENT_RAIN_NAME = f"Recent rain ({RECENT_RAIN_DAYS_BEFORE + 1}-day total)"
 RECENT_RAIN_KEY = "recent_rain_mm"
 
@@ -97,8 +102,8 @@ def recent_phrase():
 
 # ---- counting ---------------------------------------------------------------
 
-def _rarity(dates, values, threshold, start, end, nominal_years, spell_days=1):
-    """How often a value >= threshold happened between start and end.
+def _rarity(dates, values, threshold, start, end, nominal_years, spell_days=1, lower=False):
+    """How often a value >= threshold (<= threshold if `lower`) happened between start and end.
 
     Returns None if the window is missing too many days (thin data).
     spell_days: for multi-day totals (e.g. 6), overlapping windows from the
@@ -112,7 +117,7 @@ def _rarity(dates, values, threshold, start, end, nominal_years, spell_days=1):
     if expected_days <= 0 or valid_days < expected_days * (1 - MAX_MISSING_SHARE):
         return None
 
-    hits = (window >= threshold).astype(bool)
+    hits = (window <= threshold if lower else window >= threshold).astype(bool)
     if spell_days > 1:
         run_id = (hits != hits.shift(1)).cumsum()
         run_lengths = hits[hits].groupby(run_id[hits]).size()
@@ -176,11 +181,15 @@ def _relative_level(r):
 def _typical_text(key, value):
     """Plain wording for a check that comes back Typical (no "how often" line)."""
     if key == RECENT_RAIN_KEY:
-        return f"No unusual rain in the last {RECENT_RAIN_DAYS_BEFORE + 1} days ({value:.1f} mm)"
+        return f"Normal rain for the last {RECENT_RAIN_DAYS_BEFORE + 1} days ({value:.1f} mm)"
     if key == "rain_mm":
         return "No rain forecast" if value == 0 else f"Normal rain for here ({value:.1f} mm)"
+    if key == "snow_cm":
+        return "No snow forecast" if value == 0 else f"Normal snowfall for here ({value:.1f} cm)"
     if key == "feels_like_max_c":
-        return f"Normal temperatures for here (feels like {value:.0f} °C)"
+        return f"Normal highs for here (feels like up to {value:.0f} °C)"
+    if key == "feels_like_min_c":
+        return f"Normal lows for here (feels like down to {value:.0f} °C)"
     return f"Normal wind for here (gusts up to {value:.0f} km/h)"
 
 
@@ -199,14 +208,15 @@ def _worse(a, b):
     return a if LEVELS.index(a) >= LEVELS.index(b) else b
 
 
-def _check(key, name, unit, value, dates, values, date, danger_line=None, spell_days=1):
+def _check(key, name, unit, value, dates, values, date, danger_line=None, spell_days=1, lower=False):
     """One rarity check (plus the danger line, if there is one).
 
     `text` is what the app shows: plain wording when Typical, "how often" and
     the comparison with the baseline only when Elevated or higher. The full
     numbers stay in the result either way.
     """
-    result = {"key": key, "name": name, "unit": unit, "value": value, "danger_line": danger_line, "notes": []}
+    result = {"key": key, "name": name, "unit": unit, "value": value, "danger_line": danger_line,
+              "lower_is_worse": lower, "notes": []}
     if value is None or pd.isna(value):
         result.update(level=NOT_ENOUGH, decided_by=None, text=NOT_ENOUGH_TEXT,
                       notes=[f"No forecast value. {NOT_ENOUGH_TEXT}."])
@@ -214,8 +224,8 @@ def _check(key, name, unit, value, dates, values, date, danger_line=None, spell_
 
     base_start, base_end = dt.date(BASELINE_START_YEAR, 1, 1), dt.date(BASELINE_END_YEAR, 12, 31)
     rec_start, rec_end = recent_window(date)
-    base = _rarity(dates, values, value, base_start, base_end, baseline_years(), spell_days)
-    recent = _rarity(dates, values, value, rec_start, rec_end, RECENT_WINDOW_YEARS, spell_days)
+    base = _rarity(dates, values, value, base_start, base_end, baseline_years(), spell_days, lower)
+    recent = _rarity(dates, values, value, rec_start, rec_end, RECENT_WINDOW_YEARS, spell_days, lower)
     if base is None or recent is None:
         result.update(level=NOT_ENOUGH, decided_by=None, text=NOT_ENOUGH_TEXT,
                       notes=[f"History too thin. {NOT_ENOUGH_TEXT}."])
@@ -300,7 +310,8 @@ def assess(lat, lon, date, today=None):
 
     checks = []
     for key, (name, unit) in CHECKS.items():
-        checks.append(_check(key, name, unit, fc[key], df["date"], df[key], date, DANGER_LINES[key]))
+        checks.append(_check(key, name, unit, fc[key], df["date"], df[key], date, DANGER_LINES.get(key),
+                             lower=key in LOWER_IS_WORSE))
 
     # Recent rain: the same rarity check on multi-day totals.
     days = RECENT_RAIN_DAYS_BEFORE + 1
