@@ -23,6 +23,20 @@ python scripts/save_replay_data.py
 
 Checks on the wording: `python tests/test_message.py`.
 
+## Claude text
+
+Claude (`claude-sonnet-5-5`) writes the headline, what it means, short why bullets, the text message and a confidence note, from the computed facts only (`groundtruth/claude_text.py`). Code checks every reply: the level word, every number, banned words, "normal", the 160-character SMS, 2–4 bullets, and official warnings. If anything fails, or Claude times out or errors, the app shows the template sentence labelled "template mode", with the reason in small print. "Not enough data" days never go to Claude.
+
+The key comes from `st.secrets` or the environment variable `GROUNDTRUTH_CLAUDE_KEY`. Never write it into a file.
+
+Replays never call Claude: they use the saved replies in `data/claude_replies/`, checked again every time. Each one carries a fingerprint of the facts, the prompt and the model; when any of those change, it is out of date and the replay shows template mode until you refill:
+
+```
+python scripts/save_claude_replies.py
+```
+
+Checks on the Claude text (no API calls): `python tests/test_claude_text.py`.
+
 ## Test cases
 
 `tests/cases.csv` lists real events and calm days with the level we expect. Run them all (no Open-Meteo calls; uses only the saved data) and write the results to `TESTLOG.md`:

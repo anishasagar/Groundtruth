@@ -1,0 +1,127 @@
+{
+ "model": "claude-sonnet-5-5",
+ "fingerprint": "1d41bb8eda4d9d8085480a5ace7a70a30a11e6addd8ed548076a406f7508a1ba",
+ "facts": {
+  "place": "Porticello, Sicily, Italy",
+  "day": "19 Aug 2024",
+  "is_today": false,
+  "level": "Typical",
+  "level_set_by_checks": [
+   "Rain (24 h)",
+   "Feels-like heat",
+   "Feels-like cold",
+   "Snowfall (24 h)",
+   "Wind gust",
+   "Recent rain (6-day total)"
+  ],
+  "deciding_check": "Recent rain (6-day total)",
+  "comparison_period": "1951–1980",
+  "recent_period": "1994–2024 (the 30 years before this date)",
+  "checks": [
+   {
+    "name": "Rain (24 h)",
+    "value": "2.5 mm",
+    "level": "Typical",
+    "wording": "Normal rain for here (2.5 mm)",
+    "how_often_in_recent_period": "about 64 times a year",
+    "how_often_in_comparison_period": "about 72 times a year",
+    "comparison": "1.1 times less common here than in 1951–1980",
+    "less_common_now": true,
+    "danger_line": "150 mm",
+    "danger_line_crossed": false,
+    "set_by": "rarity"
+   },
+   {
+    "name": "Feels-like heat",
+    "value": "33 °C",
+    "level": "Typical",
+    "wording": "Normal highs for here (feels like up to 33 °C)",
+    "how_often_in_recent_period": "about 57 times a year",
+    "how_often_in_comparison_period": "about 28 times a year",
+    "comparison": "2.0 times more common here than in 1951–1980",
+    "less_common_now": false,
+    "danger_line": "40 °C",
+    "danger_line_crossed": false,
+    "set_by": "rarity"
+   },
+   {
+    "name": "Feels-like cold",
+    "value": "28 °C",
+    "level": "Typical",
+    "wording": "Normal lows for here (feels like down to 28 °C)",
+    "how_often_in_recent_period": "about 327 times a year",
+    "how_often_in_comparison_period": "about 354 times a year",
+    "comparison": "1.1 times less common here than in 1951–1980",
+    "less_common_now": true,
+    "danger_line": "none for this check",
+    "danger_line_crossed": false,
+    "set_by": "rarity"
+   },
+   {
+    "name": "Snowfall (24 h)",
+    "value": "0.0 cm",
+    "level": "Typical",
+    "wording": "No snow forecast",
+    "how_often_in_recent_period": "about 365 times a year",
+    "how_often_in_comparison_period": "about 365 times a year",
+    "comparison": "about as common here as in 1951–1980",
+    "less_common_now": false,
+    "danger_line": "none for this check",
+    "danger_line_crossed": false,
+    "set_by": "rarity"
+   },
+   {
+    "name": "Wind gust",
+    "value": "45 km/h",
+    "level": "Typical",
+    "wording": "Normal wind for here (gusts up to 45 km/h)",
+    "how_often_in_recent_period": "about 58 times a year",
+    "how_often_in_comparison_period": "about 58 times a year",
+    "comparison": "about as common here as in 1951–1980",
+    "less_common_now": false,
+    "danger_line": "100 km/h",
+    "danger_line_crossed": false,
+    "set_by": "rarity"
+   },
+   {
+    "name": "Recent rain (6-day total)",
+    "value": "14 mm",
+    "level": "Typical",
+    "wording": "Normal rain for the last 6 days (13.8 mm)",
+    "how_often_in_recent_period": "about 21 times a year",
+    "how_often_in_comparison_period": "about 24 times a year",
+    "comparison": "1.1 times less common here than in 1951–1980",
+    "less_common_now": true,
+    "danger_line": "none for this check",
+    "danger_line_crossed": false,
+    "set_by": "rarity"
+   }
+  ],
+  "recent_rain": {
+   "rain_in_the_days_before": "11.3 mm",
+   "how_many_days_before": "5 days",
+   "total_including_the_day": "14 mm",
+   "based_on": "measured rain for the earlier days and the forecast for the day itself"
+  },
+  "action_line": null,
+  "official_warnings": "Check your official weather warnings — Groundtruth never replaces them.",
+  "scope_notes": [
+   "We check rain, heat, cold, snow, wind and recent rain. We don't yet check thunderstorms, hail, freezing rain or ice, wildfire, air quality, coastal flooding, or geological hazards. For those, follow official warnings.",
+   "Thunderstorms are not checked. Storms are a major cause of weather deaths — follow official storm warnings.",
+   "The history data is a ~25 km grid and misses very local storms.",
+   "Groundtruth covers weather-driven hazards only. For landslides, glacier collapse or earthquakes, check local civil protection and geological authorities."
+  ],
+  "data_notes": []
+ },
+ "reply": {
+  "headline": "Typical weather for Porticello, Sicily, Italy on 19 Aug 2024.",
+  "why": [
+   "The deciding check was recent rain: 14 mm over the last 6 days, which is normal rain for the last 6 days (13.8 mm).",
+   "Totals like this happen about 21 times a year here now, against about 24 times a year in 1951–1980, and that does not make the day any less serious, because the level is based on the recent 30 years.",
+   "Normal highs for here (feels like up to 33 °C), and days like this are 2.0 times more common here than in 1951–1980."
+  ],
+  "what_it_means": "Nothing in the checked weather stands out for this place on 19 Aug 2024. Check your official weather warnings, because Groundtruth never replaces them.",
+  "sms": "Groundtruth: Typical weather in Porticello, Sicily on 19 Aug 2024. Check your official weather warnings.",
+  "confidence_note": "The history is a grid of about 25 km and misses very local storms, and thunderstorms are not checked. Recent rain uses measured rain for the earlier days and the forecast for the day itself. Landslides, glacier collapse or earthquakes need local civil protection and geological authorities."
+ }
+}

@@ -60,7 +60,7 @@ def day_text(date):
     return f"{date.day} {date:%b %Y}"
 
 
-def _amount(value, unit):
+def amount(value, unit):
     return f"{value:.1f} {unit}" if abs(value) < 10 else f"{value:.0f} {unit}"
 
 
@@ -114,7 +114,7 @@ def _days(c, text):
 def _unusual_bullet(c, result):
     """Value, danger line (if crossed), how often it happens here, and the comparison with the baseline."""
     lead, noun = LEAD[c["key"]]
-    lead = lead.format(v=_amount(c["value"], c["unit"]), n=risk.RECENT_RAIN_DAYS_BEFORE + 1)
+    lead = lead.format(v=amount(c["value"], c["unit"]), n=risk.RECENT_RAIN_DAYS_BEFORE + 1)
     line = c.get("danger_line")
     if c.get("crosses_danger_line"):
         how = "above" if c["value"] > line else "at"
@@ -219,7 +219,7 @@ def sms_text(result, place):
         detail = ""
         if check is not None and level != "Typical":
             unit = _ascii(check["unit"]).strip() or "C"  # "°C" -> "C"
-            detail = f"{SHORT_NAMES[check['key']]} {_amount(check['value'], unit)}."
+            detail = f"{SHORT_NAMES[check['key']]} {amount(check['value'], unit)}."
         action = action_line(result)
         candidates = [
             " ".join(p for p in (head, detail, action, tail) if p),

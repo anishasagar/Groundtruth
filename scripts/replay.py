@@ -16,7 +16,7 @@ import requests
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from groundtruth import risk  # noqa: E402
+from groundtruth import claude_text, replays, risk  # noqa: E402
 from groundtruth import weather  # noqa: E402
 from groundtruth.weather import LimitReached, NotAvailable  # noqa: E402
 
@@ -86,9 +86,21 @@ def _detail(case, result):
     return lines
 
 
+def _claude_row(case, result):
+    """Whether this replay shows Claude's saved text, checked again by the guardrail (never calls Claude)."""
+    if case["name"] not in replays.REPLAY_PLACES:
+        return None
+    facts = claude_text.facts(result, replays.place_of(case), dt.date.today())
+    reply, problems = claude_text.saved_reply(replays.claude_reply_file(case["name"]), facts)
+    if reply is None:
+        return f"| {case['name']} | {result['level']} | template mode: {claude_text.short_reason(problems)} | — |"
+    return (f"| {case['name']} | {result['level']} | Claude mode: passes the checks "
+            f"(fingerprint {claude_text.fingerprint(facts)[:12]}) | {reply['headline']} |")
+
+
 def main():
     cases = pd.read_csv(CASES, dtype=str, keep_default_na=False)
-    summary, details = [], []
+    summary, details, claude_rows = [], [], []
     for _, case in cases.iterrows():
         if not case["date"]:  # a test day not picked yet (see scripts/save_replay_data.py)
             print(f"{case['name']}: pending, no date yet")
@@ -114,6 +126,9 @@ def main():
             f"| {case['expect']} | {_match(result['level'], case['lowest_expected'], case['highest_expected'])} |"
         )
         details += _detail(case, result)
+        row = _claude_row(case, result)
+        if row:
+            claude_rows.append(row)
 
     not_run = sum("| not run |" in row for row in summary)
     pending = sum("| pending |" in row for row in summary)
@@ -133,6 +148,16 @@ def main():
         "| Case | Date | Level | Decided by | " + " | ".join(COLUMNS) + " | Expected | Matches? |",
         "|---|---|---|---|" + "---|" * len(COLUMNS) + "---|---|",
         *summary,
+        "",
+        "## Claude text (saved replies)",
+        "",
+        f"Each replay shows Claude's saved text ({claude_text.MODEL}) only if its fingerprint still matches the facts, "
+        "prompt and model, and it passes the guardrail check again. Otherwise the app shows the template sentence. "
+        "Refill with `python scripts/save_claude_replies.py`.",
+        "",
+        "| Replay | Level | Text shown | Claude's headline |",
+        "|---|---|---|---|",
+        *claude_rows,
         "",
         "## Details",
         "",

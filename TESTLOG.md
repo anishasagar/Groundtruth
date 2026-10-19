@@ -20,6 +20,21 @@ Each check cell shows the wording the app shows, then that check's level. Typica
 | Paris snow and cold | 2026-01-07 | **Typical** | Rain (24 h), Feels-like heat, Feels-like cold, Snowfall (24 h), Wind gust, Recent rain (6-day total) | Normal rain for here (5.1 mm) → Typical | Normal highs for here (feels like up to -1 °C) → Typical | Normal lows for here (feels like down to -6 °C) → Typical | Normal snowfall for here (3.0 cm) → Typical | Normal wind for here (gusts up to 36 km/h) → Typical | Normal rain for the last 6 days (10.6 mm) → Typical | Typical. Honest limit: the danger came from snow falling on freezing, unprepared roads. Ice risk and local preparedness aren't checked yet. | yes |
 | Ordinary snow, Montreal | — | pending | — | — | — | — | — | — | — | Pending: day not picked yet (scripts/save_replay_data.py picks it). Expect Typical: snow is routine here. | — |
 
+## Claude text (saved replies)
+
+Each replay shows Claude's saved text (claude-sonnet-5-5) only if its fingerprint still matches the facts, prompt and model, and it passes the guardrail check again. Otherwise the app shows the template sentence. Refill with `python scripts/save_claude_replies.py`.
+
+| Replay | Level | Text shown | Claude's headline |
+|---|---|---|---|
+| Valencia flash flood | Extreme | Claude mode: passes the checks (fingerprint b636221c6d07) | Extreme risk of heavy rain in Paiporta, Valencia, Spain on 29 Oct 2024. |
+| Texas Hill Country flood | High | Claude mode: passes the checks (fingerprint 9edeba6e20f4) | High risk for heavy rain in Texas Hill Country, USA on 4 Jul 2025. |
+| Kolkata heat (KK concert) | High | Claude mode: passes the checks (fingerprint 27044a56569e) | High risk from feels-like heat in Kolkata, India on 31 May 2022. |
+| Bayesian sinking | Typical | Claude mode: passes the checks (fingerprint 1d41bb8eda4d) | Typical weather for Porticello, Sicily, Italy on 19 Aug 2024. |
+| Nepal-Tibet glacier-collapse flood | Typical | Claude mode: passes the checks (fingerprint e4beb65d7578) | Typical weather for the Nepal–Tibet border area on 26 Aug 2026, with recent rain the deciding check. |
+| Calm control 1, Paiporta | Typical | Claude mode: passes the checks (fingerprint 14932b86d54f) | Typical weather in Paiporta, Valencia, Spain on 15 May 2024, with recent rain as the deciding check. |
+| Calm control 2, Kolkata | Typical | Claude mode: passes the checks (fingerprint d17616eab4f5) | Typical weather in Kolkata, India on 15 Jan 2022. |
+| Paris snow and cold | Typical | Claude mode: passes the checks (fingerprint 1d8882f05cdc) | Typical weather in Paris, France on 7 Jan 2026. |
+
 ## Details
 
 ### Valencia flash flood — 2024-10-29

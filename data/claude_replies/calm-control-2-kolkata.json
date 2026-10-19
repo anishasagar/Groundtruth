@@ -1,0 +1,127 @@
+{
+ "model": "claude-sonnet-5-5",
+ "fingerprint": "d17616eab4f5628c1148f4565a8c8eaf81fdee0a6cc33fcc6104954d9697fb29",
+ "facts": {
+  "place": "Kolkata, India",
+  "day": "15 Jan 2022",
+  "is_today": false,
+  "level": "Typical",
+  "level_set_by_checks": [
+   "Rain (24 h)",
+   "Feels-like heat",
+   "Feels-like cold",
+   "Snowfall (24 h)",
+   "Wind gust",
+   "Recent rain (6-day total)"
+  ],
+  "deciding_check": "Recent rain (6-day total)",
+  "comparison_period": "1951–1980",
+  "recent_period": "1992–2022 (the 30 years before this date)",
+  "checks": [
+   {
+    "name": "Rain (24 h)",
+    "value": "0.2 mm",
+    "level": "Typical",
+    "wording": "Normal rain for here (0.2 mm)",
+    "how_often_in_recent_period": "about 186 times a year",
+    "how_often_in_comparison_period": "about 196 times a year",
+    "comparison": "1.1 times less common here than in 1951–1980",
+    "less_common_now": true,
+    "danger_line": "150 mm",
+    "danger_line_crossed": false,
+    "set_by": "rarity"
+   },
+   {
+    "name": "Feels-like heat",
+    "value": "24 °C",
+    "level": "Typical",
+    "wording": "Normal highs for here (feels like up to 24 °C)",
+    "how_often_in_recent_period": "about 350 times a year",
+    "how_often_in_comparison_period": "about 351 times a year",
+    "comparison": "about as common here as in 1951–1980",
+    "less_common_now": false,
+    "danger_line": "40 °C",
+    "danger_line_crossed": false,
+    "set_by": "rarity"
+   },
+   {
+    "name": "Feels-like cold",
+    "value": "14 °C",
+    "level": "Typical",
+    "wording": "Normal lows for here (feels like down to 14 °C)",
+    "how_often_in_recent_period": "about 42 times a year",
+    "how_often_in_comparison_period": "about 49 times a year",
+    "comparison": "1.2 times less common here than in 1951–1980",
+    "less_common_now": true,
+    "danger_line": "none for this check",
+    "danger_line_crossed": false,
+    "set_by": "rarity"
+   },
+   {
+    "name": "Snowfall (24 h)",
+    "value": "0.0 cm",
+    "level": "Typical",
+    "wording": "No snow forecast",
+    "how_often_in_recent_period": "about 365 times a year",
+    "how_often_in_comparison_period": "about 365 times a year",
+    "comparison": "about as common here as in 1951–1980",
+    "less_common_now": false,
+    "danger_line": "none for this check",
+    "danger_line_crossed": false,
+    "set_by": "rarity"
+   },
+   {
+    "name": "Wind gust",
+    "value": "24 km/h",
+    "level": "Typical",
+    "wording": "Normal wind for here (gusts up to 24 km/h)",
+    "how_often_in_recent_period": "about 242 times a year",
+    "how_often_in_comparison_period": "about 250 times a year",
+    "comparison": "about as common here as in 1951–1980",
+    "less_common_now": false,
+    "danger_line": "100 km/h",
+    "danger_line_crossed": false,
+    "set_by": "rarity"
+   },
+   {
+    "name": "Recent rain (6-day total)",
+    "value": "17 mm",
+    "level": "Typical",
+    "wording": "Normal rain for the last 6 days (17.0 mm)",
+    "how_often_in_recent_period": "about 29 times a year",
+    "how_often_in_comparison_period": "about 29 times a year",
+    "comparison": "about as common here as in 1951–1980",
+    "less_common_now": false,
+    "danger_line": "none for this check",
+    "danger_line_crossed": false,
+    "set_by": "rarity"
+   }
+  ],
+  "recent_rain": {
+   "rain_in_the_days_before": "16.8 mm",
+   "how_many_days_before": "5 days",
+   "total_including_the_day": "17 mm",
+   "based_on": "measured rain for the earlier days and the forecast for the day itself"
+  },
+  "action_line": null,
+  "official_warnings": "Check your official weather warnings — Groundtruth never replaces them.",
+  "scope_notes": [
+   "We check rain, heat, cold, snow, wind and recent rain. We don't yet check thunderstorms, hail, freezing rain or ice, wildfire, air quality, coastal flooding, or geological hazards. For those, follow official warnings.",
+   "Thunderstorms are not checked. Storms are a major cause of weather deaths — follow official storm warnings.",
+   "The history data is a ~25 km grid and misses very local storms.",
+   "Groundtruth covers weather-driven hazards only. For landslides, glacier collapse or earthquakes, check local civil protection and geological authorities."
+  ],
+  "data_notes": []
+ },
+ "reply": {
+  "headline": "Typical weather in Kolkata, India on 15 Jan 2022.",
+  "why": [
+   "The deciding check was recent rain: 17 mm fell over the 6-day total, and 16.8 mm of it came in the 5 days before.",
+   "Days with this much recent rain happen about 29 times a year here now, about as common here as in 1951–1980.",
+   "Normal wind for here (gusts up to 24 km/h), and normal highs for here (feels like up to 24 °C)."
+  ],
+  "what_it_means": "Nothing in the checked weather stands out for this place on this day. Check your official weather warnings, because Groundtruth never replaces them.",
+  "sms": "Groundtruth: Typical weather in Kolkata, India on 15 Jan 2022. Check your official weather warnings for anything we don't cover.",
+  "confidence_note": "The history is a grid of about 25 km and misses very local storms, and thunderstorms are not checked. The rain total uses measured rain for the earlier days and the forecast for the day itself. For landslides, glacier collapse or earthquakes, check local civil protection and geological authorities."
+ }
+}

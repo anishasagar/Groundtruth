@@ -1,0 +1,122 @@
+{
+ "model": "claude-sonnet-5-5",
+ "fingerprint": "27044a56569e2e476a7d56ab5392cd65f8430b5edcb49d257431f35bb9b9db2f",
+ "facts": {
+  "place": "Kolkata, India",
+  "day": "31 May 2022",
+  "is_today": false,
+  "level": "High",
+  "level_set_by_checks": [
+   "Feels-like heat"
+  ],
+  "deciding_check": "Feels-like heat",
+  "comparison_period": "1951–1980",
+  "recent_period": "1992–2022 (the 30 years before this date)",
+  "checks": [
+   {
+    "name": "Rain (24 h)",
+    "value": "8.2 mm",
+    "level": "Typical",
+    "wording": "Normal rain for here (8.2 mm)",
+    "how_often_in_recent_period": "about 67 times a year",
+    "how_often_in_comparison_period": "about 68 times a year",
+    "comparison": "about as common here as in 1951–1980",
+    "less_common_now": false,
+    "danger_line": "150 mm",
+    "danger_line_crossed": false,
+    "set_by": "rarity"
+   },
+   {
+    "name": "Feels-like heat",
+    "value": "41 °C",
+    "level": "High",
+    "wording": "about 48 times a year in the 30 years before this date; 1.4 times more common here than in 1951–1980; at or above the 40 °C danger line",
+    "how_often_in_recent_period": "about 48 times a year",
+    "how_often_in_comparison_period": "about 34 times a year",
+    "comparison": "1.4 times more common here than in 1951–1980",
+    "less_common_now": false,
+    "danger_line": "40 °C",
+    "danger_line_crossed": true,
+    "set_by": "danger line"
+   },
+   {
+    "name": "Feels-like cold",
+    "value": "34 °C",
+    "level": "Typical",
+    "wording": "Normal lows for here (feels like down to 34 °C)",
+    "how_often_in_recent_period": "about 340 times a year",
+    "how_often_in_comparison_period": "about 359 times a year",
+    "comparison": "1.1 times less common here than in 1951–1980",
+    "less_common_now": true,
+    "danger_line": "none for this check",
+    "danger_line_crossed": false,
+    "set_by": "rarity"
+   },
+   {
+    "name": "Snowfall (24 h)",
+    "value": "0.0 cm",
+    "level": "Typical",
+    "wording": "No snow forecast",
+    "how_often_in_recent_period": "about 365 times a year",
+    "how_often_in_comparison_period": "about 365 times a year",
+    "comparison": "about as common here as in 1951–1980",
+    "less_common_now": false,
+    "danger_line": "none for this check",
+    "danger_line_crossed": false,
+    "set_by": "rarity"
+   },
+   {
+    "name": "Wind gust",
+    "value": "28 km/h",
+    "level": "Typical",
+    "wording": "Normal wind for here (gusts up to 28 km/h)",
+    "how_often_in_recent_period": "about 177 times a year",
+    "how_often_in_comparison_period": "about 186 times a year",
+    "comparison": "about as common here as in 1951–1980",
+    "less_common_now": false,
+    "danger_line": "100 km/h",
+    "danger_line_crossed": false,
+    "set_by": "rarity"
+   },
+   {
+    "name": "Recent rain (6-day total)",
+    "value": "16 mm",
+    "level": "Typical",
+    "wording": "Normal rain for the last 6 days (16.5 mm)",
+    "how_often_in_recent_period": "about 29 times a year",
+    "how_often_in_comparison_period": "about 29 times a year",
+    "comparison": "about as common here as in 1951–1980",
+    "less_common_now": false,
+    "danger_line": "none for this check",
+    "danger_line_crossed": false,
+    "set_by": "rarity"
+   }
+  ],
+  "recent_rain": {
+   "rain_in_the_days_before": "8.3 mm",
+   "how_many_days_before": "5 days",
+   "total_including_the_day": "16 mm",
+   "based_on": "measured rain for the earlier days and the forecast for the day itself"
+  },
+  "action_line": "Avoid heavy exertion outdoors, drink water, and check on older or vulnerable people.",
+  "official_warnings": "Check your official weather warnings — Groundtruth never replaces them.",
+  "scope_notes": [
+   "We check rain, heat, cold, snow, wind and recent rain. We don't yet check thunderstorms, hail, freezing rain or ice, wildfire, air quality, coastal flooding, or geological hazards. For those, follow official warnings.",
+   "Thunderstorms are not checked. Storms are a major cause of weather deaths — follow official storm warnings.",
+   "The history data is a ~25 km grid and misses very local storms.",
+   "Groundtruth covers weather-driven hazards only. For landslides, glacier collapse or earthquakes, check local civil protection and geological authorities."
+  ],
+  "data_notes": []
+ },
+ "reply": {
+  "headline": "High risk from feels-like heat in Kolkata, India on 31 May 2022.",
+  "why": [
+   "Feels-like heat reached 41 °C, which is at or above the 40 °C danger line and is what set the level.",
+   "Days with feels-like heat like this happen about 48 times a year here in the 30 years before this date.",
+   "That is 1.4 times more common here than in 1951–1980, when it was about 34 times a year."
+  ],
+  "what_it_means": "Avoid heavy exertion outdoors, drink water, and check on older or vulnerable people. Check your official weather warnings, because Groundtruth never replaces them.",
+  "sms": "High risk, Kolkata, 31 May 2022: feels-like heat 41 C, above the 40 C danger line. Drink water, avoid exertion. Check official warnings.",
+  "confidence_note": "The history data is a grid of about 25 km and misses very local storms, and thunderstorms are not checked. For landslides, glacier collapse or earthquakes, check local civil protection and geological authorities."
+ }
+}
