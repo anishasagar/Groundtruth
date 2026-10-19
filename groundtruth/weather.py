@@ -1,9 +1,10 @@
 """Fetch weather numbers from Open-Meteo (no API key needed).
 
 Three things:
-- get_forecast_day: the forecast for one date (rain, max feels-like, max gust).
+- get_forecast_day: the forecast for one date (rain, snowfall, highest and lowest
+  feels-like temperature, max gust).
 - get_forecast_range: the same for a run of dates (used for the recent-rain total).
-- get_history: the same three values for every day in a date range, from the
+- get_history: the same values for every day in a date range, from the
   ERA5 reanalysis (~25 km grid). Downloaded history is saved in data/history/
   so each place is only downloaded once.
 
@@ -28,6 +29,8 @@ ARCHIVE_URL = "https://archive-api.open-meteo.com/v1/archive"
 VARIABLES = {
     "precipitation_sum": "rain_mm",
     "apparent_temperature_max": "feels_like_max_c",
+    "apparent_temperature_min": "feels_like_min_c",
+    "snowfall_sum": "snow_cm",
     "wind_gusts_10m_max": "gust_max_kmh",
 }
 
@@ -83,13 +86,13 @@ def _get(url, params, tries=4):
         return r.json()
 
 
-def _params(lat, lon, start, end):
+def _params(lat, lon, start, end, variables=VARIABLES):
     return {
         "latitude": lat,
         "longitude": lon,
         "start_date": start.isoformat(),
         "end_date": end.isoformat(),
-        "daily": ",".join(VARIABLES),
+        "daily": ",".join(variables),
         "timezone": "auto",  # days are local calendar days
     }
 
@@ -115,13 +118,19 @@ def _load_saved_forecast(lat, lon, start, end):
     if not path.exists():
         return None
     saved = json.loads(path.read_text())
+    if any(name not in (saved["raw"].get("daily") or {}) for name in VARIABLES):
+        return None  # saved before a variable was added: treat as not saved
     return {"source": saved["source"], "grid_point": saved["grid_point"], "data": _to_frame(saved["raw"])}
 
 
-def save_forecast_range(lat, lon, start, end, today=None):
-    """Download a forecast live and save it in data/forecasts/ for replays."""
+def save_forecast_range(lat, lon, start, end, today=None, hourly=()):
+    """Download a forecast live and save it in data/forecasts/ for replays.
+
+    `hourly`: extra hourly variables to keep in the file (e.g. weather_code, cape).
+    They are saved for later; nothing reads them yet.
+    """
     today = today or dt.date.today()
-    raw, source = _fetch_forecast_raw(lat, lon, start, end, today)
+    raw, source = _fetch_forecast_raw(lat, lon, start, end, today, hourly)
     FORECAST_DIR.mkdir(parents=True, exist_ok=True)
     path = _forecast_file(lat, lon, start, end)
     path.write_text(json.dumps({"source": source, "grid_point": _grid_point(raw), "raw": raw}, indent=1))
@@ -152,7 +161,7 @@ def get_forecast_range(lat, lon, start, end, today=None):
     return {"source": source, "grid_point": _grid_point(data), "data": _to_frame(data)}
 
 
-def _fetch_forecast_raw(lat, lon, start, end, today):
+def _fetch_forecast_raw(lat, lon, start, end, today, hourly=()):
     """The live Open-Meteo call behind get_forecast_range. Returns (raw json, source name)."""
     if end >= today:
         if (end - today).days > FORECAST_DAYS_AHEAD:
@@ -161,7 +170,10 @@ def _fetch_forecast_raw(lat, lon, start, end, today):
     else:
         url, source = HISTORICAL_FORECAST_URL, "Open-Meteo Historical Forecast API"
 
-    data = _get(url, _params(lat, lon, start, end))
+    params = _params(lat, lon, start, end)
+    if hourly:
+        params["hourly"] = ",".join(hourly)
+    data = _get(url, params)
     if _to_frame(data).empty:
         raise NotAvailable("No forecast data returned for those dates.")
     return data, source
@@ -183,11 +195,25 @@ def _history_files(lat, lon):
     return HISTORY_DIR / f"{name}.csv", HISTORY_DIR / f"{name}.json"
 
 
-def _fetch_history(lat, lon, start, end):
-    params = _params(lat, lon, start, end)
+def _fetch_history(lat, lon, start, end, variables=VARIABLES):
+    params = _params(lat, lon, start, end, variables)
     params["models"] = "era5"  # the whole record on the same ~25 km grid
     data = _get(ARCHIVE_URL, params)
-    return _to_frame(data), _grid_point(data)
+    df = _to_frame(data)
+    return df[["date"] + [VARIABLES[v] for v in variables]], _grid_point(data)
+
+
+def _add_missing_columns(saved, lat, lon):
+    """Download only the variables a saved history file doesn't have yet, and merge them by date.
+
+    The values already saved are kept exactly as they are.
+    """
+    missing = [api for api, short in VARIABLES.items() if short not in saved.columns]
+    if not missing:
+        return saved, False
+    start, end = saved["date"].min().date(), saved["date"].max().date()
+    fetched, _ = _fetch_history(lat, lon, start, end, missing)
+    return saved.merge(fetched, on="date", how="left"), True
 
 
 def get_history(lat, lon, start, end):
@@ -205,6 +231,9 @@ def get_history(lat, lon, start, end):
     if csv_path.exists() and meta_path.exists():
         saved = pd.read_csv(csv_path, parse_dates=["date"])
         grid = json.loads(meta_path.read_text())["grid_point"]
+        saved, added = _add_missing_columns(saved, lat, lon)  # refused in replay (offline) mode
+    else:
+        added = False
 
     if saved is None or saved.empty or saved["date"].min().date() > start:
         fetched, grid = _fetch_history(lat, lon, start, end)
@@ -216,7 +245,7 @@ def get_history(lat, lon, start, end):
     else:
         fetched = None
 
-    if fetched is not None:
+    if fetched is not None or added:
         # Don't save trailing days ERA5 hasn't filled in yet; they get
         # downloaded again next time.
         has_value = saved[list(VARIABLES.values())].notna().any(axis=1)

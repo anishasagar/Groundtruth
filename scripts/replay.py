@@ -1,6 +1,9 @@
 """Run every test case in tests/cases.csv and write the results to TESTLOG.md.
 
 Run from the project folder:  python scripts/replay.py
+
+Never calls Open-Meteo: it only uses the saved data in data/history/ and
+data/forecasts/. To download that data, run scripts/save_replay_data.py first.
 """
 
 import datetime as dt
@@ -14,11 +17,13 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from groundtruth import risk  # noqa: E402
+from groundtruth import weather  # noqa: E402
 from groundtruth.weather import LimitReached, NotAvailable  # noqa: E402
 
 CASES = ROOT / "tests" / "cases.csv"
 TESTLOG = ROOT / "TESTLOG.md"
 ORDER = risk.LEVELS
+COLUMNS = [name for name, _ in risk.CHECKS.values()] + [risk.RECENT_RAIN_NAME]  # the engine's check order
 
 
 def _fmt(value, unit):
@@ -82,43 +87,51 @@ def _detail(case, result):
 
 
 def main():
-    cases = pd.read_csv(CASES, dtype=str)
+    cases = pd.read_csv(CASES, dtype=str, keep_default_na=False)
     summary, details = [], []
     for _, case in cases.iterrows():
+        if not case["date"]:  # a test day not picked yet (see scripts/save_replay_data.py)
+            print(f"{case['name']}: pending, no date yet")
+            summary.append(f"| {case['name']} | — | pending | — |" + " — |" * len(COLUMNS)
+                           + f" {case['expect']} | — |")
+            continue
         date = dt.date.fromisoformat(case["date"])
         print(f"{case['name']} ({case['date']}) ...", flush=True)
         try:
-            result = risk.assess(float(case["latitude"]), float(case["longitude"]), date)
+            with weather.offline():
+                result = risk.assess(float(case["latitude"]), float(case["longitude"]), date)
         except (LimitReached, NotAvailable, requests.RequestException) as e:
             print(f"  could not run: {e}")
-            summary.append(f"| {case['name']} | {case['date']} | not run | — | — | — | — | — | {case['expect']} | — |")
+            summary.append(f"| {case['name']} | {case['date']} | not run | — |"
+                           + " — |" * len(COLUMNS) + f" {case['expect']} | — |")
             details += [f"### {case['name']} — {case['date']}", "", f"Not run: {e}", ""]
             continue
         print(f"  {result['level']} (decided by: {', '.join(result['decided_by']) or '—'})")
-        rain, heat, gust, recent = result["checks"]
+        cells = " | ".join(_cell(c) for c in result["checks"])
         summary.append(
             f"| {case['name']} | {case['date']} | **{result['level']}** | {', '.join(result['decided_by']) or '—'} "
-            f"| {_cell(rain)} | {_cell(heat)} | {_cell(gust)} | {_cell(recent)} "
+            f"| {cells} "
             f"| {case['expect']} | {_match(result['level'], case['lowest_expected'], case['highest_expected'])} |"
         )
         details += _detail(case, result)
 
     not_run = sum("| not run |" in row for row in summary)
+    pending = sum("| pending |" in row for row in summary)
     out = [
         "# Test log",
         "",
         f"Last run: {dt.date.today().isoformat()} with `python scripts/replay.py`.",
         *([f"**{not_run} of {len(summary)} cases could not run — see Details. Run the replay again later.**"]
           if not_run else []),
+        *([f"{pending} case(s) pending: their test day hasn't been picked yet."] if pending else []),
         f"Settings: comparison period {risk.baseline_label()}; the level uses {risk.recent_phrase()}; "
         f"recent rain = {risk.RECENT_RAIN_DAYS_BEFORE} days before + the date.",
         "",
         "Each check cell shows the wording the app shows, then that check's level. "
         "Typical checks show plain wording; the full numbers for every check are in Details.",
         "",
-        "| Case | Date | Level | Decided by | Rain (24 h) | Feels-like | Gust | Recent rain "
-        f"({risk.RECENT_RAIN_DAYS_BEFORE + 1}-day) | Expected | Matches? |",
-        "|---|---|---|---|---|---|---|---|---|---|",
+        "| Case | Date | Level | Decided by | " + " | ".join(COLUMNS) + " | Expected | Matches? |",
+        "|---|---|---|---|" + "---|" * len(COLUMNS) + "---|---|",
         *summary,
         "",
         "## Details",

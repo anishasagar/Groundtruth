@@ -8,11 +8,13 @@ A web app that tells a person, in one plain sentence, how unusual today's weathe
 2. Over-warn, never under-warn. The final level is the worse of the relative check (how rare for this place) and the absolute danger lines. When unsure, choose the higher level.
    Absolute danger lines: rain >= 150 mm in 24 h, feels-like >= 40 °C, gust >= 100 km/h. Each line crossed = at least High.
    The recent-rain total (the 5 days before plus the day itself; for future days, the forecast) gets the same rarity check. Recent wet or dry spells can only raise the level, never lower it.
+   Cold and snow get the same rarity check. Snow: daily snowfall in cm (how often a day with at least this much snow happened). Cold: the lowest feels-like temperature of the day, checked in the cold direction (how often a day at least this cold happened). No fixed danger lines for cold or snow yet; fixed cold lines need research. Like every check, they can only raise the level.
 3. Never use the words "safe", "no risk" or "all clear".
 4. If data is missing or thin, say "Not enough data — check official sources". Never fill gaps with guesses.
 5. Every assessment points to official warnings. Groundtruth never replaces them.
 6. Say what the data can't see: the history data is a ~25 km grid and misses very local storms. Groundtruth covers weather-driven hazards only. For geological hazards (landslides, glacier collapse, earthquakes), point people to local civil protection and geological authorities.
 7. Never claim climate change caused an event or made it "X times more likely". That is attribution, which needs climate models. Say only what the data shows: "days like this are X times more common here than in 1951–1980".
+8. 'Normal' may only describe what a check measures, compared with the recent 30 years. It never means safe.
 
 ## How we build
 - Python + Streamlit. Keep it small: streamlit, pandas, requests, anthropic. No other frameworks.
@@ -25,6 +27,8 @@ A web app that tells a person, in one plain sentence, how unusual today's weathe
 - I'm not a programmer: explain changes in plain language and keep each change small.
 
 ## Phase 2 (don't build yet)
+- Top priority — Storm heads-up: flag thunderstorm and hail conditions from the forecast (weather codes, CAPE), as an absolute flag because history can't measure storm rarity. Test on the Bayesian and Valencia replays and on ordinary summer storm days. It must use both weather codes and CAPE: the Bayesian forecast showed high CAPE with no thunderstorm codes.
+- Ice-risk heads-up: an absolute flag when precipitation falls at or below freezing (Paris 2026-01-07 as the test case).
 - Rain and wind: replace the fixed danger lines with location-adaptive ones. Trigger if today's value exceeds the 99th percentile of the 75-year ERA5 record for that location.
 - Heat: trigger if today's feels-like value exceeds the location's 99th percentile OR is 40 °C or more. Keep this fixed floor: the human body's heat limit doesn't adapt to local climate, and the percentile itself rises as the climate warms.
 - Before building this, print Kolkata's 99th-percentile feels-like value and show it to me.

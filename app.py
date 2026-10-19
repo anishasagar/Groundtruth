@@ -22,7 +22,7 @@ LIVE_DOWN = "Live data is temporarily unavailable. Try a replay."
 REPLAY_MISSING = "Replay data for this event isn't saved yet. Please try again later."
 
 # Test cases that are not offered as replays.
-HIDDEN_REPLAY_PREFIX = "Ordinary rain"
+HIDDEN_REPLAY_PREFIX = "Ordinary"
 # Replays that get the geological-hazards warning right under the level.
 GEOLOGICAL_REPLAYS = {"Nepal-Tibet glacier-collapse flood"}
 
@@ -34,6 +34,7 @@ REPLAY_PLACES = {
     "Nepal-Tibet glacier-collapse flood": "Nepal–Tibet border area",
     "Calm control 1, Paiporta": "Paiporta, Valencia, Spain",
     "Calm control 2, Kolkata": "Kolkata, India",
+    "Paris snow and cold": "Paris, France",
 }
 
 GEOLOGICAL_NOTE = (
@@ -54,8 +55,8 @@ LEVEL_STYLE = {
 
 @st.cache_data
 def load_replays():
-    cases = pd.read_csv(CASES_FILE, dtype=str)
-    cases = cases[~cases["name"].str.startswith(HIDDEN_REPLAY_PREFIX)]
+    cases = pd.read_csv(CASES_FILE, dtype=str, keep_default_na=False)
+    cases = cases[~cases["name"].str.startswith(HIDDEN_REPLAY_PREFIX) & (cases["date"] != "")]
     return cases.to_dict("records")
 
 
@@ -123,6 +124,8 @@ def how_sure_box(result):
     rain = result["checks"][-1]
     with st.container(border=True):
         st.subheader("How sure are we")
+        st.warning(message.STORM_NOTE, icon="⚡")
+        st.markdown(message.SCOPE_LINE)
         st.markdown(
             "- Official weather warnings come first. Groundtruth never replaces them.\n"
             "- The history data is a grid of about 25 km, so it misses very local storms.\n"
@@ -140,6 +143,8 @@ def how_sure_box(result):
                 f"({result['recent_phrase']})"
             )
             st.markdown(f"- Rain in the {risk.RECENT_RAIN_DAYS_BEFORE} days before: from {rain['source']}")
+            st.markdown("- There are no fixed danger lines for cold or snow yet; fixed cold lines need research. "
+                        "Those two checks use only how rare the day is here.")
             engine_notes = result["notes"][: len(result["notes"]) - len(risk.ALWAYS_NOTES)]
             engine_notes += [f"{c['name']}: {n}" for c in result["checks"] for n in c["notes"]]
             for n in engine_notes:
@@ -168,21 +173,21 @@ def show_assessment(result, place, replay_name=None):
     st.markdown(f"**{place} — {message.day_text(result['date'])}**")
     st.markdown(f"### {message.template_sentence(result)}")
     st.caption("Template mode: this sentence is built from the numbers, not written by an AI.")
+    st.warning(message.STORM_NOTE, icon="⚡")
 
     st.subheader("Why")
     st.markdown("\n".join(f"- {b}" for b in message.why_bullets(result)))
 
     rarity = message.rarity_rows(result)
     if rarity is not None:
-        rows, check_name = rarity
+        rows, check_name, like_this = rarity
         st.subheader("How often a day like this happens")
         if all(r["per_year"] == 0 for r in rows):
             st.markdown(f"**{check_name}:** a day like this was not seen in {result['baseline_label']} "
                         f"or in {result['recent_label']}.")
         else:
             rarity_lines(rows, LEVEL_STYLE[result["level"]][0])
-            st.caption(f"{check_name}: days at or beyond this value. The longer line is the period "
-                       "with more of them.")
+            st.caption(f"{check_name}: {like_this}. The longer line is the period with more of them.")
 
     st.subheader("Text message version")
     sms = message.sms_text(result, place)

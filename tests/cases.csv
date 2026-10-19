@@ -8,3 +8,5 @@ Nepal-Tibet glacier-collapse flood,28.16,85.34,2026-08-26,Probably Typical or El
 "Calm control 2, Kolkata",22.57,88.36,2022-01-15,Typical,Typical,Typical
 "Ordinary rain 1, Paiporta (winter)",39.43,-0.42,2018-02-27,"Ordinary rainy day (about 16 mm; 22 mm or more happens about 3 times a year here): Typical or Elevated, not Extreme",Typical,Elevated
 "Ordinary rain 2, Paiporta (autumn)",39.43,-0.42,2024-09-18,"Ordinary rainy day (about 16 mm; 22 mm or more happens about 3 times a year here): Typical or Elevated, not Extreme",Typical,Elevated
+Paris snow and cold,48.86,2.35,2026-01-07,"Typical. Honest limit: the danger came from snow falling on freezing, unprepared roads. Ice risk and local preparedness aren't checked yet.",Typical,Typical
+"Ordinary snow, Montreal",45.50,-73.57,,Pending: day not picked yet (scripts/save_replay_data.py picks it). Expect Typical: snow is routine here.,Typical,Typical
