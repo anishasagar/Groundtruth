@@ -55,8 +55,8 @@ LEVEL_STYLE = {
 
 @st.cache_data
 def load_replays():
-    cases = pd.read_csv(CASES_FILE, dtype=str)
-    cases = cases[~cases["name"].str.startswith(HIDDEN_REPLAY_PREFIX)]
+    cases = pd.read_csv(CASES_FILE, dtype=str, keep_default_na=False)
+    cases = cases[~cases["name"].str.startswith(HIDDEN_REPLAY_PREFIX) & (cases["date"] != "")]
     return cases.to_dict("records")
 
 

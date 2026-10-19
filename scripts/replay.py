@@ -87,9 +87,14 @@ def _detail(case, result):
 
 
 def main():
-    cases = pd.read_csv(CASES, dtype=str)
+    cases = pd.read_csv(CASES, dtype=str, keep_default_na=False)
     summary, details = [], []
     for _, case in cases.iterrows():
+        if not case["date"]:  # a test day not picked yet (see scripts/save_replay_data.py)
+            print(f"{case['name']}: pending, no date yet")
+            summary.append(f"| {case['name']} | — | pending | — |" + " — |" * len(COLUMNS)
+                           + f" {case['expect']} | — |")
+            continue
         date = dt.date.fromisoformat(case["date"])
         print(f"{case['name']} ({case['date']}) ...", flush=True)
         try:
@@ -111,12 +116,14 @@ def main():
         details += _detail(case, result)
 
     not_run = sum("| not run |" in row for row in summary)
+    pending = sum("| pending |" in row for row in summary)
     out = [
         "# Test log",
         "",
         f"Last run: {dt.date.today().isoformat()} with `python scripts/replay.py`.",
         *([f"**{not_run} of {len(summary)} cases could not run — see Details. Run the replay again later.**"]
           if not_run else []),
+        *([f"{pending} case(s) pending: their test day hasn't been picked yet."] if pending else []),
         f"Settings: comparison period {risk.baseline_label()}; the level uses {risk.recent_phrase()}; "
         f"recent rain = {risk.RECENT_RAIN_DAYS_BEFORE} days before + the date.",
         "",

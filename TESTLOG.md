@@ -1,6 +1,7 @@
 # Test log
 
 Last run: 2026-10-19 with `python scripts/replay.py`.
+1 case(s) pending: their test day hasn't been picked yet.
 Settings: comparison period 1951–1980; the level uses the 30 years before this date; recent rain = 5 days before + the date.
 
 Each check cell shows the wording the app shows, then that check's level. Typical checks show plain wording; the full numbers for every check are in Details.
@@ -16,7 +17,8 @@ Each check cell shows the wording the app shows, then that check's level. Typica
 | Calm control 2, Kolkata | 2022-01-15 | **Typical** | Rain (24 h), Feels-like heat, Feels-like cold, Snowfall (24 h), Wind gust, Recent rain (6-day total) | Normal rain for here (0.2 mm) → Typical | Normal highs for here (feels like up to 24 °C) → Typical | Normal lows for here (feels like down to 14 °C) → Typical | No snow forecast → Typical | Normal wind for here (gusts up to 24 km/h) → Typical | Normal rain for the last 6 days (17.0 mm) → Typical | Typical | yes |
 | Ordinary rain 1, Paiporta (winter) | 2018-02-27 | **Typical** | Rain (24 h), Feels-like heat, Feels-like cold, Snowfall (24 h), Wind gust, Recent rain (6-day total) | Normal rain for here (15.4 mm) → Typical | Normal highs for here (feels like up to 7 °C) → Typical | Normal lows for here (feels like down to 2 °C) → Typical | No snow forecast → Typical | Normal wind for here (gusts up to 58 km/h) → Typical | Normal rain for the last 6 days (15.7 mm) → Typical | Ordinary rainy day (about 16 mm; 22 mm or more happens about 3 times a year here): Typical or Elevated, not Extreme | yes |
 | Ordinary rain 2, Paiporta (autumn) | 2024-09-18 | **Typical** | Rain (24 h), Feels-like heat, Feels-like cold, Snowfall (24 h), Wind gust, Recent rain (6-day total) | Normal rain for here (15.6 mm) → Typical | Normal highs for here (feels like up to 24 °C) → Typical | Normal lows for here (feels like down to 20 °C) → Typical | No snow forecast → Typical | Normal wind for here (gusts up to 24 km/h) → Typical | Normal rain for the last 6 days (15.9 mm) → Typical | Ordinary rainy day (about 16 mm; 22 mm or more happens about 3 times a year here): Typical or Elevated, not Extreme | yes |
-| Paris snow and cold | 2026-01-07 | **Typical** | Rain (24 h), Feels-like heat, Feels-like cold, Snowfall (24 h), Wind gust, Recent rain (6-day total) | Normal rain for here (5.1 mm) → Typical | Normal highs for here (feels like up to -1 °C) → Typical | Normal lows for here (feels like down to -6 °C) → Typical | Normal snowfall for here (3.0 cm) → Typical | Normal wind for here (gusts up to 36 km/h) → Typical | Normal rain for the last 6 days (10.6 mm) → Typical | At least Elevated from snow or cold | **no — lower than expected** |
+| Paris snow and cold | 2026-01-07 | **Typical** | Rain (24 h), Feels-like heat, Feels-like cold, Snowfall (24 h), Wind gust, Recent rain (6-day total) | Normal rain for here (5.1 mm) → Typical | Normal highs for here (feels like up to -1 °C) → Typical | Normal lows for here (feels like down to -6 °C) → Typical | Normal snowfall for here (3.0 cm) → Typical | Normal wind for here (gusts up to 36 km/h) → Typical | Normal rain for the last 6 days (10.6 mm) → Typical | Typical. Honest limit: the danger came from snow falling on freezing, unprepared roads. Ice risk and local preparedness aren't checked yet. | yes |
+| Ordinary snow, Montreal | — | pending | — | — | — | — | — | — | — | Pending: day not picked yet (scripts/save_replay_data.py picks it). Expect Typical: snow is routine here. | — |
 
 ## Details
 

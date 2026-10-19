@@ -27,7 +27,8 @@ A web app that tells a person, in one plain sentence, how unusual today's weathe
 - I'm not a programmer: explain changes in plain language and keep each change small.
 
 ## Phase 2 (don't build yet)
-- Top priority — Storm heads-up: flag thunderstorm and hail conditions from the forecast (weather codes, CAPE), as an absolute flag because history can't measure storm rarity. Test on the Bayesian and Valencia replays and on ordinary summer storm days.
+- Top priority — Storm heads-up: flag thunderstorm and hail conditions from the forecast (weather codes, CAPE), as an absolute flag because history can't measure storm rarity. Test on the Bayesian and Valencia replays and on ordinary summer storm days. It must use both weather codes and CAPE: the Bayesian forecast showed high CAPE with no thunderstorm codes.
+- Ice-risk heads-up: an absolute flag when precipitation falls at or below freezing (Paris 2026-01-07 as the test case).
 - Rain and wind: replace the fixed danger lines with location-adaptive ones. Trigger if today's value exceeds the 99th percentile of the 75-year ERA5 record for that location.
 - Heat: trigger if today's feels-like value exceeds the location's 99th percentile OR is 40 °C or more. Keep this fixed floor: the human body's heat limit doesn't adapt to local climate, and the percentile itself rises as the climate warms.
 - Before building this, print Kolkata's 99th-percentile feels-like value and show it to me.

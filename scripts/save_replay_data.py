@@ -62,7 +62,8 @@ def save_history(lat, lon, dates):
 
 def pick_montreal_day(cases):
     """An ordinary snowy day in Montreal (2017 or later) where that much snow happens >= 3 times a year."""
-    if (cases["name"] == MONTREAL_NAME).any():
+    picked = cases[(cases["name"] == MONTREAL_NAME) & (cases["date"] != "")]
+    if len(picked):
         print("  Montreal day already chosen")
         return cases
     lat, lon = MONTREAL
@@ -84,7 +85,7 @@ def pick_montreal_day(cases):
             candidates.append((row["snow_cm"], date, snow_rate, cold_rate))
     candidates.sort(reverse=True)  # the snowiest day that is still ordinary for Montreal
 
-    for era5_snow, date, era5_rate, cold_rate in candidates[:5]:
+    for era5_snow, date, era5_rate, cold_rate in candidates[:10]:
         save_forecast("Montreal candidate", lat, lon, date)
         fc = weather.get_forecast_day(lat, lon, date)
         if fc["snow_cm"] is None:
@@ -92,7 +93,8 @@ def pick_montreal_day(cases):
         fc_rate = per_year(hist["snow_cm"], fc["snow_cm"], date)
         print(f"  candidate {date}: ERA5 snow {era5_snow:.1f} cm ({era5_rate:.1f}/yr), forecast snow "
               f"{fc['snow_cm']:.1f} cm ({fc_rate:.1f}/yr), cold this low {cold_rate:.1f}/yr")
-        if fc_rate < MONTREAL_MIN_PER_YEAR:
+        # The engine judges the forecast, so the forecast itself must be a clearly snowy, still-routine day.
+        if fc["snow_cm"] < MONTREAL_MIN_CM or fc_rate < MONTREAL_MIN_PER_YEAR:
             weather._forecast_file(lat, lon, date, date).unlink()  # not picked: don't keep its file
         else:
             expect = (f"Ordinary snowy day (forecast {fc['snow_cm']:.1f} cm; that much or more happens about "
@@ -100,7 +102,8 @@ def pick_montreal_day(cases):
             row = {"name": MONTREAL_NAME, "latitude": f"{lat:.2f}", "longitude": f"{lon:.2f}",
                    "date": date.isoformat(), "expect": expect, "lowest_expected": "Typical",
                    "highest_expected": "Typical"}
-            cases = pd.concat([cases, pd.DataFrame([row])], ignore_index=True)
+            cases = pd.concat([cases[cases["name"] != MONTREAL_NAME], pd.DataFrame([row])],
+                              ignore_index=True)  # replaces the pending row
             cases.to_csv(CASES, index=False)
             print(f"  picked Montreal {date}")
             return cases
@@ -111,7 +114,7 @@ def pick_montreal_day(cases):
 def storm_report(cases):
     """Thunderstorm codes and highest CAPE in each saved forecast (report only; the app doesn't use them)."""
     print("\nStorm signals in the saved forecasts (report only):")
-    for _, case in cases.iterrows():
+    for _, case in cases[cases["date"] != ""].iterrows():
         date = dt.date.fromisoformat(case["date"])
         path = weather._forecast_file(float(case["latitude"]), float(case["longitude"]), date, date)
         if not path.exists():
@@ -127,13 +130,14 @@ def storm_report(cases):
 
 
 def main():
-    cases = pd.read_csv(CASES, dtype=str)
+    cases = pd.read_csv(CASES, dtype=str, keep_default_na=False)
+    ready = cases[cases["date"] != ""]  # rows without a date are picked in step 4
     try:
         print("1. Forecasts")
-        for _, c in cases.iterrows():
+        for _, c in ready.iterrows():
             save_forecast(c["name"], float(c["latitude"]), float(c["longitude"]), dt.date.fromisoformat(c["date"]))
         print("2-3. History")
-        places = cases.groupby(["latitude", "longitude"])["date"].apply(list)
+        places = ready.groupby(["latitude", "longitude"])["date"].apply(list)
         for (lat, lon), dates in places.items():
             save_history(float(lat), float(lon), [dt.date.fromisoformat(d) for d in dates])
         print("4. Montreal")

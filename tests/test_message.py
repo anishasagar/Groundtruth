@@ -193,10 +193,14 @@ def made_up_cases():
 
 
 def main():
-    cases = pd.read_csv(ROOT / "tests" / "cases.csv", dtype=str)
+    cases = pd.read_csv(ROOT / "tests" / "cases.csv", dtype=str, keep_default_na=False)
     skipped = []
     with weather.offline():
         for _, c in cases.iterrows():
+            if not c["date"]:
+                skipped.append(c["name"])
+                print("skipped (test day not picked yet):", c["name"])
+                continue
             try:
                 result = risk.assess(float(c["latitude"]), float(c["longitude"]), dt.date.fromisoformat(c["date"]))
             except weather.NotAvailable:
