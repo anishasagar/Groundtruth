@@ -1,6 +1,6 @@
 {
  "model": "claude-sonnet-5-5",
- "fingerprint": "e4beb65d757843c4c1eb517cf4199fc1c225293c31a0d2886e0c7f5fce1979be",
+ "fingerprint": "5c323686d28813aec3d4f38273f1d0b7106b54cabacf845d7366814541e86cc6",
  "facts": {
   "place": "Nepal–Tibet border area",
   "day": "26 Aug 2026",
@@ -114,15 +114,15 @@
   "data_notes": []
  },
  "reply": {
-  "headline": "Typical weather for the Nepal–Tibet border area on 26 Aug 2026, with recent rain the deciding check.",
+  "headline": "Typical rain, temperature, snow and wind for Nepal–Tibet border area on 26 Aug 2026.",
   "why": [
-   "The deciding check was recent rain: 66 mm over the last 6 days, which is normal rain for the last 6 days (65.6 mm).",
-   "Totals like this happen about 18 times a year here now, about as common here as in 1951–1980.",
-   "The total combines 59.5 mm of measured rain over the 5 days before with the forecast for the day itself.",
-   "Wind gusts up to 31 km/h are normal wind for here, and no snow is forecast."
+   "Rain over the last 6 days set the level, with a total of 65.6 mm, and days like this happen about 18 times a year here now.",
+   "That is about as common here as in 1951–1980, when it happened about 19 times a year.",
+   "Rain for the day itself is 6.1 mm, which is normal rain for here, and gusts are up to 31 km/h, which is normal wind for here.",
+   "Feels-like highs reach 30 °C, which is normal highs for here, and no snow is forecast."
   ],
-  "what_it_means": "Nothing in the checks points to unusual weather for this place on this day. Check your official weather warnings, since Groundtruth never replaces them.",
-  "sms": "Typical weather, Nepal-Tibet border area, 26 Aug 2026. 66 mm rain in 6 days. Check your official weather warnings.",
-  "confidence_note": "The history is a grid of about 25 km and misses very local storms, and thunderstorms are not checked. The rain total assumes the forecast rain for the day falls. For landslides, glacier collapse or earthquakes, check local civil protection and geological authorities."
+  "what_it_means": "Nothing in the checks stands out for this place and date. Check your official weather warnings before you decide, because Groundtruth never replaces them.",
+  "sms": "Groundtruth: Typical rain, heat, cold, snow and wind for Nepal-Tibet border area on 26 Aug 2026. Check your official weather warnings.",
+  "confidence_note": "The history is a grid of about 25 km and misses very local storms, and thunderstorms are not checked. The rain total for the day itself relies on the forecast. For landslides, glacier collapse or earthquakes, check local civil protection and geological authorities."
  }
 }

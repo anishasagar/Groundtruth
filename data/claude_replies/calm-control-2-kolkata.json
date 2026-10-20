@@ -1,6 +1,6 @@
 {
  "model": "claude-sonnet-5-5",
- "fingerprint": "d17616eab4f5628c1148f4565a8c8eaf81fdee0a6cc33fcc6104954d9697fb29",
+ "fingerprint": "df46bdd1f4486b18c6d7b6dc30cd078fb9ec68df91f7597d212e592947a8197f",
  "facts": {
   "place": "Kolkata, India",
   "day": "15 Jan 2022",
@@ -114,14 +114,14 @@
   "data_notes": []
  },
  "reply": {
-  "headline": "Typical weather in Kolkata, India on 15 Jan 2022.",
+  "headline": "Typical rain, temperature, snow and wind for Kolkata, India on 15 Jan 2022.",
   "why": [
-   "The deciding check was recent rain: 17 mm fell over the 6-day total, and 16.8 mm of it came in the 5 days before.",
-   "Days with this much recent rain happen about 29 times a year here now, about as common here as in 1951–1980.",
-   "Normal wind for here (gusts up to 24 km/h), and normal highs for here (feels like up to 24 °C)."
+   "Normal rain for the last 6 days (17.0 mm) was the check that set the level.",
+   "Days with this much rain over 6 days happen about 29 times a year here now, about as often as in 1951–1980.",
+   "Normal wind for here (gusts up to 24 km/h) and normal highs for here (feels like up to 24 °C) matched the pattern, and no snow was forecast."
   ],
-  "what_it_means": "Nothing in the checked weather stands out for this place on this day. Check your official weather warnings, because Groundtruth never replaces them.",
-  "sms": "Groundtruth: Typical weather in Kolkata, India on 15 Jan 2022. Check your official weather warnings for anything we don't cover.",
-  "confidence_note": "The history is a grid of about 25 km and misses very local storms, and thunderstorms are not checked. The rain total uses measured rain for the earlier days and the forecast for the day itself. For landslides, glacier collapse or earthquakes, check local civil protection and geological authorities."
+  "what_it_means": "Nothing in the checked weather stands out for Kolkata on this day. Check your official weather warnings, since Groundtruth never replaces them.",
+  "sms": "Groundtruth: Typical rain, temperature, snow and wind for Kolkata, India on 15 Jan 2022. Check your official weather warnings.",
+  "confidence_note": "The history data is a grid of about 25 km and misses very local storms, and thunderstorms, hail and air quality are not checked. Landslides, glacier collapse and earthquakes need local civil protection and geological authorities."
  }
 }

@@ -1,6 +1,6 @@
 {
  "model": "claude-sonnet-5-5",
- "fingerprint": "b636221c6d07d34458aa619b9367de75e714d0b55c8bcbb6d698a96836806bfa",
+ "fingerprint": "6113997144c3d6ec36f0767235336adda8b525897715d28d2a8e5ba9914527d4",
  "facts": {
   "place": "Paiporta, Valencia, Spain",
   "day": "29 Oct 2024",
@@ -112,13 +112,12 @@
  "reply": {
   "headline": "Extreme risk of heavy rain in Paiporta, Valencia, Spain on 29 Oct 2024.",
   "why": [
-   "Rain over 24 h reached 202 mm, which is at or above the 150 mm danger line.",
-   "Rain like this was not seen in 1951–1980 or in the 30 years before this date.",
-   "The 6-day rain total of 257 mm also was not seen in 1951–1980 or in those 30 years, and 54.9 mm of it fell in the 5 days before.",
-   "Normal wind for here (gusts up to 61 km/h), so rain is the main concern."
+   "Rain over 24 h set the level: 202 mm, at or above the 150 mm danger line.",
+   "A day with this much rain was not seen in 1951–1980 or in the 30 years before this date.",
+   "Rain over the last 6 days also set the level: 257 mm in total, which includes 54.9 mm over the 5 days before and the forecast for the day itself."
   ],
   "what_it_means": "Avoid underpasses, low roads and riverbanks. Check your official weather warnings, because Groundtruth never replaces them.",
-  "sms": "Extreme risk of heavy rain in Paiporta on 29 Oct 2024. Avoid underpasses, low roads, riverbanks. Check official warnings.",
-  "confidence_note": "The history is a grid of about 25 km and misses very local storms, and thunderstorms are not checked. The 6-day total uses measured rain for earlier days and the forecast for the day itself. For landslides, glacier collapse or earthquakes, check local civil protection and geological authorities."
+  "sms": "Groundtruth: Extreme rain risk in Paiporta on 29 Oct 2024. 202 mm in 24 h. Avoid underpasses, low roads, riverbanks. Check official warnings.",
+  "confidence_note": "The history is a grid of about 25 km and misses very local storms, and thunderstorms are not checked. For landslides, glacier collapse or earthquakes, check local civil protection and geological authorities."
  }
 }

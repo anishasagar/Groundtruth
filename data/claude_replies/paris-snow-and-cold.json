@@ -1,6 +1,6 @@
 {
  "model": "claude-sonnet-5-5",
- "fingerprint": "1d8882f05cdc06bd1c77d7902e679138db0a5311f8657eb39d30176f7b98b937",
+ "fingerprint": "d6394e478b9108fb850d38fbc07cc6f03469ba0b9387b152b0f2c68ff5b0f5f2",
  "facts": {
   "place": "Paris, France",
   "day": "7 Jan 2026",
@@ -114,15 +114,15 @@
   "data_notes": []
  },
  "reply": {
-  "headline": "Typical weather in Paris, France on 7 Jan 2026.",
+  "headline": "Typical rain, temperature, snow and wind for Paris, France on 7 Jan 2026.",
   "why": [
-   "Snowfall set the level: Normal snowfall for here (3.0 cm).",
-   "Snowfall like this happens about 1.1 times a year here now, against about 1.3 times a year in 1951–1980, which does not make the day any less serious, because the level is based on the recent 30 years.",
-   "Normal wind for here (gusts up to 36 km/h), and normal rain for here (5.1 mm).",
-   "Feels-like cold reached -6.5 °C, and normal lows for here (feels like down to -6 °C) were recorded."
+   "Snowfall set the level: Normal snowfall for here (3.0 cm), a amount that happens about 1.1 times a year now.",
+   "Normal wind for here (gusts up to 36 km/h), and days with gusts like this happen about 172 times a year.",
+   "Normal rain for the last 6 days (10.6 mm), which is about as common here as in 1951–1980.",
+   "Cold like this happens about 12 times a year now versus about 19 times a year in 1951–1980, which does not make the day any less serious, because the level is based on the recent 30 years."
   ],
-  "what_it_means": "Nothing in the checks stands out for this place and date. Check your official weather warnings before you decide, as they cover things Groundtruth does not.",
-  "sms": "Groundtruth: Typical weather in Paris, France on 7 Jan 2026. Check your official weather warnings for anything the data cannot see.",
-  "confidence_note": "The history data is a ~25 km grid and misses very local storms, and thunderstorms, hail, ice and air quality are not checked. For landslides, glacier collapse or earthquakes, check local civil protection and geological authorities."
+  "what_it_means": "Nothing in the data stands out for this place on this day. Check your official weather warnings, because Groundtruth never replaces them.",
+  "sms": "Groundtruth: Typical rain, temperature, snow and wind for Paris, France on 7 Jan 2026. Check your official weather warnings.",
+  "confidence_note": "The history is a grid of about 25 km and misses very local storms, and thunderstorms, hail, freezing rain or ice are not checked. For landslides, glacier collapse or earthquakes, check local civil protection and geological authorities."
  }
 }

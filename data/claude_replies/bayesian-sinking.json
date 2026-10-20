@@ -1,6 +1,6 @@
 {
  "model": "claude-sonnet-5-5",
- "fingerprint": "1d41bb8eda4d9d8085480a5ace7a70a30a11e6addd8ed548076a406f7508a1ba",
+ "fingerprint": "e8115ba1bf1cac943ec1c81c585fba77a055fabc1419ed23e7530f504f2ab88e",
  "facts": {
   "place": "Porticello, Sicily, Italy",
   "day": "19 Aug 2024",
@@ -114,14 +114,15 @@
   "data_notes": []
  },
  "reply": {
-  "headline": "Typical weather for Porticello, Sicily, Italy on 19 Aug 2024.",
+  "headline": "Typical rain, temperature, snow and wind for Porticello, Sicily, Italy on 19 Aug 2024.",
   "why": [
-   "The deciding check was recent rain: 14 mm over the last 6 days, which is normal rain for the last 6 days (13.8 mm).",
-   "Totals like this happen about 21 times a year here now, against about 24 times a year in 1951–1980, and that does not make the day any less serious, because the level is based on the recent 30 years.",
-   "Normal highs for here (feels like up to 33 °C), and days like this are 2.0 times more common here than in 1951–1980."
+   "Normal rain for the last 6 days (13.8 mm) was the check that set the level, with 11.3 mm falling over the 5 days before and the rest forecast for the day itself.",
+   "Days with this much rain over 6 days happen about 21 times a year here now, against about 24 times a year in 1951–1980, which does not make the day any less serious because the level is based on the recent 30 years.",
+   "Normal highs for here (feels like up to 33 °C) are 2.0 times more common here than in 1951–1980.",
+   "Normal wind for here (gusts up to 45 km/h) matches 1951–1980, which was about as common."
   ],
-  "what_it_means": "Nothing in the checked weather stands out for this place on 19 Aug 2024. Check your official weather warnings, because Groundtruth never replaces them.",
-  "sms": "Groundtruth: Typical weather in Porticello, Sicily on 19 Aug 2024. Check your official weather warnings.",
-  "confidence_note": "The history is a grid of about 25 km and misses very local storms, and thunderstorms are not checked. Recent rain uses measured rain for the earlier days and the forecast for the day itself. Landslides, glacier collapse or earthquakes need local civil protection and geological authorities."
+  "what_it_means": "Nothing in the rain, heat, cold, snow or wind checks stands out for this place on this day. Check your official weather warnings, because Groundtruth never replaces them.",
+  "sms": "Groundtruth: Typical rain, temperature, snow and wind for Porticello on 19 Aug 2024. Check your official weather warnings.",
+  "confidence_note": "The history is a grid of about 25 km and misses very local storms, and thunderstorms are not checked. The recent rain total uses measured rain for the earlier days and the forecast for the day itself. For landslides, glacier collapse or earthquakes, check local civil protection and geological authorities."
  }
 }

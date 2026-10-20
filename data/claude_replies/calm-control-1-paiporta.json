@@ -1,6 +1,6 @@
 {
  "model": "claude-sonnet-5-5",
- "fingerprint": "14932b86d54fbbb0ceb758fa67b9645bb264218a3be3fc7c0cef028e2aab0c53",
+ "fingerprint": "34d17a77a7b4526eb7aa95af73447c9d7051dd02f4b3968e5bd382438bbb6203",
  "facts": {
   "place": "Paiporta, Valencia, Spain",
   "day": "15 May 2024",
@@ -114,15 +114,15 @@
   "data_notes": []
  },
  "reply": {
-  "headline": "Typical weather in Paiporta, Valencia, Spain on 15 May 2024, with recent rain as the deciding check.",
+  "headline": "Typical rain, temperature, snow and wind for Paiporta, Valencia, Spain on 15 May 2024.",
   "why": [
-   "Recent rain was the deciding check: normal rain for the last 6 days (0.3 mm), made up of 0.2 mm over the 5 days before and the forecast for the day itself.",
-   "Totals like this happen about 45 times a year here now, against about 51 times a year in 1951–1980.",
-   "This does not make the day any less serious, because the level is based on the recent 30 years, 1994–2024.",
-   "Normal wind for here (gusts up to 34 km/h) and normal highs for here (feels like up to 22 °C)."
+   "Recent rain over the last 6 days set the level: Normal rain for the last 6 days (0.3 mm).",
+   "Totals like this happen about 45 times a year here now, and the 0.3 mm includes measured rain for earlier days plus the forecast for the day itself.",
+   "Normal wind for here (gusts up to 34 km/h) and normal highs for here (feels like up to 22 °C) also fit the pattern, with no snow forecast.",
+   "Days like this were about 51 times a year in 1951–1980, which does not make this day any less serious, because the level is based on the recent 30 years."
   ],
-  "what_it_means": "Nothing in the checked weather stands out for 15 May 2024 compared with recent years here. Check your official weather warnings, since Groundtruth never replaces them.",
-  "sms": "Groundtruth: Typical weather in Paiporta on 15 May 2024. Check your official weather warnings for the latest.",
-  "confidence_note": "The history is a grid of about 25 km and misses very local storms, and thunderstorms, hail and other hazards are not checked. For landslides, glacier collapse or earthquakes, check local civil protection and geological authorities."
+  "what_it_means": "Nothing in the checked weather stands out for this place on this date. Check your official weather warnings, as Groundtruth never replaces them.",
+  "sms": "Groundtruth: Typical rain, temperature, snow and wind for Paiporta on 15 May 2024. Check your official weather warnings.",
+  "confidence_note": "The history is a grid of about 25 km and misses very local storms, and thunderstorms, hail, freezing rain, wildfire, air quality and coastal flooding are not checked. Geological hazards such as landslides, glacier collapse or earthquakes need local civil protection and geological authorities."
  }
 }

@@ -1,6 +1,6 @@
 # Test log
 
-Last run: 2026-10-19 with `python scripts/replay.py`.
+Last run: 2026-10-20 with `python scripts/replay.py`.
 1 case(s) pending: their test day hasn't been picked yet.
 Settings: comparison period 1951–1980; the level uses the 30 years before this date; recent rain = 5 days before + the date.
 
@@ -26,14 +26,14 @@ Each replay shows Claude's saved text (claude-sonnet-5-5) only if its fingerprin
 
 | Replay | Level | Text shown | Claude's headline |
 |---|---|---|---|
-| Valencia flash flood | Extreme | Claude mode: passes the checks (fingerprint b636221c6d07) | Extreme risk of heavy rain in Paiporta, Valencia, Spain on 29 Oct 2024. |
-| Texas Hill Country flood | High | Claude mode: passes the checks (fingerprint 9edeba6e20f4) | High risk for heavy rain in Texas Hill Country, USA on 4 Jul 2025. |
-| Kolkata heat (KK concert) | High | Claude mode: passes the checks (fingerprint 27044a56569e) | High risk from feels-like heat in Kolkata, India on 31 May 2022. |
-| Bayesian sinking | Typical | Claude mode: passes the checks (fingerprint 1d41bb8eda4d) | Typical weather for Porticello, Sicily, Italy on 19 Aug 2024. |
-| Nepal-Tibet glacier-collapse flood | Typical | Claude mode: passes the checks (fingerprint e4beb65d7578) | Typical weather for the Nepal–Tibet border area on 26 Aug 2026, with recent rain the deciding check. |
-| Calm control 1, Paiporta | Typical | Claude mode: passes the checks (fingerprint 14932b86d54f) | Typical weather in Paiporta, Valencia, Spain on 15 May 2024, with recent rain as the deciding check. |
-| Calm control 2, Kolkata | Typical | Claude mode: passes the checks (fingerprint d17616eab4f5) | Typical weather in Kolkata, India on 15 Jan 2022. |
-| Paris snow and cold | Typical | Claude mode: passes the checks (fingerprint 1d8882f05cdc) | Typical weather in Paris, France on 7 Jan 2026. |
+| Valencia flash flood | Extreme | Claude mode: passes the checks (fingerprint 6113997144c3) | Extreme risk of heavy rain in Paiporta, Valencia, Spain on 29 Oct 2024. |
+| Texas Hill Country flood | High | Claude mode: passes the checks (fingerprint 684f4a773bd6) | High risk of heavy rain in Texas Hill Country, USA on 4 Jul 2025. |
+| Kolkata heat (KK concert) | High | Claude mode: passes the checks (fingerprint 4ab5542ca755) | High risk of feels-like heat in Kolkata, India on 31 May 2022. |
+| Bayesian sinking | Typical | Claude mode: passes the checks (fingerprint e8115ba1bf1c) | Typical rain, temperature, snow and wind for Porticello, Sicily, Italy on 19 Aug 2024. |
+| Nepal-Tibet glacier-collapse flood | Typical | Claude mode: passes the checks (fingerprint 5c323686d288) | Typical rain, temperature, snow and wind for Nepal–Tibet border area on 26 Aug 2026. |
+| Calm control 1, Paiporta | Typical | Claude mode: passes the checks (fingerprint 34d17a77a7b4) | Typical rain, temperature, snow and wind for Paiporta, Valencia, Spain on 15 May 2024. |
+| Calm control 2, Kolkata | Typical | Claude mode: passes the checks (fingerprint df46bdd1f448) | Typical rain, temperature, snow and wind for Kolkata, India on 15 Jan 2022. |
+| Paris snow and cold | Typical | Claude mode: passes the checks (fingerprint d6394e478b91) | Typical rain, temperature, snow and wind for Paris, France on 7 Jan 2026. |
 
 ## Details
 

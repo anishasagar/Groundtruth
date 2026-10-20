@@ -38,6 +38,7 @@ def replay_facts(name):
 
 KOLKATA, _ = replay_facts("Kolkata heat (KK concert)")
 VALENCIA, _ = replay_facts("Valencia flash flood")
+PARIS, _ = replay_facts("Paris snow and cold")
 
 GOOD_KOLKATA = {
     "headline": "High risk from heat in Kolkata, India on 31 May 2022.",
@@ -56,6 +57,16 @@ GOOD_VALENCIA = {
     "what_it_means": "Avoid underpasses, low roads and riverbanks. Check your official weather warnings.",
     "sms": "Extreme risk of heavy rain in Paiporta on 29 Oct 2024: 202 mm in 24 h. Check official warnings.",
     "confidence_note": "Thunderstorms are not checked, and the history misses very local storms.",
+}
+
+
+GOOD_PARIS = {
+    "headline": "Typical rain, temperature, snow and wind for Paris, France on 7 Jan 2026.",
+    "why": ["Snowfall set the level: normal snowfall for here (3.0 cm).",
+            "Normal wind for here (gusts up to 36 km/h)."],
+    "what_it_means": "Ice on roads is not checked. Check your official weather warnings.",
+    "sms": "Groundtruth Paris 7 Jan 2026: Typical rain, temperature, snow and wind. Check official warnings.",
+    "confidence_note": "Freezing rain and ice are not checked, and the history misses very local storms.",
 }
 
 
@@ -97,6 +108,40 @@ def guardrail_cases():
                                                        "history misses very local storms."), VALENCIA)
     expect_fail("a capitalised other level label",
                 why_with(GOOD_KOLKATA, "Rain was Typical."), KOLKATA, "names another level (Typical)")
+
+    # Typical days: the headline says what is typical; no broad "typical weather" without that scope.
+    expect_pass("good Paris (Typical) reply", GOOD_PARIS, PARIS)
+    expect_pass("Typical headline with heat and cold for temperature",
+                changed(GOOD_PARIS, headline="Typical rain, heat, cold, snow and wind for Paris, France on "
+                                             "7 Jan 2026."), PARIS)
+    expect_fail('"Typical weather" headline', changed(GOOD_PARIS, headline="Typical weather in Paris, France on "
+                                                                          "7 Jan 2026."),
+                PARIS, "doesn't say what is typical (missing: rain, temperature, snow, wind)")
+    expect_fail("Typical headline missing wind", changed(GOOD_PARIS, headline="Typical rain, temperature and snow "
+                                                                             "for Paris, France on 7 Jan 2026."),
+                PARIS, "(missing: wind)")
+    for phrase in ("typical weather", "typical conditions", "typical day", "normal weather", "normal conditions"):
+        expect_fail(f'"{phrase}" in a bullet', why_with(GOOD_PARIS, f"It was a {phrase} for Paris."),
+                    PARIS, f'"{phrase}" without saying what it covers')
+    expect_fail('"Typical weather" in the SMS',
+                changed(GOOD_PARIS, sms="Groundtruth Paris 7 Jan 2026: Typical weather. Check official warnings."),
+                PARIS, '"Typical weather" without saying what it covers')
+    expect_pass('"normal conditions" followed by its scope',
+                why_with(GOOD_PARIS, "These are normal conditions for the rain, temperature, snow and wind we check."),
+                PARIS)
+    expect_pass('"typical weather" on a High day is checked too, and passes with its scope',
+                why_with(GOOD_KOLKATA, "Apart from heat, this was typical weather for the rain, snow and wind we "
+                                       "check, and for the cold."), KOLKATA)
+    expect_fail('"typical weather" on a High day without its scope',
+                why_with(GOOD_KOLKATA, "Apart from the heat it was typical weather."), KOLKATA, "without saying")
+
+    # "Deciding check" stays out of the headline, and plain words are used instead of the term.
+    expect_fail('"deciding check" in the headline',
+                changed(GOOD_PARIS, headline="Typical rain, temperature, snow and wind for Paris, France on "
+                                             "7 Jan 2026, with snowfall the deciding check."),
+                PARIS, 'headline mentions the "deciding check"')
+    expect_fail('"deciding check" in a bullet', why_with(GOOD_PARIS, "Snowfall was the deciding check."),
+                PARIS, 'term "deciding check"')
 
     # Wrong level.
     expect_fail("wrong level", changed(GOOD_KOLKATA, headline="Extreme risk from heat in Kolkata on 31 May 2022.",
