@@ -20,6 +20,8 @@ SCOPE_LINE = ("We check rain, heat, cold, snow, wind and recent rain. We don't y
               "For those, follow official warnings.")
 STORM_NOTE = ("**Thunderstorms are not checked.** Storms are a major cause of weather deaths — "
               "follow official storm warnings.")
+GEOLOGICAL_NOTE = ("Groundtruth covers weather-driven hazards only. For geological hazards (landslides, "
+                   "glacier collapse, earthquakes), check local civil protection and geological authorities.")
 
 # {when} becomes "today", or "on this day" when the date isn't today (replays, other dates).
 HEADLINES = {
@@ -54,13 +56,15 @@ LIKE_THIS = {
 }
 
 SMS_LIMIT = 160
+# What a Typical level covers. "Typical weather" would sound like everything is fine.
+TYPICAL_SCOPE = "Typical rain, temperature, snow and wind"
 
 
 def day_text(date):
     return f"{date.day} {date:%b %Y}"
 
 
-def _amount(value, unit):
+def amount(value, unit):
     return f"{value:.1f} {unit}" if abs(value) < 10 else f"{value:.0f} {unit}"
 
 
@@ -114,7 +118,7 @@ def _days(c, text):
 def _unusual_bullet(c, result):
     """Value, danger line (if crossed), how often it happens here, and the comparison with the baseline."""
     lead, noun = LEAD[c["key"]]
-    lead = lead.format(v=_amount(c["value"], c["unit"]), n=risk.RECENT_RAIN_DAYS_BEFORE + 1)
+    lead = lead.format(v=amount(c["value"], c["unit"]), n=risk.RECENT_RAIN_DAYS_BEFORE + 1)
     line = c.get("danger_line")
     if c.get("crosses_danger_line"):
         how = "above" if c["value"] > line else "at"
@@ -203,6 +207,10 @@ def _ascii(text):
     return unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode()
 
 
+def _sms_level(level):
+    return TYPICAL_SCOPE if level == "Typical" else f"{level} risk"
+
+
 def sms_text(result, place):
     """A text message of at most 160 characters (plain ASCII, so it stays one SMS)."""
     place = _ascii(place).strip() or "your area"
@@ -212,14 +220,13 @@ def sms_text(result, place):
     if level not in risk.LEVELS:
         candidates = [f"Groundtruth {place} {day}: Not enough data - check official sources."]
     else:
-        word = "weather" if level == "Typical" else "risk"
-        head = f"Groundtruth {place} {day}: {level} {word}."
+        head = f"Groundtruth {place} {day}: {_sms_level(level)}."
         tail = "Check official warnings."
         check = deciding_check(result)
         detail = ""
         if check is not None and level != "Typical":
             unit = _ascii(check["unit"]).strip() or "C"  # "°C" -> "C"
-            detail = f"{SHORT_NAMES[check['key']]} {_amount(check['value'], unit)}."
+            detail = f"{SHORT_NAMES[check['key']]} {amount(check['value'], unit)}."
         action = action_line(result)
         candidates = [
             " ".join(p for p in (head, detail, action, tail) if p),
@@ -233,9 +240,9 @@ def sms_text(result, place):
     # Last resort: shorten the place name.
     for n in range(len(place), 0, -1):
         short = place[: n - 1] + "." if n < len(place) else place
-        text = (f"Groundtruth {short} {day}: {level} risk. Check official warnings." if level in risk.LEVELS
+        text = (f"Groundtruth {short} {day}: {_sms_level(level)}. Check official warnings." if level in risk.LEVELS
                 else f"Groundtruth {short} {day}: Not enough data - check official sources.")
         if len(text) <= SMS_LIMIT:
             return text
     return ("Groundtruth: Not enough data - check official sources." if level not in risk.LEVELS
-            else f"Groundtruth: {level} risk. Check official warnings.")
+            else f"Groundtruth: {_sms_level(level)}. Check official warnings.")

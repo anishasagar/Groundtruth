@@ -5,42 +5,22 @@ Run:  streamlit run app.py
 
 import datetime as dt
 import html
-from pathlib import Path
+import os
+import re
 
-import pandas as pd
 import requests
 import streamlit as st
 
-from groundtruth import geocode, message, risk, weather
-
-ROOT = Path(__file__).resolve().parent
-CASES_FILE = ROOT / "tests" / "cases.csv"
+from groundtruth import claude_text, geocode, message, replays, risk, weather
 
 EARLIEST_DATE = dt.date(2017, 1, 1)  # the past-forecast archive goes back about this far
 NO_REPLAY = "— none, use the search above —"
 LIVE_DOWN = "Live data is temporarily unavailable. Try a replay."
 REPLAY_MISSING = "Replay data for this event isn't saved yet. Please try again later."
 
-# Test cases that are not offered as replays.
-HIDDEN_REPLAY_PREFIX = "Ordinary"
 # Replays that get the geological-hazards warning right under the level.
-GEOLOGICAL_REPLAYS = {"Nepal-Tibet glacier-collapse flood"}
-
-REPLAY_PLACES = {
-    "Valencia flash flood": "Paiporta, Valencia, Spain",
-    "Texas Hill Country flood": "Texas Hill Country, USA",
-    "Kolkata heat (KK concert)": "Kolkata, India",
-    "Bayesian sinking": "Porticello, Sicily, Italy",
-    "Nepal-Tibet glacier-collapse flood": "Nepal–Tibet border area",
-    "Calm control 1, Paiporta": "Paiporta, Valencia, Spain",
-    "Calm control 2, Kolkata": "Kolkata, India",
-    "Paris snow and cold": "Paris, France",
-}
-
-GEOLOGICAL_NOTE = (
-    "Groundtruth covers weather-driven hazards only. For geological hazards (landslides, "
-    "glacier collapse, earthquakes), check local civil protection and geological authorities."
-)
+GEOLOGICAL_REPLAYS = {name for name, note in replays.SPECIAL_NOTES.items() if note == "geological"}
+GEOLOGICAL_NOTE = message.GEOLOGICAL_NOTE
 # Level colours. Never green: a green box could read as "all fine".
 LEVEL_STYLE = {
     "Typical": ("#3d5a80", "#ffffff"),
@@ -55,9 +35,7 @@ LEVEL_STYLE = {
 
 @st.cache_data
 def load_replays():
-    cases = pd.read_csv(CASES_FILE, dtype=str, keep_default_na=False)
-    cases = cases[~cases["name"].str.startswith(HIDDEN_REPLAY_PREFIX) & (cases["date"] != "")]
-    return cases.to_dict("records")
+    return replays.load_replays()
 
 
 @st.cache_data(ttl=24 * 3600, show_spinner=False)
@@ -74,6 +52,43 @@ def cached_live(lat, lon, date):
 def cached_replay(lat, lon, date):
     with weather.offline():  # a replay never calls Open-Meteo
         return risk.assess(lat, lon, date)
+
+
+def claude_key():
+    """From st.secrets, else the environment. Never shown or saved."""
+    try:
+        key = st.secrets.get("GROUNDTRUTH_CLAUDE_KEY")
+    except Exception:  # no secrets file
+        key = None
+    return key or os.environ.get("GROUNDTRUTH_CLAUDE_KEY")
+
+
+def claude_live(facts):
+    """Claude's reply for a live search, kept for this visitor so reruns don't ask again. Failures aren't kept."""
+    kept = st.session_state.setdefault("claude_replies", {})
+    fingerprint = claude_text.fingerprint(facts)
+    if fingerprint in kept:
+        return kept[fingerprint], []
+    reply, problems = claude_text.write(facts, claude_text.make_client(claude_key()))
+    if reply is not None:
+        kept[fingerprint] = reply
+    return reply, problems
+
+
+def claude_reply(result, place, replay_name):
+    """(reply, problems). A replay only uses its saved reply; it never calls Claude."""
+    facts = claude_text.facts(result, place, dt.date.today(), replays.SPECIAL_NOTES.get(replay_name))
+    if replay_name is not None:
+        return claude_text.saved_reply(replays.claude_reply_file(replay_name), facts)
+    if result["level"] not in risk.LEVELS:
+        return claude_text.write(facts, None)  # "Not enough data" never goes to Claude
+    with st.spinner("Writing the summary…"):
+        return claude_live(facts)
+
+
+def plain(text):
+    """Claude's text shown as written: no markdown formatting, no maths."""
+    return re.sub(r"([\\`*_\[\]<>#$~|])", r"\\\1", text)
 
 
 # ---- pieces of the screen -----------------------------------------------------
@@ -120,10 +135,12 @@ def rarity_lines(rows, accent):
     st.markdown("".join(out), unsafe_allow_html=True)
 
 
-def how_sure_box(result):
+def how_sure_box(result, confidence_note=None):
     rain = result["checks"][-1]
     with st.container(border=True):
         st.subheader("How sure are we")
+        if confidence_note:
+            st.markdown(f"**In short (written by Claude):** {plain(confidence_note)}")
         st.warning(message.STORM_NOTE, icon="⚡")
         st.markdown(message.SCOPE_LINE)
         st.markdown(
@@ -171,11 +188,19 @@ def show_assessment(result, place, replay_name=None):
         st.warning(f"**Weather data can't see everything.** {GEOLOGICAL_NOTE}", icon="⚠️")
 
     st.markdown(f"**{place} — {message.day_text(result['date'])}**")
-    st.markdown(f"### {message.template_sentence(result)}")
-    st.caption("Template mode: this sentence is built from the numbers, not written by an AI.")
+    reply, problems = claude_reply(result, place, replay_name)
+    if reply is not None:
+        st.markdown(f"### {plain(reply['headline'])}")
+        st.markdown(plain(reply["what_it_means"]))
+        st.markdown("\n".join(f"- {plain(b)}" for b in reply["why"]))
+        st.caption("Written by Claude from the computed facts; the level and every number were checked in code.")
+    else:
+        st.markdown(f"### {message.template_sentence(result)}")
+        st.caption("Template mode: this sentence is built from the numbers, not written by an AI.  \n"
+                   f"Claude's text wasn't used: {plain(claude_text.short_reason(problems))}.")
     st.warning(message.STORM_NOTE, icon="⚡")
 
-    st.subheader("Why")
+    st.subheader("The numbers")
     st.markdown("\n".join(f"- {b}" for b in message.why_bullets(result)))
 
     rarity = message.rarity_rows(result)
@@ -190,11 +215,11 @@ def show_assessment(result, place, replay_name=None):
             st.caption(f"{check_name}: {like_this}. The longer line is the period with more of them.")
 
     st.subheader("Text message version")
-    sms = message.sms_text(result, place)
+    sms = reply["sms"] if reply is not None else message.sms_text(result, place)
     st.code(sms, language=None, wrap_lines=True)
-    st.caption(f"{len(sms)} of 160 characters")
+    st.caption(f"{len(sms)} of 160 characters" + (" · written by Claude" if reply is not None else ""))
 
-    how_sure_box(result)
+    how_sure_box(result, reply["confidence_note"] if reply is not None else None)
 
 
 # ---- the page -----------------------------------------------------------------
@@ -203,21 +228,21 @@ st.set_page_config(page_title="Groundtruth", page_icon="🌍")
 st.title("Groundtruth")
 st.write("How unusual is today's weather for your exact place, compared with how it used to be, and what does it mean?")
 
-replays = {c["name"]: c for c in load_replays()}
+replay_cases = {c["name"]: c for c in load_replays()}
 today = dt.date.today()
 
 query = st.text_input("Search for a place", placeholder="e.g. Valencia")
 date = st.date_input("Date", value=today, min_value=EARLIEST_DATE, max_value=today + dt.timedelta(days=weather.FORECAST_DAYS_AHEAD))
-replay_name = st.selectbox("Replay a past event", [NO_REPLAY, *replays])
+replay_name = st.selectbox("Replay a past event", [NO_REPLAY, *replay_cases])
 
 lat = lon = place = None
 problem = None
 
 if replay_name != NO_REPLAY:
-    case = replays[replay_name]
+    case = replay_cases[replay_name]
     lat, lon = float(case["latitude"]), float(case["longitude"])
     date = dt.date.fromisoformat(case["date"])
-    place = REPLAY_PLACES.get(replay_name, f"{lat:.2f}, {lon:.2f}")
+    place = replays.place_of(case)
     st.caption("Replay: saved data, no live lookup. The place and date above are ignored.")
 elif query.strip():
     try:

@@ -1,0 +1,129 @@
+{
+ "model": "claude-sonnet-5-5",
+ "fingerprint": "a0abd31a02569f9dd09e205b4625495d05d063767bec0271a603c42ade914220",
+ "facts": {
+  "place": "Nepal–Tibet border area",
+  "day": "26 Aug 2026",
+  "is_today": false,
+  "level": "Typical",
+  "level_set_by_checks": [
+   "Rain (24 h)",
+   "Feels-like heat",
+   "Feels-like cold",
+   "Snowfall (24 h)",
+   "Wind gust",
+   "Recent rain (6-day total)"
+  ],
+  "deciding_check": "Recent rain (6-day total)",
+  "comparison_period": "1951–1980",
+  "recent_period": "1996–2026 (the 30 years before this date)",
+  "checks": [
+   {
+    "name": "Rain (24 h)",
+    "value": "6.1 mm",
+    "level": "Typical",
+    "wording": "Normal rain for here (6.1 mm)",
+    "how_often_in_recent_period": "about 129 times a year",
+    "how_often_in_comparison_period": "about 133 times a year",
+    "comparison": "about as common here as in 1951–1980",
+    "less_common_now": false,
+    "danger_line": "150 mm",
+    "danger_line_crossed": false,
+    "set_by": "rarity"
+   },
+   {
+    "name": "Feels-like heat",
+    "value": "30 °C",
+    "level": "Typical",
+    "wording": "Normal highs for here (feels like up to 30 °C)",
+    "how_often_in_recent_period": "about 68 times a year",
+    "how_often_in_comparison_period": "about 21 times a year",
+    "comparison": "3.2 times more common here than in 1951–1980",
+    "less_common_now": false,
+    "danger_line": "40 °C",
+    "danger_line_crossed": false,
+    "set_by": "rarity"
+   },
+   {
+    "name": "Feels-like cold",
+    "value": "23 °C",
+    "level": "Typical",
+    "wording": "Normal lows for here (feels like down to 23 °C)",
+    "how_often_in_recent_period": "about 319 times a year",
+    "how_often_in_comparison_period": "about 354 times a year",
+    "comparison": "1.1 times less common here than in 1951–1980",
+    "less_common_now": true,
+    "danger_line": "none for this check",
+    "danger_line_crossed": false,
+    "set_by": "rarity"
+   },
+   {
+    "name": "Snowfall (24 h)",
+    "value": "0.0 cm",
+    "level": "Typical",
+    "wording": "No snow forecast",
+    "how_often_in_recent_period": "about 365 times a year",
+    "how_often_in_comparison_period": "about 365 times a year",
+    "comparison": "about as common here as in 1951–1980",
+    "less_common_now": false,
+    "danger_line": "none for this check",
+    "danger_line_crossed": false,
+    "set_by": "rarity"
+   },
+   {
+    "name": "Wind gust",
+    "value": "31 km/h",
+    "level": "Typical",
+    "wording": "Normal wind for here (gusts up to 31 km/h)",
+    "how_often_in_recent_period": "about 228 times a year",
+    "how_often_in_comparison_period": "about 214 times a year",
+    "comparison": "1.1 times more common here than in 1951–1980",
+    "less_common_now": false,
+    "danger_line": "100 km/h",
+    "danger_line_crossed": false,
+    "set_by": "rarity"
+   },
+   {
+    "name": "Recent rain (6-day total)",
+    "value": "66 mm",
+    "level": "Typical",
+    "wording": "Normal rain for the last 6 days (65.6 mm)",
+    "how_often_in_recent_period": "about 18 times a year",
+    "how_often_in_comparison_period": "about 19 times a year",
+    "comparison": "about as common here as in 1951–1980",
+    "less_common_now": false,
+    "danger_line": "none for this check",
+    "danger_line_crossed": false,
+    "set_by": "rarity"
+   }
+  ],
+  "recent_rain": {
+   "rain_in_the_days_before": "59.5 mm",
+   "how_many_days_before": "5 days",
+   "total_including_the_day": "66 mm",
+   "based_on": "measured rain for the earlier days and the forecast for the day itself"
+  },
+  "action_line": null,
+  "official_warnings": "Check your official weather warnings — Groundtruth never replaces them.",
+  "scope_notes": [
+   "We check rain, heat, cold, snow, wind and recent rain. We don't yet check thunderstorms, hail, freezing rain or ice, wildfire, air quality, coastal flooding, or geological hazards. For those, follow official warnings.",
+   "Thunderstorms are not checked. Storms are a major cause of weather deaths — follow official storm warnings.",
+   "The history data is a ~25 km grid and misses very local storms.",
+   "Groundtruth covers weather-driven hazards only. For landslides, glacier collapse or earthquakes, check local civil protection and geological authorities."
+  ],
+  "data_notes": [],
+  "special_note": "Groundtruth covers weather-driven hazards only. For geological hazards (landslides, glacier collapse, earthquakes), check local civil protection and geological authorities.",
+  "special_note_kind": "geological"
+ },
+ "reply": {
+  "headline": "Typical rain, temperature, snow and wind for Nepal–Tibet border area on 26 Aug 2026.",
+  "why": [
+   "Recent rain over the last 6 days was 66 mm, and days like this happen about 18 times a year here now.",
+   "Rain over the last 6 days was about as common here as in 1951–1980, when it happened about 19 times a year.",
+   "Feels-like highs of up to 30 °C happen about 68 times a year now, which is 3.2 times more common here than in 1951–1980."
+  ],
+  "what_it_means": "The checks do not cover thunderstorms, hail, freezing rain or ice, wildfire, air quality, coastal flooding, or geological hazards. Groundtruth covers weather-driven hazards only, so for landslides, glacier collapse or earthquakes, check local civil protection and geological authorities. Check your official weather warnings, because Groundtruth never replaces them.",
+  "sms": "Groundtruth: Typical rain, temperature, snow and wind for Nepal-Tibet border area, 26 Aug 2026. Storms not checked. Check official warnings.",
+  "confidence_note": "The history is a grid of about 25 km and misses very local storms, and thunderstorms are not checked. The 6-day rain total uses measured rain for the earlier days and the forecast for the day itself, and geological hazards need local civil protection and geological authorities."
+ }
+}
