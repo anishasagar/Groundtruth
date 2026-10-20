@@ -40,3 +40,16 @@ A web app that tells a person, in one plain sentence, how unusual today's weathe
   - "Not enough data" must not hide a higher reading: keep "Not enough data — check official sources" and add what the checks that did run already reach (for example Elevated).
   - Rounding: round cold values toward colder, show one decimal within about 1 unit of a danger line, and never show a rounded value at or above a line that wasn't crossed.
   - Rare Typical checks: for a check that happens only a few times a year (Paris snow, about 1.1 times a year), show how often it happens instead of "Normal…". Don't lower anything.
+  - Ice in Claude's facts: when the ice note applies, give it to Claude and require "ice" in the confidence note (Paris's confidence note doesn't mention ice today).
+  - Text message on Elevated or higher days: when a storm or geological note applies, still add "Storms, landslides, glacier floods not checked." (drop the number, then the place, to make room).
+  - Ice note after a wet spell: also trigger it when the 5 days before had rain or snow and the day drops to +1 °C or below (refreezing slush, black ice).
+  - Invented descriptions and permission phrases: reject season and month words ("winter", "January", "this time of year") and phrases like "OK to", "good to go", "good day for", "can proceed", "don't need", "not necessary".
+  - Confidence note meaning: require "misses" next to "local storm(s)" and "can be too low" next to "forecast"; reject "reliable", "accurate", "confident", "certain", "high confidence".
+  - Climate wording: also reject "climate" on its own, "more/less probable", "odds", "fuelled by", "linked to", "sign of".
+  - More softening words on Elevated or higher: "scattered", "short-lived", "passing", "patchy", "modest", "marginal(ly)", "borderline", "barely", "merely".
+  - Past tense for the day itself: reject "fell", "reached", "was recorded" in sentences about the day's own value (prompt-only today).
+  - Danger-line rate: any bullet that gives a danger-line check's yearly rate must also say "danger line" (Kolkata's second bullet stands alone today).
+  - Ice note first on Typical days, before the not-covered list.
+  - TESTLOG label: "what it means" is shown with Claude's text only, not in template mode; fix the "Full output per case" label.
+  - Shortened place names in text messages: cut at a word boundary and separate the place from the date ("Nepal-Tibet bo. 26 Aug 2026", "39.43, -0.42 27 Feb 2018").
+  - Prompt typo: an extra quote mark before "minimal risk" in rule 3.
