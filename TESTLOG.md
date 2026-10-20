@@ -267,4 +267,206 @@ Each replay shows Claude's saved text (claude-sonnet-5-5) only if its fingerprin
 - Shown for Wind gust: "Normal wind for here (gusts up to 36 km/h)"
 - Shown for Recent rain (6-day total): "Normal rain for the last 6 days (10.6 mm)"
 
+## Replay check: date, level and sentence
+
+Added by the replay-check skill on 2026-10-20. "Previous level" is the level in TESTLOG.md before this run.
+
+| Case | Date | Level | Previous level | Sentence shown | Template sentence |
+|---|---|---|---|---|---|
+| Valencia flash flood | 2024-10-29 | **Extreme** | Extreme | Claude: Extreme risk of heavy rain in Paiporta, Valencia, Spain on 29 Oct 2024. | Risk here on this day is extremely high. Avoid underpasses, low roads and riverbanks. Check your official weather warnings — Groundtruth never replaces them. |
+| Texas Hill Country flood | 2025-07-04 | **High** | High | Claude: High risk of heavy rain in Texas Hill Country, USA on 4 Jul 2025. | Risk here on this day is unusually high. Avoid underpasses, low roads and riverbanks. Check your official weather warnings — Groundtruth never replaces them. |
+| Kolkata heat (KK concert) | 2022-05-31 | **High** | High | Claude: High risk of feels-like heat in Kolkata, India on 31 May 2022. | Risk here on this day is unusually high. Avoid heavy exertion outdoors, drink water, and check on older or vulnerable people. Check your official weather warnings — Groundtruth never replaces them. |
+| Bayesian sinking | 2024-08-19 | **Typical** | Typical | Claude: Typical rain, temperature, snow and wind for Porticello, Sicily, Italy on 19 Aug 2024. | Normal conditions for here, for the rain, temperature, snow and wind we check. Check your official weather warnings — Groundtruth never replaces them. |
+| Nepal-Tibet glacier-collapse flood | 2026-08-26 | **Typical** | Typical | Claude: Typical rain, temperature, snow and wind for Nepal–Tibet border area on 26 Aug 2026. | Normal conditions for here, for the rain, temperature, snow and wind we check. Check your official weather warnings — Groundtruth never replaces them. |
+| Calm control 1, Paiporta | 2024-05-15 | **Typical** | Typical | Claude: Typical rain, temperature, snow and wind for Paiporta, Valencia, Spain on 15 May 2024. | Normal conditions for here, for the rain, temperature, snow and wind we check. Check your official weather warnings — Groundtruth never replaces them. |
+| Calm control 2, Kolkata | 2022-01-15 | **Typical** | Typical | Claude: Typical rain, temperature, snow and wind for Kolkata, India on 15 Jan 2022. | Normal conditions for here, for the rain, temperature, snow and wind we check. Check your official weather warnings — Groundtruth never replaces them. |
+| Ordinary rain 1, Paiporta (winter) | 2018-02-27 | **Typical** | Typical | template mode: Normal conditions for here, for the rain, temperature, snow and wind we check. Check your official weather warnings — Groundtruth never replaces them. | Normal conditions for here, for the rain, temperature, snow and wind we check. Check your official weather warnings — Groundtruth never replaces them. |
+| Ordinary rain 2, Paiporta (autumn) | 2024-09-18 | **Typical** | Typical | template mode: Normal conditions for here, for the rain, temperature, snow and wind we check. Check your official weather warnings — Groundtruth never replaces them. | Normal conditions for here, for the rain, temperature, snow and wind we check. Check your official weather warnings — Groundtruth never replaces them. |
+| Paris snow and cold | 2026-01-07 | **Typical** | Typical | Claude: Typical rain, temperature, snow and wind for Paris, France on 7 Jan 2026. | Normal conditions for here, for the rain, temperature, snow and wind we check. Check your official weather warnings — Groundtruth never replaces them. |
+| Ordinary snow, Montreal | — | pending | pending | — | — |
+
+### Level changes since the last run
+
+None.
+
+### Full output per case
+
+The actual text a person would see: the template-mode text (shown whenever Claude or the guardrail fails) and Claude's full saved reply.
+
+#### Valencia flash flood — 2024-10-29 — Extreme
+
+Template mode:
+
+- Sentence: "Risk here on this day is extremely high. Avoid underpasses, low roads and riverbanks. Check your official weather warnings — Groundtruth never replaces them."
+- Action line: "Avoid underpasses, low roads and riverbanks."
+- SMS: "Groundtruth Paiporta, Valencia, Spain 29 Oct 2024: Extreme risk. Rain 202 mm. Avoid underpasses, low roads and riverbanks. Check official warnings."
+
+Claude's saved reply — passes the guardrail (shown in the app):
+
+- Headline: "Extreme risk of heavy rain in Paiporta, Valencia, Spain on 29 Oct 2024."
+- Why:
+  - "Rain over 24 hours set the level, at 202 mm, which is above the 150 mm danger line."
+  - "A day with this much rain was not seen in 1951–1980 or in the 30 years before this date."
+  - "Rain over the last 6 days also reached Extreme, with 257 mm in total, of which 54.9 mm fell in the 5 days before."
+  - "That total uses measured rain for the earlier days and the forecast for the day itself."
+- What it means: "Avoid underpasses, low roads and riverbanks. Check your official weather warnings, because Groundtruth never replaces them."
+- SMS: "Groundtruth: Extreme risk of heavy rain in Paiporta, Valencia, Spain, 29 Oct 2024. Avoid underpasses and low roads. Check official warnings."
+- Confidence note: "The history is a grid of about 25 km and misses very local storms, and thunderstorms are not checked. Geological hazards such as landslides, glacier collapse or earthquakes need local civil protection and geological authorities."
+
+#### Texas Hill Country flood — 2025-07-04 — High
+
+Template mode:
+
+- Sentence: "Risk here on this day is unusually high. Avoid underpasses, low roads and riverbanks. Check your official weather warnings — Groundtruth never replaces them."
+- Action line: "Avoid underpasses, low roads and riverbanks."
+- SMS: "Groundtruth Texas Hill Country, USA 4 Jul 2025: High risk. Rain 107 mm. Avoid underpasses, low roads and riverbanks. Check official warnings."
+
+Claude's saved reply — passes the guardrail (shown in the app):
+
+- Headline: "High risk of heavy rain in Texas Hill Country, USA on 4 Jul 2025."
+- Why:
+  - "Rain over 24 h set the level, with 107 mm forecast, which is below the danger line of 150 mm."
+  - "Rain like this happens about once every 15 years here now, about as common here as in 1951–1980."
+  - "Rain over the last 6 days adds to this, with a total of 144 mm, including 36.7 mm measured over the 5 days before."
+  - "Days with this much rain over 6 days happen about once every 4.3 years here now, and are 3.5 times more common here than in 1951–1980."
+- What it means: "Avoid underpasses, low roads and riverbanks. Check your official weather warnings, because Groundtruth never replaces them."
+- SMS: "Groundtruth: High risk of heavy rain in Texas Hill Country, USA on 4 Jul 2025. Avoid underpasses and low roads. Check official warnings."
+- Confidence note: "The history data is a grid of about 25 km and misses very local storms, and thunderstorms are not checked. The 6-day rain total uses measured rain for the earlier days and the forecast for the day itself, and landslides or other geological hazards need local civil protection and geological authorities."
+
+#### Kolkata heat (KK concert) — 2022-05-31 — High
+
+Template mode:
+
+- Sentence: "Risk here on this day is unusually high. Avoid heavy exertion outdoors, drink water, and check on older or vulnerable people. Check your official weather warnings — Groundtruth never replaces them."
+- Action line: "Avoid heavy exertion outdoors, drink water, and check on older or vulnerable people."
+- SMS: "Groundtruth Kolkata, India 31 May 2022: High risk. Feels-like 41 C. Check official warnings."
+
+Claude's saved reply — passes the guardrail (shown in the app):
+
+- Headline: "High risk of feels-like heat in Kolkata, India on 31 May 2022."
+- Why:
+  - "Feels-like heat set the level, with a value of 41 °C, at or above the 40 °C danger line."
+  - "Days like this happen about 48 times a year here now, based on the 30 years before this date."
+  - "Days like this are 1.4 times more common here than in 1951–1980, when they happened about 34 times a year."
+- What it means: "Avoid heavy exertion outdoors, drink water, and check on older or vulnerable people. Check your official weather warnings, because Groundtruth never replaces them."
+- SMS: "Kolkata, India 31 May 2022: High risk of feels-like heat (41 C). Drink water, avoid heavy exertion. Check official weather warnings."
+- Confidence note: "The history data is a grid of about 25 km and misses very local storms, and thunderstorms are not checked. For landslides, glacier collapse or earthquakes, check local civil protection and geological authorities."
+
+#### Bayesian sinking — 2024-08-19 — Typical
+
+Template mode:
+
+- Sentence: "Normal conditions for here, for the rain, temperature, snow and wind we check. Check your official weather warnings — Groundtruth never replaces them."
+- Action line: none
+- SMS: "Groundtruth Porticello, Sicily, Italy 19 Aug 2024: Typical rain, temperature, snow and wind. Check official warnings."
+
+Claude's saved reply — passes the guardrail (shown in the app):
+
+- Headline: "Typical rain, temperature, snow and wind for Porticello, Sicily, Italy on 19 Aug 2024."
+- Why:
+  - "Rain over the last 6 days set the level, at 14 mm in total."
+  - "Days with this much rain over 6 days happen about 21 times a year here now."
+  - "Normal wind for here (gusts up to 45 km/h), and normal highs for here (feels like up to 33 °C)."
+  - "Feels-like heat at this level happens about 57 times a year now, and days like this are 2.0 times more common here than in 1951–1980."
+- What it means: "The checks do not cover thunderstorms, hail, freezing rain or ice, wildfire, air quality, coastal flooding, or geological hazards such as landslides or glacier collapse. Storms are a major cause of weather deaths, so check your official weather and storm warnings."
+- SMS: "Porticello 19 Aug 2024: Typical rain, temperature, snow and wind. Storms are not checked. Check official weather and storm warnings."
+- Confidence note: "The history is a grid of about 25 km and misses very local storms, and thunderstorms are not checked. Geological hazards such as landslides, glacier collapse and earthquakes need local civil protection and geological authorities."
+
+#### Nepal-Tibet glacier-collapse flood — 2026-08-26 — Typical
+
+Template mode:
+
+- Sentence: "Normal conditions for here, for the rain, temperature, snow and wind we check. Check your official weather warnings — Groundtruth never replaces them."
+- Action line: none
+- SMS: "Groundtruth Nepal-Tibet border area 26 Aug 2026: Typical rain, temperature, snow and wind. Check official warnings."
+
+Claude's saved reply — passes the guardrail (shown in the app):
+
+- Headline: "Typical rain, temperature, snow and wind for Nepal–Tibet border area on 26 Aug 2026."
+- Why:
+  - "Recent rain over the last 6 days was 66 mm, and days like this happen about 18 times a year here now."
+  - "Rain over the last 6 days was about as common here as in 1951–1980, when it happened about 19 times a year."
+  - "Feels-like highs of up to 30 °C happen about 68 times a year now, which is 3.2 times more common here than in 1951–1980."
+- What it means: "The checks do not cover thunderstorms, hail, freezing rain or ice, wildfire, air quality, coastal flooding, or geological hazards. Groundtruth covers weather-driven hazards only, so for landslides, glacier collapse or earthquakes, check local civil protection and geological authorities. Check your official weather warnings, because Groundtruth never replaces them."
+- SMS: "Groundtruth: Typical rain, temperature, snow and wind for Nepal-Tibet border area, 26 Aug 2026. Storms not checked. Check official warnings."
+- Confidence note: "The history is a grid of about 25 km and misses very local storms, and thunderstorms are not checked. The 6-day rain total uses measured rain for the earlier days and the forecast for the day itself, and geological hazards need local civil protection and geological authorities."
+
+#### Calm control 1, Paiporta — 2024-05-15 — Typical
+
+Template mode:
+
+- Sentence: "Normal conditions for here, for the rain, temperature, snow and wind we check. Check your official weather warnings — Groundtruth never replaces them."
+- Action line: none
+- SMS: "Groundtruth Paiporta, Valencia, Spain 15 May 2024: Typical rain, temperature, snow and wind. Check official warnings."
+
+Claude's saved reply — passes the guardrail (shown in the app):
+
+- Headline: "Typical rain, temperature, snow and wind for Paiporta, Valencia, Spain on 15 May 2024."
+- Why:
+  - "Normal rain for the last 6 days (0.3 mm) was the check that set the level, based on measured rain for the earlier days and the forecast for the day itself."
+  - "Rain totals like this over 6 days happen about 45 times a year here now, against about 51 times a year in 1951–1980."
+  - "That difference does not make the day any less serious, because the level is based on the recent 30 years, 1994–2024."
+  - "Normal wind for here (gusts up to 34 km/h) and normal rain for here (0.1 mm) were also part of the checks."
+- What it means: "The checks do not cover thunderstorms, hail, freezing rain or ice, wildfire, air quality, coastal flooding, or geological hazards such as landslides, glacier collapse or earthquakes. Check your official weather warnings, because Groundtruth never replaces them."
+- SMS: "Groundtruth: Typical rain, temperature, snow and wind for Paiporta on 15 May 2024. Storms not checked. Check official warnings."
+- Confidence note: "The history data is a grid of about 25 km and misses very local storms, and thunderstorms are not checked. Geological hazards such as landslides, glacier collapse or earthquakes need local civil protection and geological authorities."
+
+#### Calm control 2, Kolkata — 2022-01-15 — Typical
+
+Template mode:
+
+- Sentence: "Normal conditions for here, for the rain, temperature, snow and wind we check. Check your official weather warnings — Groundtruth never replaces them."
+- Action line: none
+- SMS: "Groundtruth Kolkata, India 15 Jan 2022: Typical rain, temperature, snow and wind. Check official warnings."
+
+Claude's saved reply — passes the guardrail (shown in the app):
+
+- Headline: "Typical rain, temperature, snow and wind for Kolkata, India on 15 Jan 2022."
+- Why:
+  - "Recent rain over the last 6 days was 17 mm, and days like this happen about 29 times a year here now."
+  - "That is about as common here as in 1951–1980, when it was also about 29 times a year."
+  - "Wind gusts reach up to 24 km/h, and the rain on the day is 0.2 mm."
+- What it means: "The checks do not cover thunderstorms, hail, freezing rain or ice, wildfire, air quality, coastal flooding, or geological hazards such as landslides, glacier collapse or earthquakes. Check your official weather warnings, because Groundtruth never replaces them."
+- SMS: "Groundtruth Kolkata, India 15 Jan 2022: Typical rain, temperature, snow and wind. Storms not checked. Check official warnings."
+- Confidence note: "The history is a grid of about 25 km and misses very local storms, and thunderstorms are not checked. Geological hazards such as landslides, glacier collapse and earthquakes need local civil protection and geological authorities."
+
+#### Ordinary rain 1, Paiporta (winter) — 2018-02-27 — Typical
+
+Template mode:
+
+- Sentence: "Normal conditions for here, for the rain, temperature, snow and wind we check. Check your official weather warnings — Groundtruth never replaces them."
+- Action line: none
+- SMS: "Groundtruth 39.43, -0.42 27 Feb 2018: Typical rain, temperature, snow and wind. Check official warnings."
+
+Claude: no saved Claude reply — template mode only.
+
+#### Ordinary rain 2, Paiporta (autumn) — 2024-09-18 — Typical
+
+Template mode:
+
+- Sentence: "Normal conditions for here, for the rain, temperature, snow and wind we check. Check your official weather warnings — Groundtruth never replaces them."
+- Action line: none
+- SMS: "Groundtruth 39.43, -0.42 18 Sep 2024: Typical rain, temperature, snow and wind. Check official warnings."
+
+Claude: no saved Claude reply — template mode only.
+
+#### Paris snow and cold — 2026-01-07 — Typical
+
+Template mode:
+
+- Sentence: "Normal conditions for here, for the rain, temperature, snow and wind we check. Check your official weather warnings — Groundtruth never replaces them."
+- Action line: none
+- SMS: "Groundtruth Paris, France 7 Jan 2026: Typical rain, temperature, snow and wind. Check official warnings."
+
+Claude's saved reply — passes the guardrail (shown in the app):
+
+- Headline: "Typical rain, temperature, snow and wind for Paris, France on 7 Jan 2026."
+- Why:
+  - "Snowfall of 3.0 cm in 24 hours set the level: it is normal snowfall for here, and days like this happen about 1.1 times a year now."
+  - "Gusts reached 36 km/h, which is normal wind for here, and days like this happen about 172 times a year."
+  - "Rain over the last 6 days totalled 11 mm, which is normal rain for the last 6 days, and it is about as common here as in 1951–1980."
+- What it means: "The checks do not cover thunderstorms, hail, freezing rain or ice, wildfire, air quality, coastal flooding, or geological hazards such as landslides, glacier collapse or earthquakes. Check your official weather warnings, because Groundtruth never replaces them."
+- SMS: "Groundtruth: Typical rain, temperature, snow and wind for Paris, France on 7 Jan 2026. Storms and ice are not checked. Check official warnings."
+- Confidence note: "The history is a grid of about 25 km and misses very local storms, and thunderstorms are not checked. Rain for the day itself comes from the forecast, and geological hazards need local civil protection and geological authorities."
+
 Weather data by Open-Meteo.com
