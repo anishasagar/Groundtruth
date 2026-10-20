@@ -1,6 +1,6 @@
 {
  "model": "claude-sonnet-5-5",
- "fingerprint": "bd835601371c41eaa199df2e8d919729fa6e2455b7847f0e1efbd84ff5fcc8c9",
+ "fingerprint": "c434eda7d059b344a2b9ace427e250970995b7cc3c981950e051ea91c02f47b0",
  "facts": {
   "place": "Paiporta, Valencia, Spain",
   "day": "29 Oct 2024",
@@ -114,12 +114,13 @@
  "reply": {
   "headline": "Extreme risk of heavy rain in Paiporta, Valencia, Spain on 29 Oct 2024.",
   "why": [
-   "Rain over 24 hours set the level, at 202 mm, which is at or above the 150 mm danger line.",
+   "Rain over 24 hours set the level, at 202 mm, which is above the 150 mm danger line.",
    "A day with this much rain was not seen in 1951–1980 or in the 30 years before this date.",
-   "Rain over the last 6 days also set the level: the total of 257 mm includes 54.9 mm over the 5 days before, measured, plus the forecast for the day itself."
+   "Rain over the last 6 days also reached Extreme, with 257 mm in total, of which 54.9 mm fell in the 5 days before.",
+   "That total uses measured rain for the earlier days and the forecast for the day itself."
   ],
-  "what_it_means": "Avoid underpasses, low roads and riverbanks. Heavy rain like this can flood streets and rivers quickly, so plan around it today. Check your official weather warnings, because Groundtruth never replaces them.",
-  "sms": "Groundtruth: Extreme risk of heavy rain in Paiporta, Valencia, Spain on 29 Oct 2024. Avoid underpasses, low roads, riverbanks. Check official warnings.",
-  "confidence_note": "The history is a grid of about 25 km and misses very local storms, and thunderstorms are not checked. The 6-day rain total uses measured rain for the earlier days and the forecast for the day itself; for landslides, glacier collapse or earthquakes, check local civil protection and geological authorities."
+  "what_it_means": "Avoid underpasses, low roads and riverbanks. Check your official weather warnings, because Groundtruth never replaces them.",
+  "sms": "Groundtruth: Extreme risk of heavy rain in Paiporta, Valencia, Spain, 29 Oct 2024. Avoid underpasses and low roads. Check official warnings.",
+  "confidence_note": "The history is a grid of about 25 km and misses very local storms, and thunderstorms are not checked. Geological hazards such as landslides, glacier collapse or earthquakes need local civil protection and geological authorities."
  }
 }

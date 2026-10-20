@@ -1,6 +1,6 @@
 {
  "model": "claude-sonnet-5-5",
- "fingerprint": "ce16594958c9818611e7c7db02471148bcca951646b45f4bfa5a0d58c105c155",
+ "fingerprint": "d9e005f2a312677fc026d33ef739b8d7c33c9519d47c8e1e17c2cfee13ea4223",
  "facts": {
   "place": "Kolkata, India",
   "day": "15 Jan 2022",
@@ -118,12 +118,12 @@
  "reply": {
   "headline": "Typical rain, temperature, snow and wind for Kolkata, India on 15 Jan 2022.",
   "why": [
-   "Normal rain for the last 6 days (17.0 mm) was the check that set the level, and 6-day totals like this happen about 29 times a year here now.",
-   "Normal rain for here (0.2 mm) and normal wind for here (gusts up to 24 km/h) were also in line with the recent 30 years.",
-   "No snow was forecast, and normal highs for here (feels like up to 24 °C) matched the pattern in 1951–1980."
+   "Recent rain over the last 6 days was 17 mm, and days like this happen about 29 times a year here now.",
+   "That is about as common here as in 1951–1980, when it was also about 29 times a year.",
+   "Wind gusts reach up to 24 km/h, and the rain on the day is 0.2 mm."
   ],
-  "what_it_means": "The checks do not cover thunderstorms, freezing rain or ice on roads, or geological hazards such as landslides or glacier collapse, so those can still matter. Plan your day with that in mind. Check your official weather warnings, because Groundtruth never replaces them.",
-  "sms": "Groundtruth: Typical rain, temp, snow and wind for Kolkata, India on 15 Jan 2022. Storms are not checked. Check your official warnings.",
-  "confidence_note": "The history data is a grid of about 25 km and misses very local storms, and thunderstorms are not checked. For landslides, glacier collapse or earthquakes, check local civil protection and geological authorities."
+  "what_it_means": "The checks do not cover thunderstorms, hail, freezing rain or ice, wildfire, air quality, coastal flooding, or geological hazards such as landslides, glacier collapse or earthquakes. Check your official weather warnings, because Groundtruth never replaces them.",
+  "sms": "Groundtruth Kolkata, India 15 Jan 2022: Typical rain, temperature, snow and wind. Storms not checked. Check official warnings.",
+  "confidence_note": "The history is a grid of about 25 km and misses very local storms, and thunderstorms are not checked. Geological hazards such as landslides, glacier collapse and earthquakes need local civil protection and geological authorities."
  }
 }

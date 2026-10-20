@@ -117,8 +117,9 @@ def guardrail_cases():
                 changed(GOOD_VALENCIA, why=[*GOOD_VALENCIA["why"][:2], "The daily high felt like up to 20 °C."]),
                 VALENCIA)
     expect_pass('"extreme heat" on a High day',
-                changed(GOOD_KOLKATA, what_it_means="In extreme heat, avoid heavy exertion outdoors and drink water. "
-                                                    "Check your official weather warnings."), KOLKATA)
+                changed(GOOD_KOLKATA, what_it_means="Avoid heavy exertion outdoors, drink water, and check on older "
+                                                    "or vulnerable people. This matters most in extreme heat. Check "
+                                                    "your official weather warnings."), KOLKATA)
     expect_pass('"typical for October" on an Extreme day',
                 changed(GOOD_VALENCIA, confidence_note="Rain like this is not typical for October here, and the "
                                                        "history misses very local storms."), VALENCIA)
@@ -142,6 +143,14 @@ def guardrail_cases():
     expect_fail('"Typical weather" in the SMS',
                 changed(GOOD_PARIS, sms="Groundtruth Paris 7 Jan 2026: Typical weather. Check official warnings."),
                 PARIS, '"Typical weather" without saying what it covers')
+    expect_fail('Typical SMS without its scope',
+                changed(GOOD_PARIS, sms="Groundtruth: Typical for Paris, 7 Jan 2026. Check official warnings."),
+                PARIS, "Typical text message doesn't say what is typical")
+    expect_pass('Typical SMS with "temp" for temperature',
+                changed(GOOD_PARIS, sms="Groundtruth Paris 7 Jan 2026: Typical rain, temp, snow and wind. Check "
+                                        "official warnings."), PARIS)
+    for words in ("This matches the wording.", "These were in the facts for the day."):
+        expect_fail(f'talks about the prompt: "{words}"', why_with(GOOD_PARIS, words), PARIS, "talks about the facts")
     expect_pass('"normal conditions" followed by its scope',
                 why_with(GOOD_PARIS, "These are normal conditions for the rain, temperature, snow and wind we check."),
                 PARIS)
@@ -196,6 +205,48 @@ def guardrail_cases():
                 typical_reply(NEPAL, "Nepal-Tibet", f"{NOT_COVERED} For glacier collapse and landslides, check local "
                                                     "civil protection and geological authorities. Check your "
                                                     "official weather warnings."), NEPAL)
+
+    # On a Typical day, what it means starts with what the checks don't cover and never describes the day.
+    expect_pass("Typical: starts with the list, other wording",
+                changed(GOOD_PARIS, what_it_means="Thunderstorms, freezing rain, ice on roads and landslides are not "
+                                                  "checked. Check your official weather warnings."), PARIS)
+    expect_fail("Typical: starts by describing the day",
+                changed(GOOD_PARIS, what_it_means=f"Rain, cold and snow are within range for Paris. {NOT_COVERED} "
+                                                  "Check your official weather warnings."),
+                PARIS, "must start with what the checks don't cover")
+    expect_fail("Typical: Bayesian's earlier soft opening",
+                typical_reply(BAYESIAN, "Porticello", "The checks for rain, heat, cold, snow and wind do not point to "
+                                                      "anything beyond what this place sees regularly, but they do "
+                                                      "not cover thunderstorms, freezing rain or ice on roads, or "
+                                                      "landslides. Storms are a major cause of weather deaths, so "
+                                                      "follow official storm warnings."),
+                BAYESIAN, "must start with what the checks don't cover")
+    for words in ("Days like this are usual here.", "This place sees days like this regularly.",
+                  "The weather here was typical."):
+        expect_fail(f'Typical: describes the day later on ("{words}")',
+                    changed(GOOD_PARIS, what_it_means=f"{NOT_COVERED} {words} Check your official weather warnings."),
+                    PARIS, "describes the day itself")
+
+    # Elevated or higher: what it means starts with the action line.
+    expect_fail("High: action line not first",
+                changed(GOOD_KOLKATA, what_it_means=f"{NOT_COVERED} Avoid heavy exertion outdoors, drink water, and "
+                                                    "check on older or vulnerable people. Check your official "
+                                                    "weather warnings."), KOLKATA, "start with the action line")
+    expect_fail("Extreme: action line missing",
+                changed(GOOD_VALENCIA, what_it_means="Check your official weather warnings."), VALENCIA,
+                "start with the action line")
+
+    # Official warnings once in what it means, not twice (every level).
+    expect_fail("Typical: official warnings twice",
+                typical_reply(BAYESIAN, "Porticello", f"{NOT_COVERED} Follow official storm warnings. Check your "
+                                                      "official weather warnings."),
+                BAYESIAN, "official warnings 2 times (once only)")
+    expect_fail("High: official warnings twice",
+                changed(GOOD_KOLKATA, what_it_means=f"{GOOD_KOLKATA['what_it_means']} Follow official heat "
+                                                    "advice."), KOLKATA, "2 times (once only)")
+    expect_pass("Bayesian: storm note folded into the one official sentence",
+                typical_reply(BAYESIAN, "Porticello", f"{NOT_COVERED} Storms are a major cause of weather deaths, so "
+                                                      "check your official weather and storm warnings."), BAYESIAN)
 
     # "Deciding check" stays out of the headline, and plain words are used instead of the term.
     expect_fail('"deciding check" in the headline',

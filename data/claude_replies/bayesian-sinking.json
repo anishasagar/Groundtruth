@@ -1,6 +1,6 @@
 {
  "model": "claude-sonnet-5-5",
- "fingerprint": "9e618cb99da54766441dd77b7135e6c39ea29ccaf256aba3f40cc9f156846ddb",
+ "fingerprint": "9c57d5fa179882138398e85656c1bb92ae29c344d04b79e32328a3d1b6489c6e",
  "facts": {
   "place": "Porticello, Sicily, Italy",
   "day": "19 Aug 2024",
@@ -118,13 +118,13 @@
  "reply": {
   "headline": "Typical rain, temperature, snow and wind for Porticello, Sicily, Italy on 19 Aug 2024.",
   "why": [
-   "Normal rain for the last 6 days (13.8 mm) was the check that set the level, with 11.3 mm in the 5 days before and the forecast for the day itself.",
-   "Days with this much rain over 6 days happen about 21 times a year here now, compared with about 24 times a year in 1951–1980, which does not make today any less serious because the level is based on the recent 30 years.",
-   "Normal wind for here (gusts up to 45 km/h) and normal highs for here (feels like up to 33 °C) also fit the recent record.",
-   "Days with feels-like heat like this are 2.0 times more common here than in 1951–1980."
+   "Rain over the last 6 days set the level, at 14 mm in total.",
+   "Days with this much rain over 6 days happen about 21 times a year here now.",
+   "Normal wind for here (gusts up to 45 km/h), and normal highs for here (feels like up to 33 °C).",
+   "Feels-like heat at this level happens about 57 times a year now, and days like this are 2.0 times more common here than in 1951–1980."
   ],
-  "what_it_means": "The checks for rain, heat, cold, snow and wind do not point to anything beyond what this place sees regularly, but they do not cover thunderstorms, freezing rain or ice on roads, or geological hazards such as landslides or glacier collapse. Thunderstorms are not checked, and storms are a major cause of weather deaths, so follow official storm warnings. Check your official weather warnings, because Groundtruth never replaces them.",
-  "sms": "Groundtruth: Typical rain, heat, snow, wind for Porticello on 19 Aug 2024. Storms not checked. Check official warnings.",
-  "confidence_note": "The history data is a grid of about 25 km and misses very local storms, and thunderstorms are not checked. Rain totals use measured rain for earlier days and the forecast for the day itself, and landslides, glacier collapse or earthquakes need local civil protection and geological authorities."
+  "what_it_means": "The checks do not cover thunderstorms, hail, freezing rain or ice, wildfire, air quality, coastal flooding, or geological hazards such as landslides or glacier collapse. Storms are a major cause of weather deaths, so check your official weather and storm warnings.",
+  "sms": "Porticello 19 Aug 2024: Typical rain, temperature, snow and wind. Storms are not checked. Check official weather and storm warnings.",
+  "confidence_note": "The history is a grid of about 25 km and misses very local storms, and thunderstorms are not checked. Geological hazards such as landslides, glacier collapse and earthquakes need local civil protection and geological authorities."
  }
 }

@@ -1,6 +1,6 @@
 {
  "model": "claude-sonnet-5-5",
- "fingerprint": "53fab7f2d24292283057dcdd0a011e6c672435669521f5ae93c8a7ea974116b2",
+ "fingerprint": "c828801972956e1bd08697d5727a3f5d0ad1f6031a073bf7f2428b3ebdeded85",
  "facts": {
   "place": "Paiporta, Valencia, Spain",
   "day": "15 May 2024",
@@ -118,13 +118,13 @@
  "reply": {
   "headline": "Typical rain, temperature, snow and wind for Paiporta, Valencia, Spain on 15 May 2024.",
   "why": [
-   "Rain over the last 6 days, 0.3 mm in total, was the check that set the level.",
-   "Normal rain for the last 6 days (0.3 mm), with days like this happening about 45 times a year here now.",
-   "Days like this were more common in 1951–1980, which does not make this day any less serious, because the level is based on the recent 30 years.",
-   "Normal wind for here (gusts up to 34 km/h) and no snow forecast."
+   "Normal rain for the last 6 days (0.3 mm) was the check that set the level, based on measured rain for the earlier days and the forecast for the day itself.",
+   "Rain totals like this over 6 days happen about 45 times a year here now, against about 51 times a year in 1951–1980.",
+   "That difference does not make the day any less serious, because the level is based on the recent 30 years, 1994–2024.",
+   "Normal wind for here (gusts up to 34 km/h) and normal rain for here (0.1 mm) were also part of the checks."
   ],
-  "what_it_means": "The checks cover rain, heat, cold, snow, wind and recent rain only. They do not cover thunderstorms, freezing rain or ice on roads, or geological hazards such as landslides or glacier collapse. Check your official weather warnings, because Groundtruth never replaces them.",
-  "sms": "Groundtruth: Typical rain, heat, cold, snow and wind for Paiporta on 15 May 2024. Thunderstorms not checked. Check your official warnings.",
-  "confidence_note": "The history data is a grid of about 25 km and misses very local storms, and thunderstorms are not checked. Geological hazards such as landslides, glacier collapse and earthquakes need local civil protection and geological authorities."
+  "what_it_means": "The checks do not cover thunderstorms, hail, freezing rain or ice, wildfire, air quality, coastal flooding, or geological hazards such as landslides, glacier collapse or earthquakes. Check your official weather warnings, because Groundtruth never replaces them.",
+  "sms": "Groundtruth: Typical rain, temperature, snow and wind for Paiporta on 15 May 2024. Storms not checked. Check official warnings.",
+  "confidence_note": "The history data is a grid of about 25 km and misses very local storms, and thunderstorms are not checked. Geological hazards such as landslides, glacier collapse or earthquakes need local civil protection and geological authorities."
  }
 }

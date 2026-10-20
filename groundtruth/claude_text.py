@@ -64,13 +64,21 @@ the level, in plain words (for example "Rain over the last 6 days set the level"
 check". Use the check's value, how often days like this happen here now, and the comparison with the comparison \
 period when it helps. Each bullet must tell the reader something new; the app shows the full \
 numbers separately, so don't list every check.
-- what_it_means: 1 to 4 sentences on what this means for a decision today. If "action_line" is given, include it. \
-If the level is Typical, it must not sound like an all-clear: say in plain words what the checks don't cover, \
-taken from "scope_notes": thunderstorms, freezing rain or ice on roads, and geological hazards such as landslides \
-or glacier collapse. If "special_note" is given, it is what weather data missed at this place: include it in plain \
-words. The last sentence must tell people to check their official warnings, using the word "official".
+- what_it_means: 1 to 4 sentences on what this means for a decision today. Mention official warnings exactly once, \
+in the last sentence, using the word "official"; usually: "Check your official weather warnings, because \
+Groundtruth never replaces them."
+  - If the level is not Typical: write "action_line", copied exactly, then the official warnings sentence, and \
+nothing else (the why bullets carry the numbers, and the app shows what the checks don't cover).
+  - If the level is Typical: do not describe the day or its weather at all (no "usual", "regular", "typical", \
+"normal", nothing about what this place sees). Start with what the checks don't cover, taken from "scope_notes", \
+for example: "The checks do not cover thunderstorms, freezing rain or ice on roads, or geological hazards such as \
+landslides or glacier collapse."
+  - Only if "special_note" is given (it is what weather data missed at this place), include it in plain words. If it \
+is about storms, make it the last sentence: "Storms are a major cause of weather deaths, so check your official \
+weather and storm warnings." Otherwise don't repeat the storm note here.
 - sms: a text message of at most 160 characters, plain ASCII only (write "C" instead of "°C", "-" instead of a long \
-dash, no accents). It must contain the level word exactly as given, the place, and the word "official".
+dash, no accents). It must contain the level word exactly as given, the place, and the word "official". If the \
+level is Typical, say what is typical, as in the headline: "Typical rain, temperature, snow and wind".
 - confidence_note: 1 or 2 sentences on what the data can't see, taken from "scope_notes" and "data_notes" (for example \
 that the history is a grid of about 25 km and misses very local storms, that thunderstorms are not checked, or that \
 rain totals assume the forecast rain falls). If it fits, mention that geological hazards (landslides, glacier \
@@ -103,7 +111,11 @@ more often in the comparison period ("less_common_now" is true), do not present 
 out, or, in the same or the next sentence, say it does not make today any less serious, because the level is based on the recent \
 30 years.
 8. Groundtruth never replaces official warnings. Always point people to them.
-9. Never fill gaps with guesses. Say only what the facts say. Groundtruth covers weather-driven hazards only.
+9. Say only what is in the facts. Never fill gaps with guesses, and add nothing of your own: no descriptions of the \
+place, its terrain, its season or its usual weather (never things like "mountain terrain like this"), no \
+explanations from your own knowledge, and no advice beyond "action_line", the notes and official warnings. Write \
+for the reader: never mention "the facts", "the wording" or field names. \
+Groundtruth covers weather-driven hazards only.
 10. Keep it short, plain and calm. No exclamation marks, no markdown, no emojis."""
 
 
@@ -149,6 +161,14 @@ SPECIAL_NOTES = {  # what weather data missed at a replay's place (replays.SPECI
 }
 # How what_it_means must mention each special note.
 SPECIAL_NOTE_WORDS = {"storm": r"\bstorm warnings\b", "geological": r"\bcivil protection\b|\bgeological authorities\b"}
+# On a Typical day, what_it_means starts with what the checks don't cover...
+_NOT_COVERED_START = re.compile(
+    r"^(the |our |these )?(checks?|groundtruth|data)\b[^,.;:]{0,30}?\b(do(es)?n[o']t|do(es)? not|cannot|can't|never) "
+    r"(cover|check|include|see)\b|^(thunderstorms|storms|hail|ice|freezing rain|landslides|geological hazards)\b", re.I)
+# ...and doesn't describe the day itself.
+_DAY_WORDS = re.compile(r"\b(regular(ly)?|usual(ly)?|unusual|ordinary|expected|typical|normal(ly)?|"
+                        r"this (place|area|day|date) (sees|gets|has|had)|today'?s weather|"
+                        r"the weather (today|on this day|here))\b", re.I)
 # What a Typical day's what_it_means must say the checks don't cover.
 NOT_COVERED = {"thunderstorms": r"\b(thunder)?storms?\b", "ice": r"\b(ice|icy|freezing)\b",
                "landslides or glacier collapse": r"\b(landslides?|glaciers?|geological)\b"}
@@ -232,9 +252,10 @@ BANNED = [
     (re.compile(r"\b(due to|because of|driven by|thanks to|result of) (the )?(climate|global warming)", re.I),
      "blames climate change"),
     (re.compile(r"\bless (common|frequent|often)\b", re.I), "less common"),
+    (re.compile(r"\b(the|in the|from the) facts\b|\bthe wording\b", re.I), "talks about the facts"),
 ]
 # What the checks cover. A Typical headline, and any "typical weather"-style phrase, must name all of these.
-SCOPE = {"rain": r"\brain", "temperature": r"\b(temperatures?|heat|cold|feels-like)\b", "snow": r"\bsnow",
+SCOPE = {"rain": r"\brain", "temperature": r"\b(temperatures?|temp|heat|cold|feels-like)\b", "snow": r"\bsnow",
          "wind": r"\bwinds?\b|\bgusts?\b"}
 _BROAD = re.compile(r"\b(typical|normal) (weather|conditions|day)\b", re.I)
 _SENTENCE_END = re.compile(r"[.!?](\s|$)|\n")
@@ -297,6 +318,9 @@ def check_reply(reply, f):
     if level == "Typical" and _missing_scope(reply["headline"]):
         problems.append("the Typical headline doesn't say what is typical (missing: "
                         f"{', '.join(_missing_scope(reply['headline']))})")
+    if level == "Typical" and _missing_scope(reply["sms"]):
+        problems.append("the Typical text message doesn't say what is typical (missing: "
+                        f"{', '.join(_missing_scope(reply['sms']))})")
     if re.search(r"\bdeciding\b", reply["headline"], re.I):
         problems.append('the headline mentions the "deciding check"')
     if re.search(r"\bdeciding checks?\b", everything, re.I):
@@ -357,20 +381,33 @@ def check_reply(reply, f):
     # 6. Bullets and official warnings.
     if not MIN_WHY <= len(why) <= MAX_WHY:
         problems.append(f"it has {len(why)} why bullets (needs {MIN_WHY} to {MAX_WHY})")
-    if "official" not in reply["what_it_means"].lower():
+    meaning = reply["what_it_means"].strip()
+    sentences = [x for x in re.split(r"(?<=[.!?])\s+", meaning) if x]
+    officials = len(re.findall(r"\bofficial\b", meaning, re.I))
+    if not officials:
         problems.append("what it means doesn't point to official warnings")
-    else:
-        sentences = [x for x in re.split(r"(?<=[.!?])\s+", reply["what_it_means"].strip()) if x]
-        if "official" not in sentences[-1].lower():
-            problems.append("what it means doesn't end by pointing to official warnings")
+    elif "official" not in sentences[-1].lower():
+        problems.append("what it means doesn't end by pointing to official warnings")
+    if officials > 1:
+        problems.append(f"what it means mentions official warnings {officials} times (once only)")
 
-    # 7. A Typical day must not sound like an all-clear: say what the checks don't cover.
+    # 7. Elevated or higher: what it means starts with the action line, so nothing pushes it down.
+    action = f.get("action_line")
+    if level != "Typical" and action and not meaning.startswith(action):
+        problems.append("what it means doesn't start with the action line")
+
+    # 8. A Typical day must not sound like an all-clear: say what the checks don't cover.
     if level == "Typical":
         missing = [name for name, pattern in NOT_COVERED.items()
                    if not re.search(pattern, reply["what_it_means"], re.I)]
         if missing:
             problems.append("on a Typical day, what it means doesn't say what the checks don't cover "
                             f"(missing: {', '.join(missing)})")
+        if not _NOT_COVERED_START.match(meaning):
+            problems.append("on a Typical day, what it means must start with what the checks don't cover")
+        day = _DAY_WORDS.search(meaning)
+        if day:
+            problems.append(f'on a Typical day, what it means describes the day itself ("{day.group()}")')
     kind = f.get("special_note_kind")
     if kind and not re.search(SPECIAL_NOTE_WORDS[kind], reply["what_it_means"], re.I):
         problems.append(f"what it means doesn't mention the {kind} note for this place")

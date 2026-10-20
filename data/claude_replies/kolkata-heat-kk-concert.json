@@ -1,6 +1,6 @@
 {
  "model": "claude-sonnet-5-5",
- "fingerprint": "75c5a30d9f5f8a67f5252123c8fdcb88b2b57db86b69056d5f32e389652b662a",
+ "fingerprint": "df9ec58072e9c53917cf5d92b4558512c143b1b072075c55eac9810793f5d6e6",
  "facts": {
   "place": "Kolkata, India",
   "day": "31 May 2022",
@@ -113,12 +113,12 @@
  "reply": {
   "headline": "High risk of feels-like heat in Kolkata, India on 31 May 2022.",
   "why": [
-   "Feels-like heat set the level, reaching 41 °C, at or above the 40 °C danger line.",
-   "Days with feels-like heat like this happen about 48 times a year here now.",
-   "That is 1.4 times more common here than in 1951–1980, when it was about 34 times a year."
+   "Feels-like heat set the level, with a value of 41 °C, at or above the 40 °C danger line.",
+   "Days like this happen about 48 times a year here now, based on the 30 years before this date.",
+   "Days like this are 1.4 times more common here than in 1951–1980, when they happened about 34 times a year."
   ],
-  "what_it_means": "Avoid heavy exertion outdoors, drink water, and check on older or vulnerable people. Rain, snow and wind were not the concern: Normal wind for here (gusts up to 28 km/h). Check your official weather warnings, because Groundtruth never replaces them.",
-  "sms": "Kolkata, 31 May 2022: High risk of feels-like heat, 41 C. Avoid heavy exertion, drink water. Check your official weather warnings.",
-  "confidence_note": "Thunderstorms are not checked, and the history data is a grid of about 25 km that misses very local storms. Geological hazards such as landslides, glacier collapse or earthquakes need local civil protection and geological authorities."
+  "what_it_means": "Avoid heavy exertion outdoors, drink water, and check on older or vulnerable people. Check your official weather warnings, because Groundtruth never replaces them.",
+  "sms": "Kolkata, India 31 May 2022: High risk of feels-like heat (41 C). Drink water, avoid heavy exertion. Check official weather warnings.",
+  "confidence_note": "The history data is a grid of about 25 km and misses very local storms, and thunderstorms are not checked. For landslides, glacier collapse or earthquakes, check local civil protection and geological authorities."
  }
 }
