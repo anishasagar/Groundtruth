@@ -24,8 +24,10 @@ GEOLOGICAL_NOTE = ("Groundtruth covers weather-driven hazards only. For geologic
                    "glacier collapse, earthquakes), check local civil protection and geological authorities.")
 
 # {when} becomes "today", or "on this day" when the date isn't today (replays, other dates).
+# Typical says what is typical, never a whole-day verdict, and names what the checks can't see.
 HEADLINES = {
-    "Typical": "Normal conditions for here, for the rain, temperature, snow and wind we check.",
+    "Typical": ("Typical rain, temperature, snow and wind for here. These checks can't see thunderstorms, "
+                "ice on roads, or landslides and glacier collapse."),
     "Elevated": "Risk here {when} is higher than usual.",
     "High": "Risk here {when} is unusually high.",
     "Extreme": "Risk here {when} is extremely high.",
@@ -38,6 +40,14 @@ ACTIONS = {
     "wind": "Secure loose objects and stay away from trees.",
     "snow": "Avoid unnecessary travel; roads and transport may be disrupted.",
     "cold": "Dress in layers, limit time outside, and check on older or vulnerable people.",
+}
+# The same actions, short enough for a text message. Never dropped from one.
+SMS_ACTIONS = {
+    "rain": "Avoid low roads and riverbanks.",
+    "heat": "Avoid exertion, drink water, check on older people.",
+    "wind": "Secure loose objects, stay away from trees.",
+    "snow": "Avoid unnecessary travel.",
+    "cold": "Dress warmly, check on older people.",
 }
 HAZARD_OF_CHECK = {"rain_mm": "rain", "recent_rain_mm": "rain", "feels_like_max_c": "heat",
                    "feels_like_min_c": "cold", "snow_cm": "snow", "gust_max_kmh": "wind"}
@@ -58,6 +68,16 @@ LIKE_THIS = {
 SMS_LIMIT = 160
 # What a Typical level covers. "Typical weather" would sound like everything is fine.
 TYPICAL_SCOPE = "Typical rain, temperature, snow and wind"
+# Every Typical text message ends with what isn't checked (never dropped to save space).
+TYPICAL_SMS_LIMITS = "Storms, ice, landslides not checked."
+
+# Snow or rain on a day that drops to freezing. Ice itself isn't checked yet (Phase 2).
+ICE_NOTE = "Snow or rain on freezing ground can make roads icy, and ice isn't checked."
+ICE_SMS = "Roads may be icy."
+# The day's values come from a forecast, also for past days (the past-forecast archive).
+FORECAST_NOTE = "The day's figures are a forecast and can be too low."
+# When a danger line set the level, how often it happens here must not sound reassuring.
+DANGER_LINE_NOTE = "This is at or above the danger line, so it matters however often it happens here."
 
 
 def day_text(date):
@@ -78,15 +98,43 @@ def deciding_check(result):
     return min(tied, key=lambda c: c["recent"]["per_year"])  # min keeps the first on a tie
 
 
-def action_line(result):
+def action_line(result, actions=ACTIONS):
     if result["level"] == "Typical":
         return None
     check = deciding_check(result)
-    return ACTIONS.get(HAZARD_OF_CHECK.get(check["key"])) if check else None
+    return actions.get(HAZARD_OF_CHECK.get(check["key"])) if check else None
+
+
+def sms_action(result):
+    return action_line(result, SMS_ACTIONS)
+
+
+def _value(result, key):
+    c = next((c for c in result["checks"] if c["key"] == key), None)
+    v = None if c is None else c.get("value")
+    return None if v is None or pd.isna(v) else v
+
+
+def ice_note(result):
+    """ICE_NOTE when snow or rain is forecast and the day drops to 0 °C or below, else None.
+
+    Uses the day's lowest air temperature; if the forecast doesn't have it, the feels-like low.
+    """
+    wet = any((_value(result, k) or 0) > 0 for k in ("rain_mm", "snow_cm"))
+    low = result.get("air_min_c")
+    if low is None or pd.isna(low):
+        low = _value(result, "feels_like_min_c")
+    return ICE_NOTE if wet and low is not None and low <= 0 else None
+
+
+def danger_line_set_level(c):
+    """True when the danger line, not how rare the value is here, set this check's level."""
+    return bool(c.get("crosses_danger_line")) and c.get("relative_level") in risk.LEVELS \
+        and risk.LEVELS.index(c["relative_level"]) < risk.LEVELS.index(c["level"])
 
 
 def template_sentence(result, today=None):
-    """Headline, one action line (not for Typical), then the official-warnings line."""
+    """Headline, one action line (not for Typical), the ice note if any, then the official-warnings line."""
     today = today or dt.date.today()
     level = result["level"]
     if level not in risk.LEVELS:
@@ -95,17 +143,19 @@ def template_sentence(result, today=None):
     action = action_line(result)
     if action:
         parts.append(action)
+    if ice_note(result):
+        parts.append(ice_note(result))
     parts.append(OFFICIAL_LINE)
     return " ".join(parts)
 
 
 LEAD = {  # how a check that is Elevated or higher opens its bullet, and what "like this" refers to
-    "rain_mm": ("Rain of {v} in 24 h", "Rain"),
-    "recent_rain_mm": ("Rain of {v} over {n} days", "A wet spell"),
-    "feels_like_max_c": ("Feels like {v}", "Heat"),
-    "feels_like_min_c": ("Feels as cold as {v}", "Cold"),
-    "snow_cm": ("Snowfall of {v} in 24 h", "Snow"),
-    "gust_max_kmh": ("Gusts up to {v}", "Wind"),
+    "rain_mm": ("Forecast rain of {v} in 24 h", "Rain"),
+    "recent_rain_mm": ("Rain of {v} over {n} days, including the forecast for the day", "A wet spell"),
+    "feels_like_max_c": ("Forecast to feel like {v}", "Heat"),
+    "feels_like_min_c": ("Forecast to feel as cold as {v}", "Cold"),
+    "snow_cm": ("Forecast snowfall of {v} in 24 h", "Snow"),
+    "gust_max_kmh": ("Forecast gusts up to {v}", "Wind"),
 }
 HOW_COMMON = {"Typical": "common", "Elevated": "uncommon", "High": "rare", "Extreme": "very rare"}
 
@@ -130,6 +180,13 @@ def _unusual_bullet(c, result):
     recent, ratio_text = c["recent"], c["ratio_text"]
     years = risk.RECENT_WINDOW_YEARS
     not_less = f"but that doesn't make today any less serious: the level is based on the recent {years} years."
+    if danger_line_set_level(c):  # "common here" would undercut the danger line
+        often = _days(c, c["recent_text"])
+        if c["ratio"] is not None and c["ratio"] < 0.95:
+            return text + (f"That line matters however often this happens here: {often}. It was more frequent "
+                           f"in {result['baseline_label']} ({_days(c, c['baseline_text'])}), {not_less}")
+        ratio_text = ratio_text.replace(" here than", " than").replace(" here as", " as")
+        return text + f"That line matters however often this happens here: {often}, {ratio_text}."
     if c["baseline"]["count"] and not recent["count"]:  # seen then, not seen recently
         return text + (f"Not seen in the {years} years before this date. It happened in {result['baseline_label']} "
                        f"({c['baseline_text']}), {not_less}")
@@ -151,7 +208,7 @@ def _unusual_bullet(c, result):
 def why_bullets(result):
     """What decided the level comes first, then the other unusual checks, then the Typical ones.
 
-    The last line is the rain total for the days before the date.
+    Then the rain total for the days before the date, and last that the day's figures are a forecast.
     """
     def rank(c):  # higher = shown earlier; "Not enough data" sits just above Typical
         return risk.LEVELS.index(c["level"]) if c["level"] in risk.LEVELS else 0.5
@@ -179,6 +236,7 @@ def why_bullets(result):
     else:
         forecast = " (forecast)" if rain["source"] == "forecast" else ""
         bullets.append(f"**Rain in the {days} days before:** {rain['before_total']:.1f} mm{forecast}")
+    bullets.append(f"**About these figures:** {FORECAST_NOTE}")
     return bullets
 
 
@@ -212,37 +270,41 @@ def _sms_level(level):
 
 
 def sms_text(result, place):
-    """A text message of at most 160 characters (plain ASCII, so it stays one SMS)."""
+    """A text message of at most 160 characters (plain ASCII, so it stays one SMS).
+
+    To fit, the number goes first, then the place name is shortened. The ice note, what a Typical
+    day doesn't check, the short action and the official-warnings line are never dropped.
+    """
     place = _ascii(place).strip() or "your area"
     day = _ascii(day_text(result["date"]))
     level = result["level"]
 
     if level not in risk.LEVELS:
-        candidates = [f"Groundtruth {place} {day}: Not enough data - check official sources."]
+        must, details = ["Not enough data - check official sources."], [""]
+        head = "Groundtruth {place}" + f" {day}:"
     else:
-        head = f"Groundtruth {place} {day}: {_sms_level(level)}."
-        tail = "Check official warnings."
         check = deciding_check(result)
         detail = ""
         if check is not None and level != "Typical":
             unit = _ascii(check["unit"]).strip() or "C"  # "°C" -> "C"
-            detail = f"{SHORT_NAMES[check['key']]} {amount(check['value'], unit)}."
-        action = action_line(result)
-        candidates = [
-            " ".join(p for p in (head, detail, action, tail) if p),
-            " ".join(p for p in (head, detail, tail) if p),
-            f"{head} {tail}",
-        ]
+            when = "incl. forecast" if check["key"] == risk.RECENT_RAIN_KEY else "forecast"
+            detail = f"{SHORT_NAMES[check['key']]} {amount(check['value'], unit)} {when}."
+        must = [ICE_SMS if ice_note(result) else "",
+                TYPICAL_SMS_LIMITS if level == "Typical" else (sms_action(result) or ""),
+                "Check official warnings."]
+        details = [detail, ""]
+        head = "Groundtruth {place}" + f" {day}: {_sms_level(level)}."
 
-    for text in candidates:
+    def build(where, detail):
+        return " ".join(p for p in (head.format(place=where), detail, *must) if p)
+
+    for detail in details:
+        text = build(place, detail)
         if len(text) <= SMS_LIMIT:
             return text
-    # Last resort: shorten the place name.
-    for n in range(len(place), 0, -1):
-        short = place[: n - 1] + "." if n < len(place) else place
-        text = (f"Groundtruth {short} {day}: {_sms_level(level)}. Check official warnings." if level in risk.LEVELS
-                else f"Groundtruth {short} {day}: Not enough data - check official sources.")
+    # Shorten the place name, then leave it out.
+    for n in range(len(place) - 1, 0, -1):
+        text = build(place[: n - 1] + ".", "")
         if len(text) <= SMS_LIMIT:
             return text
-    return ("Groundtruth: Not enough data - check official sources." if level not in risk.LEVELS
-            else f"Groundtruth: {_sms_level(level)}. Check official warnings.")
+    return build("", "").replace("Groundtruth  ", "Groundtruth ")

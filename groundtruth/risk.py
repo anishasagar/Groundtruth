@@ -190,7 +190,7 @@ def _typical_text(key, value):
         return f"Normal highs for here (feels like up to {value:.0f} °C)"
     if key == "feels_like_min_c":
         return f"Normal lows for here (feels like down to {value:.0f} °C)"
-    return f"Normal wind for here (gusts up to {value:.0f} km/h)"
+    return f"Normal wind for here (gusts up to {value:.0f} km/h; the data misses sudden local storm gusts)"
 
 
 def _unusual_text(recent, recent_text, ratio_text, crosses, danger_line, unit):
@@ -360,5 +360,6 @@ def assess(lat, lon, date, today=None):
         "forecast_grid_point": fc["grid_point"],
         "history_source": hist["source"],
         "history_grid_point": hist["grid_point"],
+        "air_min_c": fc.get("air_min_c"),  # the day's lowest air temperature, if the forecast has it (ice note)
         "notes": notes + ALWAYS_NOTES,
     }

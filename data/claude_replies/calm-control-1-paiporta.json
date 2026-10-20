@@ -1,6 +1,6 @@
 {
  "model": "claude-sonnet-5-5",
- "fingerprint": "c828801972956e1bd08697d5727a3f5d0ad1f6031a073bf7f2428b3ebdeded85",
+ "fingerprint": "8249c02f254e9d9890336da4277d29eca1fe7e3ba42541122dfc0c2435e44d73",
  "facts": {
   "place": "Paiporta, Valencia, Spain",
   "day": "15 May 2024",
@@ -74,7 +74,7 @@
     "name": "Wind gust",
     "value": "34 km/h",
     "level": "Typical",
-    "wording": "Normal wind for here (gusts up to 34 km/h)",
+    "wording": "Normal wind for here (gusts up to 34 km/h; the data misses sudden local storm gusts)",
     "how_often_in_recent_period": "about 154 times a year",
     "how_often_in_comparison_period": "about 143 times a year",
     "comparison": "1.1 times more common here than in 1951–1980",
@@ -104,12 +104,15 @@
    "based_on": "measured rain for the earlier days and the forecast for the day itself"
   },
   "action_line": null,
+  "sms_action": null,
+  "ice_note": null,
   "official_warnings": "Check your official weather warnings — Groundtruth never replaces them.",
   "scope_notes": [
    "We check rain, heat, cold, snow, wind and recent rain. We don't yet check thunderstorms, hail, freezing rain or ice, wildfire, air quality, coastal flooding, or geological hazards. For those, follow official warnings.",
    "Thunderstorms are not checked. Storms are a major cause of weather deaths — follow official storm warnings.",
    "The history data is a ~25 km grid and misses very local storms.",
-   "Groundtruth covers weather-driven hazards only. For landslides, glacier collapse or earthquakes, check local civil protection and geological authorities."
+   "Groundtruth covers weather-driven hazards only. For landslides, glacier collapse or earthquakes, check local civil protection and geological authorities.",
+   "The day's figures are a forecast and can be too low."
   ],
   "data_notes": [],
   "special_note": null,
@@ -118,13 +121,13 @@
  "reply": {
   "headline": "Typical rain, temperature, snow and wind for Paiporta, Valencia, Spain on 15 May 2024.",
   "why": [
-   "Normal rain for the last 6 days (0.3 mm) was the check that set the level, based on measured rain for the earlier days and the forecast for the day itself.",
-   "Rain totals like this over 6 days happen about 45 times a year here now, against about 51 times a year in 1951–1980.",
-   "That difference does not make the day any less serious, because the level is based on the recent 30 years, 1994–2024.",
-   "Normal wind for here (gusts up to 34 km/h) and normal rain for here (0.1 mm) were also part of the checks."
+   "Recent rain over the last 6 days set the level, with 0.3 mm in total.",
+   "Days with this much recent rain happen about 45 times a year here now, against about 51 times a year in 1951–1980.",
+   "That does not make the day any less serious, because the level is based on the recent 30 years, 1994–2024.",
+   "Normal wind for here (gusts up to 34 km/h; the data misses sudden local storm gusts)."
   ],
-  "what_it_means": "The checks do not cover thunderstorms, hail, freezing rain or ice, wildfire, air quality, coastal flooding, or geological hazards such as landslides, glacier collapse or earthquakes. Check your official weather warnings, because Groundtruth never replaces them.",
-  "sms": "Groundtruth: Typical rain, temperature, snow and wind for Paiporta on 15 May 2024. Storms not checked. Check official warnings.",
-  "confidence_note": "The history data is a grid of about 25 km and misses very local storms, and thunderstorms are not checked. Geological hazards such as landslides, glacier collapse or earthquakes need local civil protection and geological authorities."
+  "what_it_means": "The checks do not cover thunderstorms, hail, freezing rain or ice on roads, wildfire, air quality, coastal flooding, or geological hazards such as landslides or glacier collapse. Check your official weather warnings, because Groundtruth never replaces them.",
+  "sms": "Typical rain, temperature, snow and wind in Paiporta, Valencia, Spain. Storms, ice, landslides not checked. Check official warnings.",
+  "confidence_note": "The history is a grid of about 25 km and misses very local storms, and the day's figures are a forecast and can be too low. Landslides, glacier collapse and earthquakes need local civil protection and geological authorities."
  }
 }

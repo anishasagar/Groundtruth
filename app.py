@@ -146,6 +146,7 @@ def how_sure_box(result, confidence_note=None):
         st.markdown(
             "- Official weather warnings come first. Groundtruth never replaces them.\n"
             "- The history data is a grid of about 25 km, so it misses very local storms.\n"
+            f"- {message.FORECAST_NOTE}\n"
             f"- {GEOLOGICAL_NOTE}"
         )
         if rain.get("source") == "forecast":
@@ -193,7 +194,8 @@ def show_assessment(result, place, replay_name=None):
         st.markdown(f"### {plain(reply['headline'])}")
         st.markdown(plain(reply["what_it_means"]))
         st.markdown("\n".join(f"- {plain(b)}" for b in reply["why"]))
-        st.caption("Written by Claude from the computed facts; the level and every number were checked in code.")
+        st.caption("Written by Claude from the computed facts. The level is set in code, "
+                   "and every number was checked against those facts.")
     else:
         st.markdown(f"### {message.template_sentence(result)}")
         st.caption("Template mode: this sentence is built from the numbers, not written by an AI.  \n"

@@ -1,6 +1,6 @@
 {
  "model": "claude-sonnet-5-5",
- "fingerprint": "df9ec58072e9c53917cf5d92b4558512c143b1b072075c55eac9810793f5d6e6",
+ "fingerprint": "651bc25e722f164cab0822bc35cecff7b2440d3a00e7c7dca66e0ccf2b6a945b",
  "facts": {
   "place": "Kolkata, India",
   "day": "31 May 2022",
@@ -37,7 +37,8 @@
     "less_common_now": false,
     "danger_line": "40 °C",
     "danger_line_crossed": true,
-    "set_by": "danger line"
+    "set_by": "danger line",
+    "danger_line_note": "This is at or above the danger line, so it matters however often it happens here."
    },
    {
     "name": "Feels-like cold",
@@ -69,7 +70,7 @@
     "name": "Wind gust",
     "value": "28 km/h",
     "level": "Typical",
-    "wording": "Normal wind for here (gusts up to 28 km/h)",
+    "wording": "Normal wind for here (gusts up to 28 km/h; the data misses sudden local storm gusts)",
     "how_often_in_recent_period": "about 177 times a year",
     "how_often_in_comparison_period": "about 186 times a year",
     "comparison": "about as common here as in 1951–1980",
@@ -99,12 +100,15 @@
    "based_on": "measured rain for the earlier days and the forecast for the day itself"
   },
   "action_line": "Avoid heavy exertion outdoors, drink water, and check on older or vulnerable people.",
+  "sms_action": "Avoid exertion, drink water, check on older people.",
+  "ice_note": null,
   "official_warnings": "Check your official weather warnings — Groundtruth never replaces them.",
   "scope_notes": [
    "We check rain, heat, cold, snow, wind and recent rain. We don't yet check thunderstorms, hail, freezing rain or ice, wildfire, air quality, coastal flooding, or geological hazards. For those, follow official warnings.",
    "Thunderstorms are not checked. Storms are a major cause of weather deaths — follow official storm warnings.",
    "The history data is a ~25 km grid and misses very local storms.",
-   "Groundtruth covers weather-driven hazards only. For landslides, glacier collapse or earthquakes, check local civil protection and geological authorities."
+   "Groundtruth covers weather-driven hazards only. For landslides, glacier collapse or earthquakes, check local civil protection and geological authorities.",
+   "The day's figures are a forecast and can be too low."
   ],
   "data_notes": [],
   "special_note": null,
@@ -113,12 +117,12 @@
  "reply": {
   "headline": "High risk of feels-like heat in Kolkata, India on 31 May 2022.",
   "why": [
-   "Feels-like heat set the level, with a value of 41 °C, at or above the 40 °C danger line.",
-   "Days like this happen about 48 times a year here now, based on the 30 years before this date.",
-   "Days like this are 1.4 times more common here than in 1951–1980, when they happened about 34 times a year."
+   "Feels-like heat set the level, with a feels-like temperature of 41 °C.",
+   "That is at or above the 40 °C danger line, so it matters however often it happens here.",
+   "Days like this happen about 48 times a year here now, which is 1.4 times more common here than in 1951–1980."
   ],
   "what_it_means": "Avoid heavy exertion outdoors, drink water, and check on older or vulnerable people. Check your official weather warnings, because Groundtruth never replaces them.",
-  "sms": "Kolkata, India 31 May 2022: High risk of feels-like heat (41 C). Drink water, avoid heavy exertion. Check official weather warnings.",
-  "confidence_note": "The history data is a grid of about 25 km and misses very local storms, and thunderstorms are not checked. For landslides, glacier collapse or earthquakes, check local civil protection and geological authorities."
+  "sms": "High risk of feels-like heat in Kolkata, India, 31 May 2022. Avoid exertion, drink water, check on older people. Check official warnings.",
+  "confidence_note": "The history is a grid of about 25 km and misses very local storms, and the day's figures are a forecast and can be too low. Geological hazards (landslides, glacier collapse, earthquakes) need local civil protection and geological authorities."
  }
 }

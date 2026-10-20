@@ -32,3 +32,9 @@ A web app that tells a person, in one plain sentence, how unusual today's weathe
 - Rain and wind: replace the fixed danger lines with location-adaptive ones. Trigger if today's value exceeds the 99th percentile of the 75-year ERA5 record for that location.
 - Heat: trigger if today's feels-like value exceeds the location's 99th percentile OR is 40 °C or more. Keep this fixed floor: the human body's heat limit doesn't adapt to local climate, and the percentile itself rises as the climate warms.
 - Before building this, print Kolkata's 99th-percentile feels-like value and show it to me.
+- From the false-reassurance review:
+  - Numbers: check each number in Claude's text against its own check (the value next to that check's name and unit, the rate next to "times a year"), not just against all the facts. Today a danger-line number can pass as a check's value.
+  - Geological note on every result, not only the Nepal-Tibet replay. Decide where it goes with the layout.
+  - "Not enough data" must not hide a higher reading: keep "Not enough data — check official sources" and add what the checks that did run already reach (for example Elevated).
+  - Rounding: round cold values toward colder, show one decimal within about 1 unit of a danger line, and never show a rounded value at or above a line that wasn't crossed.
+  - Rare Typical checks: for a check that happens only a few times a year (Paris snow, about 1.1 times a year), show how often it happens instead of "Normal…". Don't lower anything.

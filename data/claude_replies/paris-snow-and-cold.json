@@ -1,6 +1,6 @@
 {
  "model": "claude-sonnet-5-5",
- "fingerprint": "4ee6d77465c65375daffc553c498de2e3fadc6cd466438ad7a4485cdc63cf1c2",
+ "fingerprint": "f9b4efd9b31ed14df6fb7ca6c110eb0ebea6143d1d9b735cc561e96544f83c19",
  "facts": {
   "place": "Paris, France",
   "day": "7 Jan 2026",
@@ -74,7 +74,7 @@
     "name": "Wind gust",
     "value": "36 km/h",
     "level": "Typical",
-    "wording": "Normal wind for here (gusts up to 36 km/h)",
+    "wording": "Normal wind for here (gusts up to 36 km/h; the data misses sudden local storm gusts)",
     "how_often_in_recent_period": "about 172 times a year",
     "how_often_in_comparison_period": "about 158 times a year",
     "comparison": "1.1 times more common here than in 1951–1980",
@@ -104,12 +104,15 @@
    "based_on": "measured rain for the earlier days and the forecast for the day itself"
   },
   "action_line": null,
+  "sms_action": null,
+  "ice_note": "Snow or rain on freezing ground can make roads icy, and ice isn't checked.",
   "official_warnings": "Check your official weather warnings — Groundtruth never replaces them.",
   "scope_notes": [
    "We check rain, heat, cold, snow, wind and recent rain. We don't yet check thunderstorms, hail, freezing rain or ice, wildfire, air quality, coastal flooding, or geological hazards. For those, follow official warnings.",
    "Thunderstorms are not checked. Storms are a major cause of weather deaths — follow official storm warnings.",
    "The history data is a ~25 km grid and misses very local storms.",
-   "Groundtruth covers weather-driven hazards only. For landslides, glacier collapse or earthquakes, check local civil protection and geological authorities."
+   "Groundtruth covers weather-driven hazards only. For landslides, glacier collapse or earthquakes, check local civil protection and geological authorities.",
+   "The day's figures are a forecast and can be too low."
   ],
   "data_notes": [],
   "special_note": null,
@@ -118,12 +121,13 @@
  "reply": {
   "headline": "Typical rain, temperature, snow and wind for Paris, France on 7 Jan 2026.",
   "why": [
-   "Snowfall of 3.0 cm in 24 hours set the level: it is normal snowfall for here, and days like this happen about 1.1 times a year now.",
-   "Gusts reached 36 km/h, which is normal wind for here, and days like this happen about 172 times a year.",
-   "Rain over the last 6 days totalled 11 mm, which is normal rain for the last 6 days, and it is about as common here as in 1951–1980."
+   "Normal snowfall for here (3.0 cm) is the check that set the level, and days like this happen about 1.1 times a year now.",
+   "Normal wind for here (gusts up to 36 km/h; the data misses sudden local storm gusts).",
+   "Normal rain for the last 6 days (10.6 mm), which is about as common here as in 1951–1980.",
+   "Normal lows for here (feels like down to -6 °C) happen about 12 times a year now, and that does not make the day any less serious, because the level is based on the recent 30 years."
   ],
-  "what_it_means": "The checks do not cover thunderstorms, hail, freezing rain or ice, wildfire, air quality, coastal flooding, or geological hazards such as landslides, glacier collapse or earthquakes. Check your official weather warnings, because Groundtruth never replaces them.",
-  "sms": "Groundtruth: Typical rain, temperature, snow and wind for Paris, France on 7 Jan 2026. Storms and ice are not checked. Check official warnings.",
-  "confidence_note": "The history is a grid of about 25 km and misses very local storms, and thunderstorms are not checked. Rain for the day itself comes from the forecast, and geological hazards need local civil protection and geological authorities."
+  "what_it_means": "The checks do not cover thunderstorms, hail, freezing rain or ice, wildfire, air quality, coastal flooding, or geological hazards. Snow or rain on freezing ground can make roads icy, and ice isn't checked. Check your official weather warnings, because Groundtruth never replaces them.",
+  "sms": "Groundtruth Paris, France 7 Jan 2026: Typical rain, temperature, snow and wind. Storms, ice, landslides not checked. Roads may be icy. See official warnings.",
+  "confidence_note": "The history is a grid of about 25 km and misses very local storms, and the day's figures are a forecast and can be too low. Geological hazards such as landslides, glacier collapse and earthquakes need local civil protection and geological authorities."
  }
 }

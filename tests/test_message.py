@@ -24,8 +24,7 @@ from groundtruth import message, risk, weather  # noqa: E402
 FORBIDDEN = re.compile(r"\bsafe\b|\bsafely\b|\bsafety\b|\bno risk\b|\ball clear\b|\bcaused\b", re.I)
 # "Normal" may only describe what a check measures (CLAUDE.md rule 8).
 ALLOWED_NORMAL = re.compile(r"Normal (rain for here|rain for the last|temperatures for here|highs for here|"
-                            r"lows for here|snowfall for here|wind for here|conditions for here, for the rain, "
-                            r"temperature, snow and wind we check)")
+                            r"lows for here|snowfall for here|wind for here)")
 
 
 def check_text(label, result, texts):
@@ -55,9 +54,22 @@ def check_result(label, result, place="Somewhere, Far Away Land"):
     assert sms.isascii(), f"{label}: SMS should be plain ASCII"
     assert len(message.sms_text(result, "A" * 300)) <= 160, f"{label}: SMS too long with a very long place name"
     # A Typical SMS says what is typical, never "Typical weather" (also with a very long place name).
+    # It always says what isn't checked; any other level always carries its short action. Neither is dropped.
+    ice = message.ice_note(result)
     for s in (sms, message.sms_text(result, "A" * 300)):
         assert "Typical weather" not in s and "Typical risk" not in s, f"{label}: {s}"
         assert ("Typical rain, temperature, snow and wind" in s) == (result["level"] == "Typical"), f"{label}: {s}"
+        assert (message.TYPICAL_SMS_LIMITS in s) == (result["level"] == "Typical"), f"{label}: {s}"
+        if result["level"] in risk.LEVELS[1:] and message.sms_action(result):
+            assert message.sms_action(result) in s, f"{label}: short action dropped: {s}"
+        assert (message.ICE_SMS in s) == bool(ice), f"{label}: ice note in the SMS: {s}"
+    # The ice note goes in the sentence when it applies; the day's figures are always labelled a forecast.
+    assert (message.ICE_NOTE in sentence) == bool(ice), f"{label}: ice note in the sentence"
+    assert "Normal conditions" not in sentence, f"{label}: whole-day verdict: {sentence}"
+    assert bullets[-1] == f"**About these figures:** {message.FORECAST_NOTE}", f"{label}: {bullets[-1]}"
+    for b in bullets:
+        assert "Normal wind for here" not in b or "misses sudden local storm gusts" in b, f"{label}: {b}"
+        assert not ("danger line" in b and "common here" in b), f"{label}: danger line day called common: {b}"
 
     if result["level"] in risk.LEVELS:
         # The headline always matches the computed level (and no other level's headline appears).
@@ -143,8 +155,11 @@ def made_up_cases():
     check_result("made up: ordinary", r)
     bullets = message.why_bullets(r)
     assert r["level"] == "Typical", r["level"]
-    assert message.template_sentence(r).startswith(
-        "Normal conditions for here, for the rain, temperature, snow and wind we check."), message.template_sentence(r)
+    assert message.template_sentence(r) == (
+        "Typical rain, temperature, snow and wind for here. These checks can't see thunderstorms, ice on roads, or "
+        "landslides and glacier collapse. Check your official weather warnings — Groundtruth never replaces them."), \
+        message.template_sentence(r)
+    assert message.ice_note(r) is None  # 1 mm of rain on a day that stays above freezing
     assert "**Temperature:** Normal temperatures for here (feels like 3 to 12 °C)" in bullets, bullets
     assert "**Snowfall (24 h):** No snow forecast" in bullets, bullets
     assert any(b.startswith("**Recent rain (6-day total):** Normal rain for the last 6 days") for b in bullets), bullets
@@ -160,7 +175,7 @@ def made_up_cases():
     assert cold["ratio"] is not None and cold["ratio"] < 1, cold["ratio_text"]
     assert message.ACTIONS["cold"] in message.template_sentence(r)
     first = message.why_bullets(r)[0]
-    assert first.startswith("**Feels as cold as") and "It was more frequent in 1951–1980" in first, first
+    assert first.startswith("**Forecast to feel as cold as") and "It was more frequent in 1951–1980" in first, first
     assert "doesn't make today any less serious" in first, first
     assert "**Feels-like heat:** Normal highs for here" in " ".join(message.why_bullets(r))
     rows, name, like = message.rarity_rows(r)
@@ -188,6 +203,24 @@ def made_up_cases():
     assert message.rarity_rows(r)[2] == "days with at least this much snow"
     print("ok: made up: record snow -> Extreme")
 
+    # The ice note uses the day's lowest air temperature, and the feels-like low only when that is missing.
+    r, _ = fake_assess(snow_cm=2.0, feels_like_max_c=2.0, air_min_c=-5.0)  # +2 °C by day, -5 °C overnight, snow
+    check_result("made up: snow, +2 by day, -5 overnight", r)
+    assert message.ice_note(r) == message.ICE_NOTE, "a day that drops to -5 °C with snow must get the ice note"
+    assert message.ICE_NOTE in message.template_sentence(r) and message.ICE_SMS in message.sms_text(r, "Somewhere")
+    r, _ = fake_assess(snow_cm=2.0, feels_like_max_c=2.0, feels_like_min_c=-5.0)  # no air temperature saved
+    check_result("made up: snow, feels-like low -5, no air temperature", r)
+    assert message.ice_note(r) == message.ICE_NOTE, "falls back to the feels-like low"
+    r, _ = fake_assess(rain_mm=3.0, feels_like_min_c=-3.0, air_min_c=1.0)  # air stays above freezing
+    check_result("made up: rain, air low +1", r)
+    assert message.ice_note(r) is None, "the air temperature comes first when the forecast has it"
+    r, _ = fake_assess(rain_mm=0.0, air_min_c=-5.0)  # freezing, but nothing falls
+    check_result("made up: dry and freezing", r)
+    assert message.ice_note(r) is None, "no snow or rain, no ice note"
+    r, _ = fake_assess(rain_mm=2.0, air_min_c=0.0)  # exactly 0 °C counts
+    assert message.ice_note(r) == message.ICE_NOTE
+    print("ok: made up: ice note (air temperature first, feels-like low as fallback)")
+
     # The scope line names what we don't check.
     for word in ("thunderstorms", "hail", "freezing rain", "wildfire", "air quality", "coastal flooding",
                  "geological"):
@@ -214,8 +247,16 @@ def main():
             check_result(c["name"], result)
             if c["name"].startswith("Kolkata heat"):
                 assert message.why_bullets(result)[0] == (
-                    "**Feels like 41 °C** — above the 40 °C danger line. Heat like this is common here "
-                    "(about 48 days a year) and 1.4 times more common than in 1951–1980."), message.why_bullets(result)[0]
+                    "**Forecast to feel like 41 °C** — above the 40 °C danger line. That line matters however often "
+                    "this happens here: about 48 days a year, 1.4 times more common than in 1951–1980."), \
+                    message.why_bullets(result)[0]
+                assert message.sms_text(result, "Kolkata, India") == (
+                    "Groundtruth Kolkata, India 31 May 2022: High risk. Feels-like 41 C forecast. Avoid exertion, "
+                    "drink water, check on older people. Check official warnings.")
+            if c["name"] == "Paris snow and cold":  # no air temperature saved: the feels-like low (-6.5 °C) is used
+                assert result.get("air_min_c") is None and message.ice_note(result) == message.ICE_NOTE
+            if c["name"] in ("Bayesian sinking", "Nepal-Tibet glacier-collapse flood"):
+                assert message.ice_note(result) is None
             if result["level"] != "Typical":
                 rows, _, _ = message.rarity_rows(result)
                 assert [r["label"] for r in rows] == [result["baseline_label"], result["recent_label"]]

@@ -1,6 +1,6 @@
 {
  "model": "claude-sonnet-5-5",
- "fingerprint": "a0abd31a02569f9dd09e205b4625495d05d063767bec0271a603c42ade914220",
+ "fingerprint": "be5ee8792a78c907071931355225a4c30b990a36580bf87d025fcbdf21151477",
  "facts": {
   "place": "Nepal–Tibet border area",
   "day": "26 Aug 2026",
@@ -74,7 +74,7 @@
     "name": "Wind gust",
     "value": "31 km/h",
     "level": "Typical",
-    "wording": "Normal wind for here (gusts up to 31 km/h)",
+    "wording": "Normal wind for here (gusts up to 31 km/h; the data misses sudden local storm gusts)",
     "how_often_in_recent_period": "about 228 times a year",
     "how_often_in_comparison_period": "about 214 times a year",
     "comparison": "1.1 times more common here than in 1951–1980",
@@ -104,12 +104,15 @@
    "based_on": "measured rain for the earlier days and the forecast for the day itself"
   },
   "action_line": null,
+  "sms_action": null,
+  "ice_note": null,
   "official_warnings": "Check your official weather warnings — Groundtruth never replaces them.",
   "scope_notes": [
    "We check rain, heat, cold, snow, wind and recent rain. We don't yet check thunderstorms, hail, freezing rain or ice, wildfire, air quality, coastal flooding, or geological hazards. For those, follow official warnings.",
    "Thunderstorms are not checked. Storms are a major cause of weather deaths — follow official storm warnings.",
    "The history data is a ~25 km grid and misses very local storms.",
-   "Groundtruth covers weather-driven hazards only. For landslides, glacier collapse or earthquakes, check local civil protection and geological authorities."
+   "Groundtruth covers weather-driven hazards only. For landslides, glacier collapse or earthquakes, check local civil protection and geological authorities.",
+   "The day's figures are a forecast and can be too low."
   ],
   "data_notes": [],
   "special_note": "Groundtruth covers weather-driven hazards only. For geological hazards (landslides, glacier collapse, earthquakes), check local civil protection and geological authorities.",
@@ -118,12 +121,13 @@
  "reply": {
   "headline": "Typical rain, temperature, snow and wind for Nepal–Tibet border area on 26 Aug 2026.",
   "why": [
-   "Recent rain over the last 6 days was 66 mm, and days like this happen about 18 times a year here now.",
-   "Rain over the last 6 days was about as common here as in 1951–1980, when it happened about 19 times a year.",
-   "Feels-like highs of up to 30 °C happen about 68 times a year now, which is 3.2 times more common here than in 1951–1980."
+   "Recent rain over the last 6 days set the level: 66 mm fell, including 59.5 mm in the 5 days before.",
+   "Days with this much rain happen about 18 times a year here now, about as common here as in 1951–1980.",
+   "Normal wind for here (gusts up to 31 km/h; the data misses sudden local storm gusts).",
+   "Normal highs for here (feels like up to 30 °C), and days like this are 3.2 times more common here than in 1951–1980."
   ],
   "what_it_means": "The checks do not cover thunderstorms, hail, freezing rain or ice, wildfire, air quality, coastal flooding, or geological hazards. Groundtruth covers weather-driven hazards only, so for landslides, glacier collapse or earthquakes, check local civil protection and geological authorities. Check your official weather warnings, because Groundtruth never replaces them.",
-  "sms": "Groundtruth: Typical rain, temperature, snow and wind for Nepal-Tibet border area, 26 Aug 2026. Storms not checked. Check official warnings.",
-  "confidence_note": "The history is a grid of about 25 km and misses very local storms, and thunderstorms are not checked. The 6-day rain total uses measured rain for the earlier days and the forecast for the day itself, and geological hazards need local civil protection and geological authorities."
+  "sms": "Typical rain, temperature, snow and wind, Nepal-Tibet border area, 26 Aug 2026. Storms, ice, landslides not checked. See official warnings.",
+  "confidence_note": "The history is a grid of about 25 km and misses very local storms, and the day's figures are a forecast and can be too low. Geological hazards (landslides, glacier collapse, earthquakes) need local civil protection and geological authorities."
  }
 }

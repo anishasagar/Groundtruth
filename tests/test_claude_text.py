@@ -23,7 +23,7 @@ import httpx2
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from groundtruth import claude_text, replays, risk, weather  # noqa: E402
+from groundtruth import claude_text, message, replays, risk, weather  # noqa: E402
 from test_message import fake_assess  # noqa: E402
 
 TODAY = dt.date(2026, 10, 19)
@@ -41,6 +41,7 @@ VALENCIA, _ = replay_facts("Valencia flash flood")
 PARIS, _ = replay_facts("Paris snow and cold")
 BAYESIAN, _ = replay_facts("Bayesian sinking")
 NEPAL, _ = replay_facts("Nepal-Tibet glacier-collapse flood")
+TEXAS, _ = replay_facts("Texas Hill Country flood")
 NOT_COVERED = ("Our checks don't cover thunderstorms, freezing rain or ice on roads, or landslides and glacier "
                "collapse.")
 
@@ -50,28 +51,35 @@ GOOD_KOLKATA = {
             "Heat like this happens about 48 times a year here now, 1.4 times more common here than in 1951–1980."],
     "what_it_means": "Avoid heavy exertion outdoors, drink water, and check on older or vulnerable people. "
                      "Check your official weather warnings.",
-    "sms": "Kolkata 31 May 2022: High risk from heat, feels like 41 C. Drink water. Check official warnings.",
-    "confidence_note": "The history is a grid of about 25 km and misses very local storms.",
+    "sms": "Kolkata 31 May 2022: High risk from heat, feels like 41 C. Avoid exertion, drink water, check on older "
+           "people. Check official warnings.",
+    "confidence_note": "The history is a grid of about 25 km and misses very local storms, and the day's figures "
+                       "are a forecast and can be too low.",
 }
 GOOD_VALENCIA = {
     "headline": "Extreme risk of heavy rain in Paiporta, Valencia, Spain on 29 Oct 2024.",
     "why": ["Rain of 202 mm in 24 h, above the 150 mm danger line, set the level.",
             "Rain like this was not seen in 1951–1980 or in the 30 years before this date.",
-            "Normal wind for here (gusts up to 61 km/h)."],
+            "Normal wind for here (gusts up to 61 km/h; the data misses sudden local storm gusts)."],
     "what_it_means": "Avoid underpasses, low roads and riverbanks. Check your official weather warnings.",
-    "sms": "Extreme risk of heavy rain in Paiporta on 29 Oct 2024: 202 mm in 24 h. Check official warnings.",
-    "confidence_note": "Thunderstorms are not checked, and the history misses very local storms.",
+    "sms": "Extreme risk of heavy rain in Paiporta on 29 Oct 2024: 202 mm in 24 h. Avoid low roads and riverbanks. "
+           "Check official warnings.",
+    "confidence_note": "Thunderstorms are not checked, the history is a grid of about 25 km that misses very local "
+                       "storms, and the day's figures are a forecast.",
 }
 
 
 GOOD_PARIS = {
     "headline": "Typical rain, temperature, snow and wind for Paris, France on 7 Jan 2026.",
     "why": ["Snowfall set the level: normal snowfall for here (3.0 cm).",
-            "Normal wind for here (gusts up to 36 km/h)."],
-    "what_it_means": f"{NOT_COVERED} Check your official weather warnings.",
-    "sms": "Groundtruth Paris 7 Jan 2026: Typical rain, temperature, snow and wind. Check official warnings.",
-    "confidence_note": "Freezing rain and ice are not checked, and the history misses very local storms.",
+            "Normal wind for here (gusts up to 36 km/h; the data misses sudden local storm gusts)."],
+    "what_it_means": f"{NOT_COVERED} Snow on freezing ground can make roads icy. Check your official weather warnings.",
+    "sms": "Groundtruth Paris 7 Jan 2026: Typical rain, temperature, snow and wind. Roads may be icy. Storms, ice, "
+           "landslides not checked. Check official warnings.",
+    "confidence_note": "Freezing rain and ice are not checked, the history is a grid of about 25 km that misses very "
+                       "local storms, and the day's figures are a forecast.",
 }
+LIMITS = "Storms, ice, landslides not checked."
 
 
 def typical_reply(facts, short_place, what_it_means):
@@ -80,9 +88,9 @@ def typical_reply(facts, short_place, what_it_means):
         "headline": f"Typical rain, temperature, snow and wind for {facts['place']} on {facts['day']}.",
         "why": [c["wording"] for c in facts["checks"][:2]],
         "what_it_means": what_it_means,
-        "sms": f"Groundtruth {short_place} {facts['day']}: Typical rain, temperature, snow and wind. "
+        "sms": f"Groundtruth {short_place} {facts['day']}: Typical rain, temperature, snow and wind. {LIMITS} "
                "Check official warnings.",
-        "confidence_note": "The history misses very local storms.",
+        "confidence_note": "The history is a grid of about 25 km and misses very local storms; the day is a forecast.",
     }
 
 
@@ -116,13 +124,11 @@ def guardrail_cases():
     expect_pass('"daily high" on an Extreme day',
                 changed(GOOD_VALENCIA, why=[*GOOD_VALENCIA["why"][:2], "The daily high felt like up to 20 °C."]),
                 VALENCIA)
-    expect_pass('"extreme heat" on a High day',
-                changed(GOOD_KOLKATA, what_it_means="Avoid heavy exertion outdoors, drink water, and check on older "
-                                                    "or vulnerable people. This matters most in extreme heat. Check "
-                                                    "your official weather warnings."), KOLKATA)
-    expect_pass('"typical for October" on an Extreme day',
-                changed(GOOD_VALENCIA, confidence_note="Rain like this is not typical for October here, and the "
-                                                       "history misses very local storms."), VALENCIA)
+    expect_pass('"extreme heat" on a High day', why_with(GOOD_KOLKATA, "This matters most in extreme heat."), KOLKATA)
+    # ...but a lower level word, in any form, softens an Elevated or higher day (false-reassurance review).
+    expect_fail('"typical for October" on an Extreme day',
+                why_with(GOOD_VALENCIA, "Rain like this is not typical for October here."), VALENCIA,
+                "lower level word (Typical)")
     expect_fail("a capitalised other level label",
                 why_with(GOOD_KOLKATA, "Rain was Typical."), KOLKATA, "names another level (Typical)")
 
@@ -147,16 +153,16 @@ def guardrail_cases():
                 changed(GOOD_PARIS, sms="Groundtruth: Typical for Paris, 7 Jan 2026. Check official warnings."),
                 PARIS, "Typical text message doesn't say what is typical")
     expect_pass('Typical SMS with "temp" for temperature',
-                changed(GOOD_PARIS, sms="Groundtruth Paris 7 Jan 2026: Typical rain, temp, snow and wind. Check "
-                                        "official warnings."), PARIS)
+                changed(GOOD_PARIS, sms="Groundtruth Paris 7 Jan 2026: Typical rain, temp, snow and wind. Roads may be "
+                                        f"icy. {LIMITS} Check official warnings."), PARIS)
     for words in ("This matches the wording.", "These were in the facts for the day."):
         expect_fail(f'talks about the prompt: "{words}"', why_with(GOOD_PARIS, words), PARIS, "talks about the facts")
     expect_pass('"normal conditions" followed by its scope',
                 why_with(GOOD_PARIS, "These are normal conditions for the rain, temperature, snow and wind we check."),
                 PARIS)
-    expect_pass('"typical weather" on a High day is checked too, and passes with its scope',
+    expect_fail('"typical weather" on a High day, even with its scope, uses a lower level word',
                 why_with(GOOD_KOLKATA, "Apart from heat, this was typical weather for the rain, snow and wind we "
-                                       "check, and for the cold."), KOLKATA)
+                                       "check, and for the cold."), KOLKATA, "lower level word (Typical)")
     expect_fail('"typical weather" on a High day without its scope',
                 why_with(GOOD_KOLKATA, "Apart from the heat it was typical weather."), KOLKATA, "without saying")
 
@@ -209,7 +215,8 @@ def guardrail_cases():
     # On a Typical day, what it means starts with what the checks don't cover and never describes the day.
     expect_pass("Typical: starts with the list, other wording",
                 changed(GOOD_PARIS, what_it_means="Thunderstorms, freezing rain, ice on roads and landslides are not "
-                                                  "checked. Check your official weather warnings."), PARIS)
+                                                  "checked. Roads can be icy. Check your official weather warnings."),
+                PARIS)
     expect_fail("Typical: starts by describing the day",
                 changed(GOOD_PARIS, what_it_means=f"Rain, cold and snow are within range for Paris. {NOT_COVERED} "
                                                   "Check your official weather warnings."),
@@ -310,6 +317,118 @@ def guardrail_cases():
     expect_fail("no official warnings", changed(GOOD_KOLKATA, what_it_means="Drink water."), KOLKATA,
                 "official warnings")
     expect_fail("missing part", {k: v for k, v in GOOD_KOLKATA.items() if k != "sms"}, KOLKATA, "expected parts")
+
+
+def review_rule_cases():
+    """The rules added after the false-reassurance review."""
+    # 3. A Typical text message says what isn't checked; a special note is named in the text message.
+    for facts, reply in [(PARIS, GOOD_PARIS), (NEPAL, typical_reply(NEPAL, "Nepal-Tibet", "x"))]:
+        expect_fail(f"Typical SMS without the limits ({facts['place']})",
+                    changed(reply, sms=reply["sms"].replace(LIMITS + " ", "")), facts,
+                    "storms, ice and landslides are not checked")
+    expect_fail("Typical SMS names the hazards but not that they aren't checked",
+                changed(GOOD_PARIS, sms=GOOD_PARIS["sms"].replace(LIMITS, "Storms, ice, landslides.")), PARIS,
+                "storms, ice and landslides are not checked")
+    stormy = {**KOLKATA, "special_note": claude_text.SPECIAL_NOTES["storm"], "special_note_kind": "storm"}
+    stormy_reply = changed(GOOD_KOLKATA, what_it_means="Avoid heavy exertion outdoors, drink water, and check on older "
+                                                       "or vulnerable people. Storms are a major cause of weather "
+                                                       "deaths, so check your official weather and storm warnings.")
+    expect_fail("High day with the storm note: SMS doesn't name storms", stormy_reply, stormy,
+                "text message doesn't mention the storm note")
+    expect_pass("High day with the storm note: SMS names storms",
+                changed(stormy_reply, sms=GOOD_KOLKATA["sms"].replace("Check", "Storms not checked. Check")), stormy)
+    for left_out, words in [("the 25 km grid", "The history misses very local storms; the day is a forecast."),
+                            ("very local storms", "The history is a grid of about 25 km; the day is a forecast."),
+                            ("that the day's figures are a forecast",
+                             "The history is a grid of about 25 km and misses very local storms.")]:
+        expect_fail(f"confidence note without {left_out}", changed(GOOD_KOLKATA, confidence_note=words), KOLKATA,
+                    f"confidence note doesn't mention {left_out}")
+
+    # 4. Softening words: banned on every day, and more on Elevated or higher.
+    for words, label in [("Paris, France on 7 Jan 2026: a calm, low risk day.", "low risk"),
+                         ("It is a calm day.", "calm"), ("The cold is mild.", "mild"),
+                         ("It is a pleasant day.", "pleasant"), ("There are no warnings for Paris.", "no warnings"),
+                         ("You can go ahead with your plans.", "go ahead"), ("This is a minimal risk.", "low risk")]:
+        expect_fail(f'softening on a Typical day: "{label}"', why_with(GOOD_PARIS, words), PARIS, f'("{label}")')
+    expect_fail("the reviewer's made-up Paris SMS",
+                changed(GOOD_PARIS, sms=GOOD_PARIS["sms"].replace("Roads", "Low risk, calm day. Roads")), PARIS,
+                '("low risk")')
+    for words, label in [("The risk is slightly raised.", "slightly"), ("It is a bit hotter.", "a bit"),
+                         ("Heat is a little above the line.", "a bit"), ("Expect minor discomfort.", "minor"),
+                         ("It is only hot in the afternoon.", "only")]:
+        expect_fail(f'softening on a High day: "{label}"', why_with(GOOD_KOLKATA, words), KOLKATA,
+                    f'softens the level ("{label}")')
+    expect_pass('"weather-driven hazards only" on a High day',
+                changed(GOOD_KOLKATA, confidence_note=GOOD_KOLKATA["confidence_note"] + " Groundtruth covers "
+                                                      "weather-driven hazards only."), KOLKATA)
+    expect_fail('lowercase "elevated" on a High day', why_with(GOOD_KOLKATA, "The risk is elevated."), KOLKATA,
+                "lower level word (Elevated)")
+    expect_fail('"high risk" in lowercase on an Extreme day', why_with(GOOD_VALENCIA, "This is a high risk day."),
+                VALENCIA, "lower level word (High)")
+    expect_fail("the reviewer's made-up Texas reply",
+                changed(GOOD_VALENCIA, what_it_means="Avoid underpasses, low roads and riverbanks. The risk is only "
+                                                     "slightly elevated and mostly minor. Check your official weather "
+                                                     "warnings."), VALENCIA, "adds more than the action line")
+    expect_fail("Extreme: an extra sentence between the action line and official warnings",
+                changed(GOOD_VALENCIA, what_it_means="Avoid underpasses, low roads and riverbanks. Stay informed. "
+                                                     "Check your official weather warnings."), VALENCIA,
+                "adds more than the action line")
+    icy_valencia = {**VALENCIA, "ice_note": message.ICE_NOTE}
+    icy_reply = changed(GOOD_VALENCIA, what_it_means="Avoid underpasses, low roads and riverbanks. Rain on freezing "
+                                                     "ground can make roads icy. Check your official weather warnings.",
+                        sms=GOOD_VALENCIA["sms"].replace("Check", "Roads may be icy. Check"))
+    expect_pass("Extreme with the ice note: action line, ice note, official warnings", icy_reply, icy_valencia)
+
+    # 6. When a danger line set the level, how often it happens must not sound routine.
+    heat = next(c for c in KOLKATA["checks"] if c["name"] == "Feels-like heat")
+    assert heat["danger_line_note"] == message.DANGER_LINE_NOTE, heat
+    assert not any(c.get("danger_line_note") for c in VALENCIA["checks"])  # rarity set Valencia's level too
+    for words, found in [("Heat like this is common here.", "common"), ("Days like this are usual in May.", "usual"),
+                         ("Heat like this is routine for Kolkata.", "routine")]:
+        expect_fail(f'danger line set the level, but "{found}"', why_with(GOOD_KOLKATA, words), KOLKATA,
+                    f'crossed its danger line routine ("{found}")')
+
+    # 7. The ice note: what it means and the text message say roads may be icy.
+    assert PARIS["ice_note"] == message.ICE_NOTE and KOLKATA["ice_note"] is None
+    expect_fail("Paris: what it means without the ice note",
+                changed(GOOD_PARIS, what_it_means=f"{NOT_COVERED} Check your official weather warnings."), PARIS,
+                "what it means doesn't say roads may be icy")
+    expect_fail("Paris: SMS without the ice note",
+                changed(GOOD_PARIS, sms=GOOD_PARIS["sms"].replace("Roads may be icy. ", "")), PARIS,
+                "the text message doesn't say roads may be icy")
+
+    # 8. "Normal wind" carries the local-storm limit.
+    expect_fail('"normal wind" without the limit', why_with(GOOD_PARIS, "Normal wind for here (gusts up to 36 km/h)."),
+                PARIS, "data misses sudden local storm gusts")
+
+    # 9. A danger line is mentioned only when it was crossed.
+    texas_reply = {
+        "headline": "High risk of heavy rain in Texas Hill Country, USA on 4 Jul 2025.",
+        "why": ["Rain over 24 h set the level, with 107 mm forecast.",
+                "Rain like this happens about once every 15 years here now."],
+        "what_it_means": "Avoid underpasses, low roads and riverbanks. Check your official weather warnings, because "
+                         "Groundtruth never replaces them.",
+        "sms": "Groundtruth: High risk of heavy rain in Texas Hill Country, 4 Jul 2025. Avoid low roads and riverbanks. "
+               "Check official warnings.",
+        "confidence_note": "The history is a grid of about 25 km and misses very local storms, and the day's figures "
+                           "are a forecast and can be too low.",
+    }
+    expect_pass("good Texas reply", texas_reply, TEXAS)
+    expect_fail("Texas: below the danger line",
+                changed(texas_reply, why=["Rain over 24 h set the level, with 107 mm forecast, which is below the "
+                                          "danger line of 150 mm.", texas_reply["why"][1]]), TEXAS,
+                "danger line that wasn't crossed")
+    expect_fail("Typical day: any danger line", why_with(GOOD_PARIS, "No danger line was crossed."), PARIS,
+                "danger line that wasn't crossed")
+
+    # 10. The short action is in every non-Typical text message.
+    expect_fail("High SMS without the short action",
+                changed(GOOD_KOLKATA, sms="Kolkata 31 May 2022: High risk from heat. Drink water. Check official "
+                                          "warnings."), KOLKATA, "doesn't include the short action")
+    expect_fail("Texas SMS without riverbanks",
+                changed(texas_reply, sms="Groundtruth: High risk of heavy rain in Texas Hill Country, 4 Jul 2025. "
+                                         "Avoid underpasses and low roads. Check official warnings."), TEXAS,
+                '"Avoid low roads and riverbanks."')
 
 
 # ---- fake Claude clients ----------------------------------------------------
@@ -432,6 +551,7 @@ def saved_reply_cases():
 
 def main():
     guardrail_cases()
+    review_rule_cases()
     client_cases()
     not_enough_cases()
     facts_cases()

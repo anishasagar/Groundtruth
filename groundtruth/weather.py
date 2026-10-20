@@ -33,6 +33,10 @@ VARIABLES = {
     "snowfall_sum": "snow_cm",
     "wind_gusts_10m_max": "gust_max_kmh",
 }
+# Asked for in forecasts but not required: replays saved before it was added don't have it.
+OPTIONAL_FORECAST_VARIABLES = {
+    "temperature_2m_min": "air_min_c",  # the day's lowest air temperature (for the ice note)
+}
 
 FORECAST_DAYS_AHEAD = 16  # the Forecast API reaches about this far
 HISTORY_DIR = Path(__file__).resolve().parent.parent / "data" / "history"
@@ -100,7 +104,7 @@ def _params(lat, lon, start, end, variables=VARIABLES):
 def _to_frame(data):
     daily = data.get("daily") or {}
     df = pd.DataFrame({"date": pd.to_datetime(daily.get("time", []))})
-    for api_name, short in VARIABLES.items():
+    for api_name, short in {**VARIABLES, **OPTIONAL_FORECAST_VARIABLES}.items():
         df[short] = pd.to_numeric(pd.Series(daily.get(api_name, [None] * len(df))), errors="coerce")
     return df
 
@@ -170,7 +174,7 @@ def _fetch_forecast_raw(lat, lon, start, end, today, hourly=()):
     else:
         url, source = HISTORICAL_FORECAST_URL, "Open-Meteo Historical Forecast API"
 
-    params = _params(lat, lon, start, end)
+    params = _params(lat, lon, start, end, {**VARIABLES, **OPTIONAL_FORECAST_VARIABLES})
     if hourly:
         params["hourly"] = ",".join(hourly)
     data = _get(url, params)
@@ -182,11 +186,12 @@ def _fetch_forecast_raw(lat, lon, start, end, today, hourly=()):
 def get_forecast_day(lat, lon, date, today=None):
     """Forecast for one date.
 
-    Returns a dict: source, grid_point, date, and the three values (None if missing).
+    Returns a dict: source, grid_point, date, and each value (None if missing).
     """
     fc = get_forecast_range(lat, lon, date, date, today)
     row = fc["data"].iloc[0]
-    values = {short: (None if pd.isna(row[short]) else float(row[short])) for short in VARIABLES.values()}
+    shorts = [*VARIABLES.values(), *OPTIONAL_FORECAST_VARIABLES.values()]
+    values = {short: (None if pd.isna(row[short]) else float(row[short])) for short in shorts}
     return {"source": fc["source"], "grid_point": fc["grid_point"], "date": date, **values}
 
 
