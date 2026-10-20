@@ -190,12 +190,13 @@ def show_assessment(result, place, replay_name=None):
 
     st.markdown(f"**{place} — {message.day_text(result['date'])}**")
     reply, problems = claude_reply(result, place, replay_name)
+    special = replays.SPECIAL_NOTES.get(replay_name)
     if reply is not None:
         st.markdown(f"### {plain(reply['headline'])}")
-        st.markdown(plain(reply["what_it_means"]))
+        st.markdown(message.what_it_means(result, special))  # written by code, never by Claude
         st.markdown("\n".join(f"- {plain(b)}" for b in reply["why"]))
         st.caption("Written by Claude from the computed facts. The level is set in code, "
-                   "and every number was checked against those facts.")
+                   "and every number appears in those facts.")
     else:
         st.markdown(f"### {message.template_sentence(result)}")
         st.caption("Template mode: this sentence is built from the numbers, not written by an AI.  \n"
@@ -217,9 +218,9 @@ def show_assessment(result, place, replay_name=None):
             st.caption(f"{check_name}: {like_this}. The longer line is the period with more of them.")
 
     st.subheader("Text message version")
-    sms = reply["sms"] if reply is not None else message.sms_text(result, place)
+    sms = message.sms_text(result, place, special)  # written by code, never by Claude
     st.code(sms, language=None, wrap_lines=True)
-    st.caption(f"{len(sms)} of 160 characters" + (" · written by Claude" if reply is not None else ""))
+    st.caption(f"{len(sms)} of 160 characters")
 
     how_sure_box(result, reply["confidence_note"] if reply is not None else None)
 

@@ -36,28 +36,41 @@ def levels_in_testlog():
     return levels
 
 
+def saved_tries(case):
+    """How many times Claude was asked before its saved reply passed ("—" if not recorded)."""
+    path = replays.claude_reply_file(case["name"])
+    if case["name"] not in replays.REPLAY_PLACES or not path.exists():
+        return "—"
+    tries = json.loads(path.read_text()).get("tries")
+    return "—" if tries is None else str(tries)
+
+
 def full_output(case, result, place):
-    """The template-mode text and Claude's full saved reply for one case, as Markdown lines."""
+    """The text written by code, the template sentence, and Claude's full saved reply, as Markdown lines."""
+    special = replays.SPECIAL_NOTES.get(case["name"])
     action = message.action_line(result)
     lines = [f"#### {case['name']} — {case['date']} — {result['level']}", "",
+             "Written by code (shown in both modes):", "",
+             f"- What it means (shown with Claude's text): \"{message.what_it_means(result, special)}\"",
+             f"- SMS: \"{message.sms_text(result, place, special)}\"", "",
              "Template mode:", "",
              f"- Sentence: \"{message.template_sentence(result)}\"",
-             "- Action line: " + (f'"{action}"' if action else "none"),
-             f"- SMS: \"{message.sms_text(result, place)}\"", ""]
+             "- Action line: " + (f'"{action}"' if action else "none"), ""]
     path = replays.claude_reply_file(case["name"])
     if case["name"] not in replays.REPLAY_PLACES or not path.exists():
         return lines + ["Claude: no saved Claude reply — template mode only.", ""]
-    facts = claude_text.facts(result, place, dt.date.today(), replays.SPECIAL_NOTES.get(case["name"]))
+    facts = claude_text.facts(result, place, dt.date.today(), special)
     passed, problems = claude_text.saved_reply(path, facts)
     status = "passes the guardrail (shown in the app)" if passed else \
         f"does NOT pass, so the app shows template mode: {'; '.join(problems)}"
     reply = json.loads(path.read_text())["reply"]
-    lines += [f"Claude's saved reply — {status}:", "",
-              f"- Headline: \"{reply['headline']}\"",
-              "- Why:", *[f"  - \"{b}\"" for b in reply["why"]],
-              f"- What it means: \"{reply['what_it_means']}\"",
-              f"- SMS: \"{reply['sms']}\"",
-              f"- Confidence note: \"{reply['confidence_note']}\"", ""]
+    lines += [f"Claude's saved reply ({saved_tries(case)} {'try' if saved_tries(case) == '1' else 'tries'}) — "
+              f"{status}:", "",
+              *[f"- {k}: \"{v}\"" for k, v in reply.items() if isinstance(v, str)
+                and k not in ("headline", "confidence_note")],  # an old-format reply shows its extra parts
+              f"- Headline: \"{reply.get('headline')}\"",
+              "- Why:", *[f"  - \"{b}\"" for b in reply.get("why", [])],
+              f"- Confidence note: \"{reply.get('confidence_note')}\"", ""]
     return lines
 
 
@@ -70,14 +83,14 @@ def main():
     for _, case in cases.iterrows():
         previous = before.get(case["name"], "—")
         if not case["date"]:
-            rows.append(f"| {case['name']} | — | pending | {previous} | — | — |")
+            rows.append(f"| {case['name']} | — | pending | {previous} | — | — | — |")
             continue
         try:
             with weather.offline():
                 result = risk.assess(float(case["latitude"]), float(case["longitude"]),
                                      dt.date.fromisoformat(case["date"]))
         except Exception as e:  # replay.py already logged why; keep the row
-            rows.append(f"| {case['name']} | {case['date']} | not run | {previous} | — | — |")
+            rows.append(f"| {case['name']} | {case['date']} | not run | {previous} | — | — | — |")
             full += [f"#### {case['name']} — {case['date']}", "", f"Not run: {e}", ""]
             continue
         place = replays.place_of(case)
@@ -89,7 +102,8 @@ def main():
             if reply:
                 shown = f"Claude: {reply['headline']}"
         level = result["level"]
-        rows.append(f"| {case['name']} | {case['date']} | **{level}** | {previous} | {shown} | {template} |")
+        rows.append(f"| {case['name']} | {case['date']} | **{level}** | {previous} | {shown} | {template} "
+                    f"| {saved_tries(case)} |")
         if previous not in ("—", "pending", level):
             changes.append(f"- {case['name']}: {previous} → **{level}**")
         full += full_output(case, result, place)
@@ -100,8 +114,8 @@ def main():
         f"Added by the replay-check skill on {dt.date.today().isoformat()}. "
         "\"Previous level\" is the level in TESTLOG.md before this run.",
         "",
-        "| Case | Date | Level | Previous level | Sentence shown | Template sentence |",
-        "|---|---|---|---|---|---|",
+        "| Case | Date | Level | Previous level | Sentence shown | Template sentence | Claude tries |",
+        "|---|---|---|---|---|---|---|",
         *rows,
         "",
         "### Level changes since the last run",
@@ -110,8 +124,9 @@ def main():
         "",
         "### Full output per case",
         "",
-        "The actual text a person would see: the template-mode text (shown whenever Claude or the guardrail "
-        "fails) and Claude's full saved reply.",
+        "The actual text a person would see: what code writes on every day (what it means, the text message), "
+        "the template sentence (shown whenever Claude or the guardrail fails), and Claude's full saved reply "
+        "(headline, why, confidence note) with how many tries it took.",
         "",
         *full,
     ]

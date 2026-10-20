@@ -1,6 +1,6 @@
 {
  "model": "claude-sonnet-5-5",
- "fingerprint": "ef855cce4b2a55dbbd0278989a414f3c1bc25362331fa9236ad7a678342ffc59",
+ "fingerprint": "6e3aefcae9b2d45448fb8f2f64f61ed6a98741e29205ca56b83dc5657e5c354d",
  "facts": {
   "place": "Texas Hill Country, USA",
   "day": "4 Jul 2025",
@@ -98,10 +98,6 @@
    "total_including_the_day": "144 mm",
    "based_on": "measured rain for the earlier days and the forecast for the day itself"
   },
-  "action_line": "Avoid underpasses, low roads and riverbanks.",
-  "sms_action": "Avoid low roads and riverbanks.",
-  "ice_note": null,
-  "official_warnings": "Check your official weather warnings — Groundtruth never replaces them.",
   "scope_notes": [
    "We check rain, heat, cold, snow, wind and recent rain. We don't yet check thunderstorms, hail, freezing rain or ice, wildfire, air quality, coastal flooding, or geological hazards. For those, follow official warnings.",
    "Thunderstorms are not checked. Storms are a major cause of weather deaths — follow official storm warnings.",
@@ -116,12 +112,11 @@
  "reply": {
   "headline": "High risk of heavy rain in Texas Hill Country, USA on 4 Jul 2025.",
   "why": [
-   "Rain over 24 hours set the level, with 107 mm forecast.",
-   "Days with this much rain happen about once every 15 years here now, and about once every 15 years in 1951–1980.",
-   "Rain over the last 6 days totals 144 mm, which happens about once every 4.3 years here now and is 3.5 times more common here than in 1951–1980."
+   "Rain over the single day set the level, with 107 mm forecast for 4 Jul 2025.",
+   "A day with this much rain happens about once every 15 years here in the 30 years before this date, which is about as common here as in 1951–1980.",
+   "Rain over the last 6 days adds to this: 144 mm in total, made up of measured rain for the earlier days and the forecast for the day itself, and days like this are 3.5 times more common here than in 1951–1980."
   ],
-  "what_it_means": "Avoid underpasses, low roads and riverbanks. Check your official weather warnings, because Groundtruth never replaces them.",
-  "sms": "Groundtruth: High risk of heavy rain in Texas Hill Country, USA, 4 Jul 2025. Avoid low roads and riverbanks. Check official warnings.",
-  "confidence_note": "The history is a grid of about 25 km and misses very local storms, and the day's figures are a forecast and can be too low. Landslides, glacier collapse and earthquakes need local civil protection and geological authorities."
- }
+  "confidence_note": "The history is a grid of about 25 km and misses very local storms, and the day's figures are a forecast and can be too low. Geological hazards such as landslides, glacier collapse or earthquakes need local civil protection and geological authorities."
+ },
+ "tries": 1
 }

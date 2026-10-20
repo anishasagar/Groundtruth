@@ -29,11 +29,13 @@ A web app that tells a person, in one plain sentence, how unusual today's weathe
 ## Phase 2 (don't build yet)
 - Top priority — Storm heads-up: flag thunderstorm and hail conditions from the forecast (weather codes, CAPE), as an absolute flag because history can't measure storm rarity. Test on the Bayesian and Valencia replays and on ordinary summer storm days. It must use both weather codes and CAPE: the Bayesian forecast showed high CAPE with no thunderstorm codes.
 - Ice-risk heads-up: an absolute flag when precipitation falls at or below freezing (Paris 2026-01-07 as the test case).
+  - Count snow or rain in the days before, not just the day itself (a dry freezing day after snow gets no ice note today).
+  - Re-save the Paris forecast with air temperature (temperature_2m_min), so the live path of the ice note is tested; today Paris only gets it through the feels-like low.
 - Rain and wind: replace the fixed danger lines with location-adaptive ones. Trigger if today's value exceeds the 99th percentile of the 75-year ERA5 record for that location.
 - Heat: trigger if today's feels-like value exceeds the location's 99th percentile OR is 40 °C or more. Keep this fixed floor: the human body's heat limit doesn't adapt to local climate, and the percentile itself rises as the climate warms.
 - Before building this, print Kolkata's 99th-percentile feels-like value and show it to me.
 - From the false-reassurance review:
-  - Numbers: check each number in Claude's text against its own check (the value next to that check's name and unit, the rate next to "times a year"), not just against all the facts. Today a danger-line number can pass as a check's value.
+  - Numbers: check each number in Claude's text against its own check (the value next to that check's name and unit, the rate next to "times a year"), not just against all the facts. Today a danger-line number can pass as a check's value, and a dropped minus sign can pass ("down to 6 °C" for −6, because "6" appears elsewhere in the facts).
   - Geological note on every result, not only the Nepal-Tibet replay. Decide where it goes with the layout.
   - "Not enough data" must not hide a higher reading: keep "Not enough data — check official sources" and add what the checks that did run already reach (for example Elevated).
   - Rounding: round cold values toward colder, show one decimal within about 1 unit of a danger line, and never show a rounded value at or above a line that wasn't crossed.

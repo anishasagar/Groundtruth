@@ -59,8 +59,10 @@ def main():
             still_failing.append((name, problems))
             print(f"{name}: STILL FAILING after {claude_text.CACHE_ATTEMPTS} tries (nothing saved)")
             continue
-        claude_text.save_reply(path, facts, reply)
-        print(f"{name}: saved ({path.relative_to(ROOT)}): {reply['headline']}")
+        tries = len(problems) + 1  # every failed try left one problem
+        claude_text.save_reply(path, facts, reply, tries)
+        print(f"{name}: saved after {tries} {'try' if tries == 1 else 'tries'} "
+              f"({path.relative_to(ROOT)}): {reply['headline']}")
 
     if still_failing:
         print("\nStill failing (these replays will show template mode):")

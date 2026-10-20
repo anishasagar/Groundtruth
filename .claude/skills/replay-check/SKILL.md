@@ -25,8 +25,9 @@ Nothing calls Open-Meteo or Claude: it only uses the saved data in `data/` and t
      previous level, the sentence the app shows (Claude's headline, or the template sentence in template mode)
      and the template sentence,
    - adds **"Level changes since the last run"** (or "None."),
-   - adds **"Full output per case"**: the template-mode sentence, action line and SMS, and Claude's full saved
-     reply (headline, why, what it means, SMS, confidence note) with whether it still passes the guardrail.
+   - adds **"Full output per case"**: what code writes on every day ("what it means" and the text message), the
+     template-mode sentence and action line, and Claude's saved reply (headline, why, confidence note) with how
+     many tries it took and whether it still passes the guardrail. The "Claude tries" column shows the tries too.
 3. Read the new sections of TESTLOG.md and tell the user, in plain language:
    - each case's level and the sentence shown,
    - any level change since the last run, and why it happened if you know (which change caused it),

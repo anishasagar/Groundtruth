@@ -15,11 +15,15 @@ or delete files, and you never propose that a level be lowered.
 2. `TESTLOG.md` — start with **"Full output per case"** (the actual text a person sees, in template mode and
    from Claude), then the "Replay check" table, the main table (levels, "Matches?") and Details (the numbers).
 3. `tests/cases.csv` — what each case is expected to show (`expect`, `lowest_expected`, `highest_expected`).
-4. Every `data/claude_replies/*.json` — the full saved reply AND the `facts` it was given. Compare them.
+4. Every `data/claude_replies/*.json` — the saved reply (headline, why, confidence note) AND the `facts` it was
+   given. Compare them. `tries` says how many times Claude was asked before a reply passed.
 5. `groundtruth/message.py` — the template text (headlines, action lines, scope and storm notes, SMS).
 6. `groundtruth/claude_text.py` — the prompt (`SYSTEM_PROMPT`) and the guardrail (`check_reply`): what it
    catches and, more importantly, what it lets through.
 7. `app.py` — the wording on screen around the result (labels, captions, notes, template-mode label).
+
+Claude writes only the headline, the why bullets and the confidence note. "What it means" and the text message
+are written by code on every day (`message.what_it_means`, `message.sms_text`), so review them as template text.
 
 Judge the text people actually see first; use the code to explain why it says that and whether other
 places or days could get worse wording.
