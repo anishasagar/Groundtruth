@@ -1,7 +1,6 @@
 # Test log
 
-Last run: 2026-10-19 with `python scripts/replay.py`.
-1 case(s) pending: their test day hasn't been picked yet.
+Last run: 2026-10-20 with `python scripts/replay.py`.
 Settings: comparison period 1951–1980; the level uses the 30 years before this date; recent rain = 5 days before + the date.
 
 Each check cell shows the wording the app shows, then that check's level. Typical checks show plain wording; the full numbers for every check are in Details.
@@ -18,7 +17,7 @@ Each check cell shows the wording the app shows, then that check's level. Typica
 | Ordinary rain 1, Paiporta (winter) | 2018-02-27 | **Typical** | Rain (24 h), Feels-like heat, Feels-like cold, Snowfall (24 h), Wind gust, Recent rain (6-day total) | Normal rain for here (15.4 mm) → Typical | Normal highs for here (feels like up to 7 °C) → Typical | Normal lows for here (feels like down to 2 °C) → Typical | No snow forecast → Typical | Normal wind for here (gusts up to 58 km/h) → Typical | Normal rain for the last 6 days (15.7 mm) → Typical | Ordinary rainy day (about 16 mm; 22 mm or more happens about 3 times a year here): Typical or Elevated, not Extreme | yes |
 | Ordinary rain 2, Paiporta (autumn) | 2024-09-18 | **Typical** | Rain (24 h), Feels-like heat, Feels-like cold, Snowfall (24 h), Wind gust, Recent rain (6-day total) | Normal rain for here (15.6 mm) → Typical | Normal highs for here (feels like up to 24 °C) → Typical | Normal lows for here (feels like down to 20 °C) → Typical | No snow forecast → Typical | Normal wind for here (gusts up to 24 km/h) → Typical | Normal rain for the last 6 days (15.9 mm) → Typical | Ordinary rainy day (about 16 mm; 22 mm or more happens about 3 times a year here): Typical or Elevated, not Extreme | yes |
 | Paris snow and cold | 2026-01-07 | **Typical** | Rain (24 h), Feels-like heat, Feels-like cold, Snowfall (24 h), Wind gust, Recent rain (6-day total) | Normal rain for here (5.1 mm) → Typical | Normal highs for here (feels like up to -1 °C) → Typical | Normal lows for here (feels like down to -6 °C) → Typical | Normal snowfall for here (3.0 cm) → Typical | Normal wind for here (gusts up to 36 km/h) → Typical | Normal rain for the last 6 days (10.6 mm) → Typical | Typical. Honest limit: the danger came from snow falling on freezing, unprepared roads. Ice risk and local preparedness aren't checked yet. | yes |
-| Ordinary snow, Montreal | — | pending | — | — | — | — | — | — | — | Pending: day not picked yet (scripts/save_replay_data.py picks it). Expect Typical: snow is routine here. | — |
+| Ordinary snow, Montreal | 2024-01-13 | **Typical** | Rain (24 h), Feels-like heat, Feels-like cold, Snowfall (24 h), Wind gust, Recent rain (6-day total) | Normal rain for here (21.6 mm) → Typical | Normal highs for here (feels like up to -3 °C) → Typical | Normal lows for here (feels like down to -13 °C) → Typical | Normal snowfall for here (7.1 cm) → Typical | Normal wind for here (gusts up to 62 km/h) → Typical | Normal rain for the last 6 days (51.0 mm) → Typical | Ordinary snowy day (forecast 7.1 cm; that much or more happens about 5 times a year here): Typical | yes |
 
 ## Details
 
@@ -251,5 +250,28 @@ Each check cell shows the wording the app shows, then that check's level. Typica
 - Shown for Snowfall (24 h): "Normal snowfall for here (3.0 cm)"
 - Shown for Wind gust: "Normal wind for here (gusts up to 36 km/h)"
 - Shown for Recent rain (6-day total): "Normal rain for the last 6 days (10.6 mm)"
+
+### Ordinary snow, Montreal — 2024-01-13
+
+- Level: **Typical** (decided by: Rain (24 h), Feels-like heat, Feels-like cold, Snowfall (24 h), Wind gust, Recent rain (6-day total))
+- Forecast: Open-Meteo Historical Forecast API, grid point 45.49, -73.56
+- History: Open-Meteo Historical Weather API (ERA5), grid point 45.50, -73.50
+
+| Check | Value | In 1994–2024 (the 30 years before this date) | In 1951–1980 | Compared with 1951–1980 | Rarity level | Danger line | Check level |
+|---|---|---|---|---|---|---|---|
+| Rain (24 h) | 21.6 mm | about 9.6 times a year (287 days) | about 8.0 times a year (241) | 1.2 times more common here than in 1951–1980 | Typical | 150 mm: not crossed | Typical |
+| Feels-like heat | -3.4 °C | about 279 times a year (8357 days) | about 269 times a year (8072) | about as common here as in 1951–1980 | Typical | 40 °C: not crossed | Typical |
+| Feels-like cold | -12.7 °C | about 77 times a year (2304 days) | about 88 times a year (2647) | 1.1 times less common here than in 1951–1980 | Typical | — | Typical |
+| Snowfall (24 h) | 7.1 cm | about 5.0 times a year (150 days) | about 5.1 times a year (153) | about as common here as in 1951–1980 | Typical | — | Typical |
+| Wind gust | 62.3 km/h | about 16 times a year (492 days) | about 12 times a year (364) | 1.4 times more common here than in 1951–1980 | Typical | 100 km/h: not crossed | Typical |
+| Recent rain (6-day total) | 51.0 mm | about 5.2 times a year (155 spells) | about 3.7 times a year (110) | 1.4 times more common here than in 1951–1980 | Typical | — | Typical |
+
+- Rain in the 5 days before the date: 29.4 mm (from history (ERA5) for the earlier days); daily amounts: 0.0 mm, 11.3 mm, 16.6 mm, 1.5 mm, 0.0 mm, 21.6 mm
+- Shown for Rain (24 h): "Normal rain for here (21.6 mm)"
+- Shown for Feels-like heat: "Normal highs for here (feels like up to -3 °C)"
+- Shown for Feels-like cold: "Normal lows for here (feels like down to -13 °C)"
+- Shown for Snowfall (24 h): "Normal snowfall for here (7.1 cm)"
+- Shown for Wind gust: "Normal wind for here (gusts up to 62 km/h)"
+- Shown for Recent rain (6-day total): "Normal rain for the last 6 days (51.0 mm)"
 
 Weather data by Open-Meteo.com
