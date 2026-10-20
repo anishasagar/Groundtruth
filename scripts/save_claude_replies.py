@@ -3,7 +3,8 @@
 Run from the project folder:  python scripts/save_claude_replies.py
 Add --refresh to ask again even when the saved reply is still up to date.
 
-Replays in the app only use these saved replies, so the demo works without the
+Typical days use fixed wording and never go to Claude, so Typical replays have no
+saved reply (an old one is deleted). Replays in the app only use these saved replies, so the demo works without the
 Claude API. Each saved reply carries a fingerprint of the facts, the prompt and
 the model; if any of those change, the app treats the reply as out of date.
 A reply is saved only if it passes the guardrail check. If it fails, Claude is
@@ -45,6 +46,13 @@ def main():
         if result["level"] not in risk.LEVELS:
             print(f"{name}: Not enough data, so no Claude reply (template mode)")
             continue
+        if result["level"] == "Typical":
+            if path.exists():
+                path.unlink()
+                print(f"{name}: Typical: fixed wording, Claude isn't asked (deleted the old {path.name})")
+            else:
+                print(f"{name}: Typical: fixed wording, Claude isn't asked")
+            continue
         if not refresh:
             reply, problems = claude_text.saved_reply(path, facts)
             if reply is not None:
@@ -59,15 +67,17 @@ def main():
             still_failing.append((name, problems))
             print(f"{name}: STILL FAILING after {claude_text.CACHE_ATTEMPTS} tries (nothing saved)")
             continue
-        claude_text.save_reply(path, facts, reply)
-        print(f"{name}: saved ({path.relative_to(ROOT)}): {reply['headline']}")
+        tries = len(problems) + 1  # every failed try left one problem
+        claude_text.save_reply(path, facts, reply, tries)
+        print(f"{name}: saved after {tries} {'try' if tries == 1 else 'tries'} "
+              f"({path.relative_to(ROOT)}): {reply['headline']}")
 
     if still_failing:
         print("\nStill failing (these replays will show template mode):")
         for name, problems in still_failing:
             print(f"- {name}: {problems[-1]}")
         sys.exit(1)
-    print("\nEvery replay has a saved Claude reply that passes the checks.")
+    print("\nEvery raised-day replay has a saved Claude reply that passes the checks (Typical: fixed wording).")
 
 
 if __name__ == "__main__":

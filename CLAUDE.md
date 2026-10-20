@@ -29,6 +29,35 @@ A web app that tells a person, in one plain sentence, how unusual today's weathe
 ## Phase 2 (don't build yet)
 - Top priority — Storm heads-up: flag thunderstorm and hail conditions from the forecast (weather codes, CAPE), as an absolute flag because history can't measure storm rarity. Test on the Bayesian and Valencia replays and on ordinary summer storm days. It must use both weather codes and CAPE: the Bayesian forecast showed high CAPE with no thunderstorm codes.
 - Ice-risk heads-up: an absolute flag when precipitation falls at or below freezing (Paris 2026-01-07 as the test case).
+  - Count snow or rain in the days before, not just the day itself (a dry freezing day after snow gets no ice note today).
+  - Re-save the Paris forecast with air temperature (temperature_2m_min), so the live path of the ice note is tested; today Paris only gets it through the feels-like low.
 - Rain and wind: replace the fixed danger lines with location-adaptive ones. Trigger if today's value exceeds the 99th percentile of the 75-year ERA5 record for that location.
 - Heat: trigger if today's feels-like value exceeds the location's 99th percentile OR is 40 °C or more. Keep this fixed floor: the human body's heat limit doesn't adapt to local climate, and the percentile itself rises as the climate warms.
 - Before building this, print Kolkata's 99th-percentile feels-like value and show it to me.
+- From the false-reassurance review:
+  - Numbers: check each number in Claude's text against its own check (the value next to that check's name and unit, the rate next to "times a year"), not just against all the facts. Today a danger-line number can pass as a check's value, and a dropped minus sign can pass ("down to 6 °C" for −6, because "6" appears elsewhere in the facts).
+  - Geological note on every result, not only the Nepal-Tibet replay. Decide where it goes with the layout.
+  - "Not enough data" must not hide a higher reading: keep "Not enough data — check official sources" and add what the checks that did run already reach (for example Elevated).
+  - Rounding: round cold values toward colder, show one decimal within about 1 unit of a danger line, and never show a rounded value at or above a line that wasn't crossed.
+  - Rare Typical checks: for a check that happens only a few times a year (Paris snow, about 1.1 times a year), show how often it happens instead of "Normal…". Don't lower anything.
+  - Ice in Claude's facts: when the ice note applies, give it to Claude and require "ice" in the confidence note (Paris's confidence note doesn't mention ice today).
+  - Text message on Elevated or higher days: when a storm or geological note applies, still add "Storms, landslides, glacier floods not checked." (drop the number, then the place, to make room).
+  - Ice note after a wet spell: also trigger it when the 5 days before had rain or snow and the day drops to +1 °C or below (refreezing slush, black ice).
+  - Invented descriptions and permission phrases: reject season and month words ("winter", "January", "this time of year") and phrases like "OK to", "good to go", "good day for", "can proceed", "don't need", "not necessary".
+  - Confidence note meaning: require "misses" next to "local storm(s)" and "can be too low" next to "forecast"; reject "reliable", "accurate", "confident", "certain", "high confidence".
+  - Climate wording: also reject "climate" on its own, "more/less probable", "odds", "fuelled by", "linked to", "sign of".
+  - More softening words on Elevated or higher: "scattered", "short-lived", "passing", "patchy", "modest", "marginal(ly)", "borderline", "barely", "merely".
+  - Past tense for the day itself: reject "fell", "reached", "was recorded" in sentences about the day's own value (prompt-only today).
+  - Danger-line rate: any bullet that gives a danger-line check's yearly rate must also say "danger line" (Kolkata's second bullet stands alone today).
+  - Ice note first on Typical days, before the not-covered list.
+  - TESTLOG label: "what it means" is shown with Claude's text only, not in template mode; fix the "Full output per case" label.
+  - Shortened place names in text messages: cut at a word boundary and separate the place from the date ("Nepal-Tibet bo. 26 Aug 2026", "39.43, -0.42 27 Feb 2018").
+  - Prompt typo: an extra quote mark before "minimal risk" in rule 3.
+  - (High) Typical headline with ice: when the ice note applies, the fixed Typical headline should start with the warning, e.g. "Roads may be icy. Typical rain, temperature, snow and wind for here. Ice isn't checked, nor are thunderstorms, landslides or glacier collapse." Today the Paris headline only lists ice among things not checked; the text message does say "Roads may be icy".
+  - (High) Hazard denials on raised days still pass in other forms: reject an unchecked hazard followed within a few words by "not / isn't / aren't / won't" + "expected / forecast / likely / seen / a concern" ("Thunderstorms are not forecast"); "none" or "nothing" pointing back to a hazard ("nothing to suggest flooding", "but none are forecast" in the confidence note); allow more words between "no" and the hazard; add lightning, tornado, waterspout, squall, downburst, sleet, wildfire, smoke, earthquake, mudslide, debris flow, outburst to the hazard list.
+  - Risk play-downs: treat chance, likelihood, danger and threat like "risk"; add "small", "lower", "reduced", "limited" in both word orders; reject "not (a / at) risk", "without (any) risk", "not a concern", "no problem", "harmless"; on raised days reject "not" or "far from" before any level word in any case.
+  - "Less common now" in other words: trigger the rule on "more often/frequent/common" with the comparison period, "back then", "then", "during" or "in the past"; reject "less severe", "less dangerous", "less intense", "less extreme", "not as serious/severe".
+  - Typical caption: "reviewed in advance" can read as "someone checked today". Consider "This is the same standard wording used on every Typical day. It doesn't know about anything the checks below can't see."
+  - Prompt rule 6 still suggests "Typical rain, temperature, snow and wind", which the guardrail rejects on raised days; remove it, and add "not expected", "not forecast", "not likely" to rule 3's examples.
+  - TESTLOG: for Typical cases, label the template-mode block "not shown in the app" (or drop it) and list the screen order instead.
+  - All-clear rule: "Everything else looks fine." passes; the rule only catches "everything looks fine" (allow "else").

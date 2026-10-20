@@ -21,6 +21,8 @@ REPLAY_MISSING = "Replay data for this event isn't saved yet. Please try again l
 # Replays that get the geological-hazards warning right under the level.
 GEOLOGICAL_REPLAYS = {name for name, note in replays.SPECIAL_NOTES.items() if note == "geological"}
 GEOLOGICAL_NOTE = message.GEOLOGICAL_NOTE
+TYPICAL_CAPTION = ("On Typical days this text is fixed wording, reviewed in advance; "
+                   "Claude only writes on raised days.")
 # Level colours. Never green: a green box could read as "all fine".
 LEVEL_STYLE = {
     "Typical": ("#3d5a80", "#ffffff"),
@@ -146,6 +148,7 @@ def how_sure_box(result, confidence_note=None):
         st.markdown(
             "- Official weather warnings come first. Groundtruth never replaces them.\n"
             "- The history data is a grid of about 25 km, so it misses very local storms.\n"
+            f"- {message.FORECAST_NOTE}\n"
             f"- {GEOLOGICAL_NOTE}"
         )
         if rain.get("source") == "forecast":
@@ -188,14 +191,28 @@ def show_assessment(result, place, replay_name=None):
         st.warning(f"**Weather data can't see everything.** {GEOLOGICAL_NOTE}", icon="⚠️")
 
     st.markdown(f"**{place} — {message.day_text(result['date'])}**")
-    reply, problems = claude_reply(result, place, replay_name)
-    if reply is not None:
+    special = replays.SPECIAL_NOTES.get(replay_name)
+    typical = result["level"] == "Typical"
+    reply, problems = (None, []) if typical else claude_reply(result, place, replay_name)
+    ice = message.ice_line(result)  # shown right under the headline in every mode
+    if typical:  # fixed wording; Claude is never asked on Typical days
+        st.markdown(f"### {message.HEADLINES['Typical']}")
+        if ice:
+            st.markdown(f"**{ice}**")
+        st.markdown(message.what_it_means(result, special))
+        st.caption(TYPICAL_CAPTION)
+    elif reply is not None:
         st.markdown(f"### {plain(reply['headline'])}")
-        st.markdown(plain(reply["what_it_means"]))
+        if ice:
+            st.markdown(f"**{ice}**")
+        st.markdown(message.what_it_means(result, special))  # written by code, never by Claude
         st.markdown("\n".join(f"- {plain(b)}" for b in reply["why"]))
-        st.caption("Written by Claude from the computed facts; the level and every number were checked in code.")
+        st.caption("Written by Claude from the computed facts. The level is set in code, "
+                   "and every number appears in those facts.")
     else:
         st.markdown(f"### {message.template_sentence(result)}")
+        if ice:
+            st.markdown(f"**{ice}**")
         st.caption("Template mode: this sentence is built from the numbers, not written by an AI.  \n"
                    f"Claude's text wasn't used: {plain(claude_text.short_reason(problems))}.")
     st.warning(message.STORM_NOTE, icon="⚡")
@@ -215,9 +232,9 @@ def show_assessment(result, place, replay_name=None):
             st.caption(f"{check_name}: {like_this}. The longer line is the period with more of them.")
 
     st.subheader("Text message version")
-    sms = reply["sms"] if reply is not None else message.sms_text(result, place)
+    sms = message.sms_text(result, place, special)  # written by code, never by Claude
     st.code(sms, language=None, wrap_lines=True)
-    st.caption(f"{len(sms)} of 160 characters" + (" · written by Claude" if reply is not None else ""))
+    st.caption(f"{len(sms)} of 160 characters")
 
     how_sure_box(result, reply["confidence_note"] if reply is not None else None)
 

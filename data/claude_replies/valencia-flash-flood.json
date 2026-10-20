@@ -1,6 +1,6 @@
 {
  "model": "claude-sonnet-5-5",
- "fingerprint": "c434eda7d059b344a2b9ace427e250970995b7cc3c981950e051ea91c02f47b0",
+ "fingerprint": "98f69b1bdde938c95284da55c4af0d5ad09b9b51ea5f23b7238106712762856a",
  "facts": {
   "place": "Paiporta, Valencia, Spain",
   "day": "29 Oct 2024",
@@ -70,7 +70,7 @@
     "name": "Wind gust",
     "value": "61 km/h",
     "level": "Typical",
-    "wording": "Normal wind for here (gusts up to 61 km/h)",
+    "wording": "Normal wind for here (gusts up to 61 km/h; the data misses sudden local storm gusts)",
     "how_often_in_recent_period": "about 8.7 times a year",
     "how_often_in_comparison_period": "about 7.8 times a year",
     "comparison": "1.1 times more common here than in 1951–1980",
@@ -99,13 +99,12 @@
    "total_including_the_day": "257 mm",
    "based_on": "measured rain for the earlier days and the forecast for the day itself"
   },
-  "action_line": "Avoid underpasses, low roads and riverbanks.",
-  "official_warnings": "Check your official weather warnings — Groundtruth never replaces them.",
   "scope_notes": [
    "We check rain, heat, cold, snow, wind and recent rain. We don't yet check thunderstorms, hail, freezing rain or ice, wildfire, air quality, coastal flooding, or geological hazards. For those, follow official warnings.",
    "Thunderstorms are not checked. Storms are a major cause of weather deaths — follow official storm warnings.",
    "The history data is a ~25 km grid and misses very local storms.",
-   "Groundtruth covers weather-driven hazards only. For landslides, glacier collapse or earthquakes, check local civil protection and geological authorities."
+   "Groundtruth covers weather-driven hazards only. For landslides, glacier collapse or earthquakes, check local civil protection and geological authorities.",
+   "The day's figures are a forecast and can be too low."
   ],
   "data_notes": [],
   "special_note": null,
@@ -114,13 +113,11 @@
  "reply": {
   "headline": "Extreme risk of heavy rain in Paiporta, Valencia, Spain on 29 Oct 2024.",
   "why": [
-   "Rain over 24 hours set the level, at 202 mm, which is above the 150 mm danger line.",
-   "A day with this much rain was not seen in 1951–1980 or in the 30 years before this date.",
-   "Rain over the last 6 days also reached Extreme, with 257 mm in total, of which 54.9 mm fell in the 5 days before.",
-   "That total uses measured rain for the earlier days and the forecast for the day itself."
+   "Rain over 24 hours and the 6-day rain total together set the level.",
+   "The day's rain is 202 mm forecast, which is at or above the 150 mm danger line and was not seen in 1951–1980 or in the 30 years before this date.",
+   "The 6-day total is 257 mm, made up of 54.9 mm measured over the 5 days before plus the forecast for the day itself, and this was also not seen in either period."
   ],
-  "what_it_means": "Avoid underpasses, low roads and riverbanks. Check your official weather warnings, because Groundtruth never replaces them.",
-  "sms": "Groundtruth: Extreme risk of heavy rain in Paiporta, Valencia, Spain, 29 Oct 2024. Avoid underpasses and low roads. Check official warnings.",
-  "confidence_note": "The history is a grid of about 25 km and misses very local storms, and thunderstorms are not checked. Geological hazards such as landslides, glacier collapse or earthquakes need local civil protection and geological authorities."
- }
+  "confidence_note": "The history is a grid of about 25 km and misses very local storms, and the day's figures are a forecast and can be too low. Landslides, glacier collapse or earthquakes are not covered, so check local civil protection and geological authorities."
+ },
+ "tries": 1
 }

@@ -8,16 +8,16 @@ Each check cell shows the wording the app shows, then that check's level. Typica
 
 | Case | Date | Level | Decided by | Rain (24 h) | Feels-like heat | Feels-like cold | Snowfall (24 h) | Wind gust | Recent rain (6-day total) | Expected | Matches? |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| Valencia flash flood | 2024-10-29 | **Extreme** | Rain (24 h), Recent rain (6-day total) | not seen in 1951–1980 or in the 30 years before this date; at or above the 150 mm danger line → Extreme | Normal highs for here (feels like up to 20 °C) → Typical | Normal lows for here (feels like down to 17 °C) → Typical | No snow forecast → Typical | Normal wind for here (gusts up to 61 km/h) → Typical | not seen in 1951–1980 or in the 30 years before this date → Extreme | Extreme rain, possibly beyond the 30-year record | yes |
-| Texas Hill Country flood | 2025-07-04 | **High** | Rain (24 h) | about once every 15 years in the 30 years before this date; about as common here as in 1951–1980 → High | Normal highs for here (feels like up to 29 °C) → Typical | Normal lows for here (feels like down to 23 °C) → Typical | No snow forecast → Typical | Normal wind for here (gusts up to 50 km/h) → Typical | about once every 4.3 years in the 30 years before this date; 3.5 times more common here than in 1951–1980 → Elevated | Elevated or High; forecasts underestimated this rain, so a partial miss is likely | yes |
-| Kolkata heat (KK concert) | 2022-05-31 | **High** | Feels-like heat | Normal rain for here (8.2 mm) → Typical | about 48 times a year in the 30 years before this date; 1.4 times more common here than in 1951–1980; at or above the 40 °C danger line → High | Normal lows for here (feels like down to 34 °C) → Typical | No snow forecast → Typical | Normal wind for here (gusts up to 28 km/h) → Typical | Normal rain for the last 6 days (16.5 mm) → Typical | At least High via the heat danger line | yes |
-| Bayesian sinking | 2024-08-19 | **Typical** | Rain (24 h), Feels-like heat, Feels-like cold, Snowfall (24 h), Wind gust, Recent rain (6-day total) | Normal rain for here (2.5 mm) → Typical | Normal highs for here (feels like up to 33 °C) → Typical | Normal lows for here (feels like down to 28 °C) → Typical | No snow forecast → Typical | Normal wind for here (gusts up to 45 km/h) → Typical | Normal rain for the last 6 days (13.8 mm) → Typical | Probably a miss; a sudden local storm is too small for this data | yes |
-| Nepal-Tibet glacier-collapse flood | 2026-08-26 | **Typical** | Rain (24 h), Feels-like heat, Feels-like cold, Snowfall (24 h), Wind gust, Recent rain (6-day total) | Normal rain for here (6.1 mm) → Typical | Normal highs for here (feels like up to 30 °C) → Typical | Normal lows for here (feels like down to 23 °C) → Typical | No snow forecast → Typical | Normal wind for here (gusts up to 31 km/h) → Typical | Normal rain for the last 6 days (65.6 mm) → Typical | Probably Typical or Elevated; a glacier collapse is invisible to weather data | yes |
-| Calm control 1, Paiporta | 2024-05-15 | **Typical** | Rain (24 h), Feels-like heat, Feels-like cold, Snowfall (24 h), Wind gust, Recent rain (6-day total) | Normal rain for here (0.1 mm) → Typical | Normal highs for here (feels like up to 22 °C) → Typical | Normal lows for here (feels like down to 14 °C) → Typical | No snow forecast → Typical | Normal wind for here (gusts up to 34 km/h) → Typical | Normal rain for the last 6 days (0.3 mm) → Typical | Typical | yes |
-| Calm control 2, Kolkata | 2022-01-15 | **Typical** | Rain (24 h), Feels-like heat, Feels-like cold, Snowfall (24 h), Wind gust, Recent rain (6-day total) | Normal rain for here (0.2 mm) → Typical | Normal highs for here (feels like up to 24 °C) → Typical | Normal lows for here (feels like down to 14 °C) → Typical | No snow forecast → Typical | Normal wind for here (gusts up to 24 km/h) → Typical | Normal rain for the last 6 days (17.0 mm) → Typical | Typical | yes |
-| Ordinary rain 1, Paiporta (winter) | 2018-02-27 | **Typical** | Rain (24 h), Feels-like heat, Feels-like cold, Snowfall (24 h), Wind gust, Recent rain (6-day total) | Normal rain for here (15.4 mm) → Typical | Normal highs for here (feels like up to 7 °C) → Typical | Normal lows for here (feels like down to 2 °C) → Typical | No snow forecast → Typical | Normal wind for here (gusts up to 58 km/h) → Typical | Normal rain for the last 6 days (15.7 mm) → Typical | Ordinary rainy day (about 16 mm; 22 mm or more happens about 3 times a year here): Typical or Elevated, not Extreme | yes |
-| Ordinary rain 2, Paiporta (autumn) | 2024-09-18 | **Typical** | Rain (24 h), Feels-like heat, Feels-like cold, Snowfall (24 h), Wind gust, Recent rain (6-day total) | Normal rain for here (15.6 mm) → Typical | Normal highs for here (feels like up to 24 °C) → Typical | Normal lows for here (feels like down to 20 °C) → Typical | No snow forecast → Typical | Normal wind for here (gusts up to 24 km/h) → Typical | Normal rain for the last 6 days (15.9 mm) → Typical | Ordinary rainy day (about 16 mm; 22 mm or more happens about 3 times a year here): Typical or Elevated, not Extreme | yes |
-| Paris snow and cold | 2026-01-07 | **Typical** | Rain (24 h), Feels-like heat, Feels-like cold, Snowfall (24 h), Wind gust, Recent rain (6-day total) | Normal rain for here (5.1 mm) → Typical | Normal highs for here (feels like up to -1 °C) → Typical | Normal lows for here (feels like down to -6 °C) → Typical | Normal snowfall for here (3.0 cm) → Typical | Normal wind for here (gusts up to 36 km/h) → Typical | Normal rain for the last 6 days (10.6 mm) → Typical | Typical. Honest limit: the danger came from snow falling on freezing, unprepared roads. Ice risk and local preparedness aren't checked yet. | yes |
+| Valencia flash flood | 2024-10-29 | **Extreme** | Rain (24 h), Recent rain (6-day total) | not seen in 1951–1980 or in the 30 years before this date; at or above the 150 mm danger line → Extreme | Normal highs for here (feels like up to 20 °C) → Typical | Normal lows for here (feels like down to 17 °C) → Typical | No snow forecast → Typical | Normal wind for here (gusts up to 61 km/h; the data misses sudden local storm gusts) → Typical | not seen in 1951–1980 or in the 30 years before this date → Extreme | Extreme rain, possibly beyond the 30-year record | yes |
+| Texas Hill Country flood | 2025-07-04 | **High** | Rain (24 h) | about once every 15 years in the 30 years before this date; about as common here as in 1951–1980 → High | Normal highs for here (feels like up to 29 °C) → Typical | Normal lows for here (feels like down to 23 °C) → Typical | No snow forecast → Typical | Normal wind for here (gusts up to 50 km/h; the data misses sudden local storm gusts) → Typical | about once every 4.3 years in the 30 years before this date; 3.5 times more common here than in 1951–1980 → Elevated | Elevated or High; forecasts underestimated this rain, so a partial miss is likely | yes |
+| Kolkata heat (KK concert) | 2022-05-31 | **High** | Feels-like heat | Normal rain for here (8.2 mm) → Typical | about 48 times a year in the 30 years before this date; 1.4 times more common here than in 1951–1980; at or above the 40 °C danger line → High | Normal lows for here (feels like down to 34 °C) → Typical | No snow forecast → Typical | Normal wind for here (gusts up to 28 km/h; the data misses sudden local storm gusts) → Typical | Normal rain for the last 6 days (16.5 mm) → Typical | At least High via the heat danger line | yes |
+| Bayesian sinking | 2024-08-19 | **Typical** | Rain (24 h), Feels-like heat, Feels-like cold, Snowfall (24 h), Wind gust, Recent rain (6-day total) | Normal rain for here (2.5 mm) → Typical | Normal highs for here (feels like up to 33 °C) → Typical | Normal lows for here (feels like down to 28 °C) → Typical | No snow forecast → Typical | Normal wind for here (gusts up to 45 km/h; the data misses sudden local storm gusts) → Typical | Normal rain for the last 6 days (13.8 mm) → Typical | Probably a miss; a sudden local storm is too small for this data | yes |
+| Nepal-Tibet glacier-collapse flood | 2026-08-26 | **Typical** | Rain (24 h), Feels-like heat, Feels-like cold, Snowfall (24 h), Wind gust, Recent rain (6-day total) | Normal rain for here (6.1 mm) → Typical | Normal highs for here (feels like up to 30 °C) → Typical | Normal lows for here (feels like down to 23 °C) → Typical | No snow forecast → Typical | Normal wind for here (gusts up to 31 km/h; the data misses sudden local storm gusts) → Typical | Normal rain for the last 6 days (65.6 mm) → Typical | Probably Typical or Elevated; a glacier collapse is invisible to weather data | yes |
+| Calm control 1, Paiporta | 2024-05-15 | **Typical** | Rain (24 h), Feels-like heat, Feels-like cold, Snowfall (24 h), Wind gust, Recent rain (6-day total) | Normal rain for here (0.1 mm) → Typical | Normal highs for here (feels like up to 22 °C) → Typical | Normal lows for here (feels like down to 14 °C) → Typical | No snow forecast → Typical | Normal wind for here (gusts up to 34 km/h; the data misses sudden local storm gusts) → Typical | Normal rain for the last 6 days (0.3 mm) → Typical | Typical | yes |
+| Calm control 2, Kolkata | 2022-01-15 | **Typical** | Rain (24 h), Feels-like heat, Feels-like cold, Snowfall (24 h), Wind gust, Recent rain (6-day total) | Normal rain for here (0.2 mm) → Typical | Normal highs for here (feels like up to 24 °C) → Typical | Normal lows for here (feels like down to 14 °C) → Typical | No snow forecast → Typical | Normal wind for here (gusts up to 24 km/h; the data misses sudden local storm gusts) → Typical | Normal rain for the last 6 days (17.0 mm) → Typical | Typical | yes |
+| Ordinary rain 1, Paiporta (winter) | 2018-02-27 | **Typical** | Rain (24 h), Feels-like heat, Feels-like cold, Snowfall (24 h), Wind gust, Recent rain (6-day total) | Normal rain for here (15.4 mm) → Typical | Normal highs for here (feels like up to 7 °C) → Typical | Normal lows for here (feels like down to 2 °C) → Typical | No snow forecast → Typical | Normal wind for here (gusts up to 58 km/h; the data misses sudden local storm gusts) → Typical | Normal rain for the last 6 days (15.7 mm) → Typical | Ordinary rainy day (about 16 mm; 22 mm or more happens about 3 times a year here): Typical or Elevated, not Extreme | yes |
+| Ordinary rain 2, Paiporta (autumn) | 2024-09-18 | **Typical** | Rain (24 h), Feels-like heat, Feels-like cold, Snowfall (24 h), Wind gust, Recent rain (6-day total) | Normal rain for here (15.6 mm) → Typical | Normal highs for here (feels like up to 24 °C) → Typical | Normal lows for here (feels like down to 20 °C) → Typical | No snow forecast → Typical | Normal wind for here (gusts up to 24 km/h; the data misses sudden local storm gusts) → Typical | Normal rain for the last 6 days (15.9 mm) → Typical | Ordinary rainy day (about 16 mm; 22 mm or more happens about 3 times a year here): Typical or Elevated, not Extreme | yes |
+| Paris snow and cold | 2026-01-07 | **Typical** | Rain (24 h), Feels-like heat, Feels-like cold, Snowfall (24 h), Wind gust, Recent rain (6-day total) | Normal rain for here (5.1 mm) → Typical | Normal highs for here (feels like up to -1 °C) → Typical | Normal lows for here (feels like down to -6 °C) → Typical | Normal snowfall for here (3.0 cm) → Typical | Normal wind for here (gusts up to 36 km/h; the data misses sudden local storm gusts) → Typical | Normal rain for the last 6 days (10.6 mm) → Typical | Typical. Honest limit: the danger came from snow falling on freezing, unprepared roads. Ice risk and local preparedness aren't checked yet. | yes |
 | Ordinary snow, Montreal | — | pending | — | — | — | — | — | — | — | Pending: day not picked yet (scripts/save_replay_data.py picks it). Expect Typical: snow is routine here. | — |
 
 ## Claude text (saved replies)
@@ -26,14 +26,14 @@ Each replay shows Claude's saved text (claude-sonnet-5-5) only if its fingerprin
 
 | Replay | Level | Text shown | Claude's headline |
 |---|---|---|---|
-| Valencia flash flood | Extreme | Claude mode: passes the checks (fingerprint c434eda7d059) | Extreme risk of heavy rain in Paiporta, Valencia, Spain on 29 Oct 2024. |
-| Texas Hill Country flood | High | Claude mode: passes the checks (fingerprint 35a1e2ff94c7) | High risk of heavy rain in Texas Hill Country, USA on 4 Jul 2025. |
-| Kolkata heat (KK concert) | High | Claude mode: passes the checks (fingerprint df9ec58072e9) | High risk of feels-like heat in Kolkata, India on 31 May 2022. |
-| Bayesian sinking | Typical | Claude mode: passes the checks (fingerprint 9c57d5fa1798) | Typical rain, temperature, snow and wind for Porticello, Sicily, Italy on 19 Aug 2024. |
-| Nepal-Tibet glacier-collapse flood | Typical | Claude mode: passes the checks (fingerprint a0abd31a0256) | Typical rain, temperature, snow and wind for Nepal–Tibet border area on 26 Aug 2026. |
-| Calm control 1, Paiporta | Typical | Claude mode: passes the checks (fingerprint c82880197295) | Typical rain, temperature, snow and wind for Paiporta, Valencia, Spain on 15 May 2024. |
-| Calm control 2, Kolkata | Typical | Claude mode: passes the checks (fingerprint d9e005f2a312) | Typical rain, temperature, snow and wind for Kolkata, India on 15 Jan 2022. |
-| Paris snow and cold | Typical | Claude mode: passes the checks (fingerprint 4ee6d77465c6) | Typical rain, temperature, snow and wind for Paris, France on 7 Jan 2026. |
+| Valencia flash flood | Extreme | Claude mode: passes the checks (fingerprint 98f69b1bdde9) | Extreme risk of heavy rain in Paiporta, Valencia, Spain on 29 Oct 2024. |
+| Texas Hill Country flood | High | Claude mode: passes the checks (fingerprint 1545ae289268) | High risk of heavy rain in Texas Hill Country, USA on 4 Jul 2025. |
+| Kolkata heat (KK concert) | High | Claude mode: passes the checks (fingerprint a81d6328d0b9) | High risk of dangerous feels-like heat in Kolkata, India on 31 May 2022. |
+| Bayesian sinking | Typical | fixed wording (Claude isn't asked on Typical days) | — |
+| Nepal-Tibet glacier-collapse flood | Typical | fixed wording (Claude isn't asked on Typical days) | — |
+| Calm control 1, Paiporta | Typical | fixed wording (Claude isn't asked on Typical days) | — |
+| Calm control 2, Kolkata | Typical | fixed wording (Claude isn't asked on Typical days) | — |
+| Paris snow and cold | Typical | fixed wording (Claude isn't asked on Typical days) | — |
 
 ## Details
 
@@ -57,7 +57,7 @@ Each replay shows Claude's saved text (claude-sonnet-5-5) only if its fingerprin
 - Shown for Feels-like heat: "Normal highs for here (feels like up to 20 °C)"
 - Shown for Feels-like cold: "Normal lows for here (feels like down to 17 °C)"
 - Shown for Snowfall (24 h): "No snow forecast"
-- Shown for Wind gust: "Normal wind for here (gusts up to 61 km/h)"
+- Shown for Wind gust: "Normal wind for here (gusts up to 61 km/h; the data misses sudden local storm gusts)"
 - Shown for Recent rain (6-day total): "not seen in 1951–1980 or in the 30 years before this date"
 
 ### Texas Hill Country flood — 2025-07-04
@@ -80,7 +80,7 @@ Each replay shows Claude's saved text (claude-sonnet-5-5) only if its fingerprin
 - Shown for Feels-like heat: "Normal highs for here (feels like up to 29 °C)"
 - Shown for Feels-like cold: "Normal lows for here (feels like down to 23 °C)"
 - Shown for Snowfall (24 h): "No snow forecast"
-- Shown for Wind gust: "Normal wind for here (gusts up to 50 km/h)"
+- Shown for Wind gust: "Normal wind for here (gusts up to 50 km/h; the data misses sudden local storm gusts)"
 - Shown for Recent rain (6-day total): "about once every 4.3 years in the 30 years before this date; 3.5 times more common here than in 1951–1980"
 
 ### Kolkata heat (KK concert) — 2022-05-31
@@ -103,7 +103,7 @@ Each replay shows Claude's saved text (claude-sonnet-5-5) only if its fingerprin
 - Shown for Feels-like heat: "about 48 times a year in the 30 years before this date; 1.4 times more common here than in 1951–1980; at or above the 40 °C danger line"
 - Shown for Feels-like cold: "Normal lows for here (feels like down to 34 °C)"
 - Shown for Snowfall (24 h): "No snow forecast"
-- Shown for Wind gust: "Normal wind for here (gusts up to 28 km/h)"
+- Shown for Wind gust: "Normal wind for here (gusts up to 28 km/h; the data misses sudden local storm gusts)"
 - Shown for Recent rain (6-day total): "Normal rain for the last 6 days (16.5 mm)"
 
 ### Bayesian sinking — 2024-08-19
@@ -126,7 +126,7 @@ Each replay shows Claude's saved text (claude-sonnet-5-5) only if its fingerprin
 - Shown for Feels-like heat: "Normal highs for here (feels like up to 33 °C)"
 - Shown for Feels-like cold: "Normal lows for here (feels like down to 28 °C)"
 - Shown for Snowfall (24 h): "No snow forecast"
-- Shown for Wind gust: "Normal wind for here (gusts up to 45 km/h)"
+- Shown for Wind gust: "Normal wind for here (gusts up to 45 km/h; the data misses sudden local storm gusts)"
 - Shown for Recent rain (6-day total): "Normal rain for the last 6 days (13.8 mm)"
 
 ### Nepal-Tibet glacier-collapse flood — 2026-08-26
@@ -149,7 +149,7 @@ Each replay shows Claude's saved text (claude-sonnet-5-5) only if its fingerprin
 - Shown for Feels-like heat: "Normal highs for here (feels like up to 30 °C)"
 - Shown for Feels-like cold: "Normal lows for here (feels like down to 23 °C)"
 - Shown for Snowfall (24 h): "No snow forecast"
-- Shown for Wind gust: "Normal wind for here (gusts up to 31 km/h)"
+- Shown for Wind gust: "Normal wind for here (gusts up to 31 km/h; the data misses sudden local storm gusts)"
 - Shown for Recent rain (6-day total): "Normal rain for the last 6 days (65.6 mm)"
 
 ### Calm control 1, Paiporta — 2024-05-15
@@ -172,7 +172,7 @@ Each replay shows Claude's saved text (claude-sonnet-5-5) only if its fingerprin
 - Shown for Feels-like heat: "Normal highs for here (feels like up to 22 °C)"
 - Shown for Feels-like cold: "Normal lows for here (feels like down to 14 °C)"
 - Shown for Snowfall (24 h): "No snow forecast"
-- Shown for Wind gust: "Normal wind for here (gusts up to 34 km/h)"
+- Shown for Wind gust: "Normal wind for here (gusts up to 34 km/h; the data misses sudden local storm gusts)"
 - Shown for Recent rain (6-day total): "Normal rain for the last 6 days (0.3 mm)"
 
 ### Calm control 2, Kolkata — 2022-01-15
@@ -195,7 +195,7 @@ Each replay shows Claude's saved text (claude-sonnet-5-5) only if its fingerprin
 - Shown for Feels-like heat: "Normal highs for here (feels like up to 24 °C)"
 - Shown for Feels-like cold: "Normal lows for here (feels like down to 14 °C)"
 - Shown for Snowfall (24 h): "No snow forecast"
-- Shown for Wind gust: "Normal wind for here (gusts up to 24 km/h)"
+- Shown for Wind gust: "Normal wind for here (gusts up to 24 km/h; the data misses sudden local storm gusts)"
 - Shown for Recent rain (6-day total): "Normal rain for the last 6 days (17.0 mm)"
 
 ### Ordinary rain 1, Paiporta (winter) — 2018-02-27
@@ -218,7 +218,7 @@ Each replay shows Claude's saved text (claude-sonnet-5-5) only if its fingerprin
 - Shown for Feels-like heat: "Normal highs for here (feels like up to 7 °C)"
 - Shown for Feels-like cold: "Normal lows for here (feels like down to 2 °C)"
 - Shown for Snowfall (24 h): "No snow forecast"
-- Shown for Wind gust: "Normal wind for here (gusts up to 58 km/h)"
+- Shown for Wind gust: "Normal wind for here (gusts up to 58 km/h; the data misses sudden local storm gusts)"
 - Shown for Recent rain (6-day total): "Normal rain for the last 6 days (15.7 mm)"
 
 ### Ordinary rain 2, Paiporta (autumn) — 2024-09-18
@@ -241,7 +241,7 @@ Each replay shows Claude's saved text (claude-sonnet-5-5) only if its fingerprin
 - Shown for Feels-like heat: "Normal highs for here (feels like up to 24 °C)"
 - Shown for Feels-like cold: "Normal lows for here (feels like down to 20 °C)"
 - Shown for Snowfall (24 h): "No snow forecast"
-- Shown for Wind gust: "Normal wind for here (gusts up to 24 km/h)"
+- Shown for Wind gust: "Normal wind for here (gusts up to 24 km/h; the data misses sudden local storm gusts)"
 - Shown for Recent rain (6-day total): "Normal rain for the last 6 days (15.9 mm)"
 
 ### Paris snow and cold — 2026-01-07
@@ -264,7 +264,210 @@ Each replay shows Claude's saved text (claude-sonnet-5-5) only if its fingerprin
 - Shown for Feels-like heat: "Normal highs for here (feels like up to -1 °C)"
 - Shown for Feels-like cold: "Normal lows for here (feels like down to -6 °C)"
 - Shown for Snowfall (24 h): "Normal snowfall for here (3.0 cm)"
-- Shown for Wind gust: "Normal wind for here (gusts up to 36 km/h)"
+- Shown for Wind gust: "Normal wind for here (gusts up to 36 km/h; the data misses sudden local storm gusts)"
 - Shown for Recent rain (6-day total): "Normal rain for the last 6 days (10.6 mm)"
+
+## Replay check: date, level and sentence
+
+Added by the replay-check skill on 2026-10-20. "Previous level" is the level in TESTLOG.md before this run.
+
+| Case | Date | Level | Previous level | Sentence shown | Template sentence | Claude tries |
+|---|---|---|---|---|---|---|
+| Valencia flash flood | 2024-10-29 | **Extreme** | Extreme | Claude: Extreme risk of heavy rain in Paiporta, Valencia, Spain on 29 Oct 2024. | Risk here on this day is extremely high. Avoid underpasses, low roads and riverbanks. Check your official weather warnings — Groundtruth never replaces them. | 1 |
+| Texas Hill Country flood | 2025-07-04 | **High** | High | Claude: High risk of heavy rain in Texas Hill Country, USA on 4 Jul 2025. | Risk here on this day is unusually high. Avoid underpasses, low roads and riverbanks. Check your official weather warnings — Groundtruth never replaces them. | 1 |
+| Kolkata heat (KK concert) | 2022-05-31 | **High** | High | Claude: High risk of dangerous feels-like heat in Kolkata, India on 31 May 2022. | Risk here on this day is unusually high. Avoid heavy exertion outdoors, drink water, and check on older or vulnerable people. Check your official weather warnings — Groundtruth never replaces them. | 1 |
+| Bayesian sinking | 2024-08-19 | **Typical** | Typical | fixed wording: Typical rain, temperature, snow and wind for here. These checks can't see thunderstorms, ice on roads, or landslides and glacier collapse. | Typical rain, temperature, snow and wind for here. These checks can't see thunderstorms, ice on roads, or landslides and glacier collapse. Check your official weather warnings — Groundtruth never replaces them. | — |
+| Nepal-Tibet glacier-collapse flood | 2026-08-26 | **Typical** | Typical | fixed wording: Typical rain, temperature, snow and wind for here. These checks can't see thunderstorms, ice on roads, or landslides and glacier collapse. | Typical rain, temperature, snow and wind for here. These checks can't see thunderstorms, ice on roads, or landslides and glacier collapse. Check your official weather warnings — Groundtruth never replaces them. | — |
+| Calm control 1, Paiporta | 2024-05-15 | **Typical** | Typical | fixed wording: Typical rain, temperature, snow and wind for here. These checks can't see thunderstorms, ice on roads, or landslides and glacier collapse. | Typical rain, temperature, snow and wind for here. These checks can't see thunderstorms, ice on roads, or landslides and glacier collapse. Check your official weather warnings — Groundtruth never replaces them. | — |
+| Calm control 2, Kolkata | 2022-01-15 | **Typical** | Typical | fixed wording: Typical rain, temperature, snow and wind for here. These checks can't see thunderstorms, ice on roads, or landslides and glacier collapse. | Typical rain, temperature, snow and wind for here. These checks can't see thunderstorms, ice on roads, or landslides and glacier collapse. Check your official weather warnings — Groundtruth never replaces them. | — |
+| Ordinary rain 1, Paiporta (winter) | 2018-02-27 | **Typical** | Typical | fixed wording: Typical rain, temperature, snow and wind for here. These checks can't see thunderstorms, ice on roads, or landslides and glacier collapse. | Typical rain, temperature, snow and wind for here. These checks can't see thunderstorms, ice on roads, or landslides and glacier collapse. Check your official weather warnings — Groundtruth never replaces them. | — |
+| Ordinary rain 2, Paiporta (autumn) | 2024-09-18 | **Typical** | Typical | fixed wording: Typical rain, temperature, snow and wind for here. These checks can't see thunderstorms, ice on roads, or landslides and glacier collapse. | Typical rain, temperature, snow and wind for here. These checks can't see thunderstorms, ice on roads, or landslides and glacier collapse. Check your official weather warnings — Groundtruth never replaces them. | — |
+| Paris snow and cold | 2026-01-07 | **Typical** | Typical | fixed wording: Typical rain, temperature, snow and wind for here. These checks can't see thunderstorms, ice on roads, or landslides and glacier collapse. | Typical rain, temperature, snow and wind for here. These checks can't see thunderstorms, ice on roads, or landslides and glacier collapse. Snow or rain on freezing ground can make roads icy, and ice isn't checked. Check your official weather warnings — Groundtruth never replaces them. | — |
+| Ordinary snow, Montreal | — | pending | pending | — | — | — |
+
+### Level changes since the last run
+
+None.
+
+### Full output per case
+
+The actual text a person would see: what code writes on every day (what it means, the text message), the template sentence (shown whenever Claude or the guardrail fails), and Claude's full saved reply (headline, why, confidence note) with how many tries it took.
+
+#### Valencia flash flood — 2024-10-29 — Extreme
+
+Written by code:
+
+- What it means (shown on Typical days and with Claude's text, not in template mode): "Avoid underpasses, low roads and riverbanks. Check your official weather warnings — Groundtruth never replaces them."
+- SMS: "Groundtruth Paiporta, Valencia, Spain 29 Oct 2024: Extreme risk. Rain 202 mm forecast. Avoid low roads and riverbanks. Check official warnings."
+
+Template mode:
+
+- Sentence: "Risk here on this day is extremely high. Avoid underpasses, low roads and riverbanks. Check your official weather warnings — Groundtruth never replaces them."
+- Action line: "Avoid underpasses, low roads and riverbanks."
+
+Claude's saved reply (1 try) — passes the guardrail (shown in the app):
+
+- Headline: "Extreme risk of heavy rain in Paiporta, Valencia, Spain on 29 Oct 2024."
+- Why:
+  - "Rain over 24 hours and the 6-day rain total together set the level."
+  - "The day's rain is 202 mm forecast, which is at or above the 150 mm danger line and was not seen in 1951–1980 or in the 30 years before this date."
+  - "The 6-day total is 257 mm, made up of 54.9 mm measured over the 5 days before plus the forecast for the day itself, and this was also not seen in either period."
+- Confidence note: "The history is a grid of about 25 km and misses very local storms, and the day's figures are a forecast and can be too low. Landslides, glacier collapse or earthquakes are not covered, so check local civil protection and geological authorities."
+
+#### Texas Hill Country flood — 2025-07-04 — High
+
+Written by code:
+
+- What it means (shown on Typical days and with Claude's text, not in template mode): "Avoid underpasses, low roads and riverbanks. Check your official weather warnings — Groundtruth never replaces them."
+- SMS: "Groundtruth Texas Hill Country, USA 4 Jul 2025: High risk. Rain 107 mm forecast. Avoid low roads and riverbanks. Check official warnings."
+
+Template mode:
+
+- Sentence: "Risk here on this day is unusually high. Avoid underpasses, low roads and riverbanks. Check your official weather warnings — Groundtruth never replaces them."
+- Action line: "Avoid underpasses, low roads and riverbanks."
+
+Claude's saved reply (1 try) — passes the guardrail (shown in the app):
+
+- Headline: "High risk of heavy rain in Texas Hill Country, USA on 4 Jul 2025."
+- Why:
+  - "Rain over 24 hours set the level, with 107 mm forecast for the day."
+  - "Days with rain like this happen about once every 15 years here now, about as common here as in 1951–1980."
+  - "Rain over the last 6 days totals 144 mm, made up of 36.7 mm measured over the earlier 5 days plus the forecast for the day itself."
+  - "Rain totals like that happen about once every 4.3 years here now, 3.5 times more common here than in 1951–1980."
+- Confidence note: "The history is a grid of about 25 km and misses very local storms, and the day's figures are a forecast and can be too low. Geological hazards such as landslides, glacier collapse or earthquakes need local civil protection and geological authorities."
+
+#### Kolkata heat (KK concert) — 2022-05-31 — High
+
+Written by code:
+
+- What it means (shown on Typical days and with Claude's text, not in template mode): "Avoid heavy exertion outdoors, drink water, and check on older or vulnerable people. Check your official weather warnings — Groundtruth never replaces them."
+- SMS: "Groundtruth Kolkata, India 31 May 2022: High risk. Feels-like 41 C forecast. Avoid exertion, drink water, check on older people. Check official warnings."
+
+Template mode:
+
+- Sentence: "Risk here on this day is unusually high. Avoid heavy exertion outdoors, drink water, and check on older or vulnerable people. Check your official weather warnings — Groundtruth never replaces them."
+- Action line: "Avoid heavy exertion outdoors, drink water, and check on older or vulnerable people."
+
+Claude's saved reply (1 try) — passes the guardrail (shown in the app):
+
+- Headline: "High risk of dangerous feels-like heat in Kolkata, India on 31 May 2022."
+- Why:
+  - "Feels-like heat set the level, with the day forecast to feel like 41 °C, at or above the 40 °C danger line."
+  - "This is at or above the danger line, so it matters however often it happens here."
+  - "Days like this happen about 48 times a year here now, and are 1.4 times more common here than in 1951–1980."
+- Confidence note: "The history is a grid of about 25 km and misses very local storms, and the day's figures are a forecast and can be too low. Geological hazards such as landslides, glacier collapse or earthquakes need local civil protection and geological authorities."
+
+#### Bayesian sinking — 2024-08-19 — Typical
+
+Written by code:
+
+- What it means (shown on Typical days and with Claude's text, not in template mode): "These checks don't cover thunderstorms, hail, freezing rain or ice, wildfire, air quality, coastal flooding, or geological hazards. Storms are a major cause of weather deaths, so check your official weather and storm warnings."
+- SMS: "Groundtruth Porticello, Sicily, Italy 19 Aug 2024: Typical rain, temperature, snow and wind. Storms, ice, landslides not checked. Check official warnings."
+
+Template mode:
+
+- Sentence: "Typical rain, temperature, snow and wind for here. These checks can't see thunderstorms, ice on roads, or landslides and glacier collapse. Check your official weather warnings — Groundtruth never replaces them."
+- Action line: none
+
+Headline (fixed wording): "Typical rain, temperature, snow and wind for here. These checks can't see thunderstorms, ice on roads, or landslides and glacier collapse."
+
+Claude: not asked on Typical days (fixed wording).
+
+#### Nepal-Tibet glacier-collapse flood — 2026-08-26 — Typical
+
+Written by code:
+
+- What it means (shown on Typical days and with Claude's text, not in template mode): "These checks don't cover thunderstorms, hail, freezing rain or ice, wildfire, air quality, coastal flooding, or geological hazards. Groundtruth covers weather-driven hazards only. For geological hazards (landslides, glacier collapse, earthquakes), check local civil protection and geological authorities. Check your official weather warnings — Groundtruth never replaces them."
+- SMS: "Groundtruth Nepal-Tibet bo. 26 Aug 2026: Typical rain, temperature, snow and wind. Storms, ice, landslides, glacier floods not checked. Check official warnings."
+
+Template mode:
+
+- Sentence: "Typical rain, temperature, snow and wind for here. These checks can't see thunderstorms, ice on roads, or landslides and glacier collapse. Check your official weather warnings — Groundtruth never replaces them."
+- Action line: none
+
+Headline (fixed wording): "Typical rain, temperature, snow and wind for here. These checks can't see thunderstorms, ice on roads, or landslides and glacier collapse."
+
+Claude: not asked on Typical days (fixed wording).
+
+#### Calm control 1, Paiporta — 2024-05-15 — Typical
+
+Written by code:
+
+- What it means (shown on Typical days and with Claude's text, not in template mode): "These checks don't cover thunderstorms, hail, freezing rain or ice, wildfire, air quality, coastal flooding, or geological hazards. Check your official weather warnings — Groundtruth never replaces them."
+- SMS: "Groundtruth Paiporta, Valencia, Spain 15 May 2024: Typical rain, temperature, snow and wind. Storms, ice, landslides not checked. Check official warnings."
+
+Template mode:
+
+- Sentence: "Typical rain, temperature, snow and wind for here. These checks can't see thunderstorms, ice on roads, or landslides and glacier collapse. Check your official weather warnings — Groundtruth never replaces them."
+- Action line: none
+
+Headline (fixed wording): "Typical rain, temperature, snow and wind for here. These checks can't see thunderstorms, ice on roads, or landslides and glacier collapse."
+
+Claude: not asked on Typical days (fixed wording).
+
+#### Calm control 2, Kolkata — 2022-01-15 — Typical
+
+Written by code:
+
+- What it means (shown on Typical days and with Claude's text, not in template mode): "These checks don't cover thunderstorms, hail, freezing rain or ice, wildfire, air quality, coastal flooding, or geological hazards. Check your official weather warnings — Groundtruth never replaces them."
+- SMS: "Groundtruth Kolkata, India 15 Jan 2022: Typical rain, temperature, snow and wind. Storms, ice, landslides not checked. Check official warnings."
+
+Template mode:
+
+- Sentence: "Typical rain, temperature, snow and wind for here. These checks can't see thunderstorms, ice on roads, or landslides and glacier collapse. Check your official weather warnings — Groundtruth never replaces them."
+- Action line: none
+
+Headline (fixed wording): "Typical rain, temperature, snow and wind for here. These checks can't see thunderstorms, ice on roads, or landslides and glacier collapse."
+
+Claude: not asked on Typical days (fixed wording).
+
+#### Ordinary rain 1, Paiporta (winter) — 2018-02-27 — Typical
+
+Written by code:
+
+- What it means (shown on Typical days and with Claude's text, not in template mode): "These checks don't cover thunderstorms, hail, freezing rain or ice, wildfire, air quality, coastal flooding, or geological hazards. Check your official weather warnings — Groundtruth never replaces them."
+- SMS: "Groundtruth 39.43, -0.42 27 Feb 2018: Typical rain, temperature, snow and wind. Storms, ice, landslides not checked. Check official warnings."
+
+Template mode:
+
+- Sentence: "Typical rain, temperature, snow and wind for here. These checks can't see thunderstorms, ice on roads, or landslides and glacier collapse. Check your official weather warnings — Groundtruth never replaces them."
+- Action line: none
+
+Headline (fixed wording): "Typical rain, temperature, snow and wind for here. These checks can't see thunderstorms, ice on roads, or landslides and glacier collapse."
+
+Claude: not asked on Typical days (fixed wording).
+
+#### Ordinary rain 2, Paiporta (autumn) — 2024-09-18 — Typical
+
+Written by code:
+
+- What it means (shown on Typical days and with Claude's text, not in template mode): "These checks don't cover thunderstorms, hail, freezing rain or ice, wildfire, air quality, coastal flooding, or geological hazards. Check your official weather warnings — Groundtruth never replaces them."
+- SMS: "Groundtruth 39.43, -0.42 18 Sep 2024: Typical rain, temperature, snow and wind. Storms, ice, landslides not checked. Check official warnings."
+
+Template mode:
+
+- Sentence: "Typical rain, temperature, snow and wind for here. These checks can't see thunderstorms, ice on roads, or landslides and glacier collapse. Check your official weather warnings — Groundtruth never replaces them."
+- Action line: none
+
+Headline (fixed wording): "Typical rain, temperature, snow and wind for here. These checks can't see thunderstorms, ice on roads, or landslides and glacier collapse."
+
+Claude: not asked on Typical days (fixed wording).
+
+#### Paris snow and cold — 2026-01-07 — Typical
+
+Written by code:
+
+- Line under the headline (ice): "Roads may be icy; ice itself isn't checked."
+- What it means (shown on Typical days and with Claude's text, not in template mode): "These checks don't cover thunderstorms, hail, freezing rain or ice, wildfire, air quality, coastal flooding, or geological hazards. Snow or rain on freezing ground can make roads icy, and ice isn't checked. Check your official weather warnings — Groundtruth never replaces them."
+- SMS: "Groundtruth Paris, France 7 Jan 2026: Typical rain, temperature, snow and wind. Roads may be icy; ice, storms, landslides not checked. Check official warnings."
+
+Template mode:
+
+- Sentence: "Typical rain, temperature, snow and wind for here. These checks can't see thunderstorms, ice on roads, or landslides and glacier collapse. Snow or rain on freezing ground can make roads icy, and ice isn't checked. Check your official weather warnings — Groundtruth never replaces them."
+- Action line: none
+
+Headline (fixed wording): "Typical rain, temperature, snow and wind for here. These checks can't see thunderstorms, ice on roads, or landslides and glacier collapse."
+
+Claude: not asked on Typical days (fixed wording).
 
 Weather data by Open-Meteo.com
