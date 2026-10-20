@@ -90,7 +90,8 @@ def _claude_row(case, result):
     """Whether this replay shows Claude's saved text, checked again by the guardrail (never calls Claude)."""
     if case["name"] not in replays.REPLAY_PLACES:
         return None
-    facts = claude_text.facts(result, replays.place_of(case), dt.date.today())
+    facts = claude_text.facts(result, replays.place_of(case), dt.date.today(),
+                              replays.SPECIAL_NOTES.get(case["name"]))
     reply, problems = claude_text.saved_reply(replays.claude_reply_file(case["name"]), facts)
     if reply is None:
         return f"| {case['name']} | {result['level']} | template mode: {claude_text.short_reason(problems)} | — |"

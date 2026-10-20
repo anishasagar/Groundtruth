@@ -40,7 +40,8 @@ def main():
         except weather.NotAvailable as e:
             print(f"{name}: skipped, replay data not saved ({e})")
             continue
-        facts = claude_text.facts(result, replays.place_of(case), dt.date.today())
+        facts = claude_text.facts(result, replays.place_of(case), dt.date.today(),
+                                  replays.SPECIAL_NOTES.get(name))
         if result["level"] not in risk.LEVELS:
             print(f"{name}: Not enough data, so no Claude reply (template mode)")
             continue

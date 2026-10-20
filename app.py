@@ -19,12 +19,8 @@ LIVE_DOWN = "Live data is temporarily unavailable. Try a replay."
 REPLAY_MISSING = "Replay data for this event isn't saved yet. Please try again later."
 
 # Replays that get the geological-hazards warning right under the level.
-GEOLOGICAL_REPLAYS = {"Nepal-Tibet glacier-collapse flood"}
-
-GEOLOGICAL_NOTE = (
-    "Groundtruth covers weather-driven hazards only. For geological hazards (landslides, "
-    "glacier collapse, earthquakes), check local civil protection and geological authorities."
-)
+GEOLOGICAL_REPLAYS = {name for name, note in replays.SPECIAL_NOTES.items() if note == "geological"}
+GEOLOGICAL_NOTE = message.GEOLOGICAL_NOTE
 # Level colours. Never green: a green box could read as "all fine".
 LEVEL_STYLE = {
     "Typical": ("#3d5a80", "#ffffff"),
@@ -81,7 +77,7 @@ def claude_live(facts):
 
 def claude_reply(result, place, replay_name):
     """(reply, problems). A replay only uses its saved reply; it never calls Claude."""
-    facts = claude_text.facts(result, place, dt.date.today())
+    facts = claude_text.facts(result, place, dt.date.today(), replays.SPECIAL_NOTES.get(replay_name))
     if replay_name is not None:
         return claude_text.saved_reply(replays.claude_reply_file(replay_name), facts)
     if result["level"] not in risk.LEVELS:

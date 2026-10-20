@@ -64,8 +64,11 @@ the level, in plain words (for example "Rain over the last 6 days set the level"
 check". Use the check's value, how often days like this happen here now, and the comparison with the comparison \
 period when it helps. Each bullet must tell the reader something new; the app shows the full \
 numbers separately, so don't list every check.
-- what_it_means: 1 to 3 sentences on what this means for a decision today. If "action_line" is given, include it. \
-Always tell people to check their official weather warnings, using the word "official".
+- what_it_means: 1 to 4 sentences on what this means for a decision today. If "action_line" is given, include it. \
+If the level is Typical, it must not sound like an all-clear: say in plain words what the checks don't cover, \
+taken from "scope_notes": thunderstorms, freezing rain or ice on roads, and geological hazards such as landslides \
+or glacier collapse. If "special_note" is given, it is what weather data missed at this place: include it in plain \
+words. The last sentence must tell people to check their official warnings, using the word "official".
 - sms: a text message of at most 160 characters, plain ASCII only (write "C" instead of "°C", "-" instead of a long \
 dash, no accents). It must contain the level word exactly as given, the place, and the word "official".
 - confidence_note: 1 or 2 sentences on what the data can't see, taken from "scope_notes" and "data_notes" (for example \
@@ -81,7 +84,8 @@ higher or lower. Do not name the levels of single checks.
 convert, add up, average, or compute a percentage. Never write numbers as words: write "6 days", not "six days"; never "twice", "double" or "half". \
 Never use a number that is not in the facts. Write the date exactly as in "day".
 3. Never use the words "safe", "safely", "safety", "no risk", "all clear", "risk-free", "nothing to worry about", \
-"no hazard", "no danger" or "no threat", in any form. A Typical day still has risks the data can't see.
+"no hazard", "no danger", "no threat", "nothing stands out", "nothing unusual", "everything is fine" or anything \
+else that sounds like an all-clear, in any form. A Typical day still has risks the data can't see.
 4. The word "normal" must always come directly before the thing a check measures: "normal rain for here", "normal \
 highs for here", "normal lows for here", "normal snowfall for here", "normal wind for here". Never put it after the \
 thing ("wind was normal", "within normal ranges", "normal for here") and never write "normal day", "normal \
@@ -139,8 +143,22 @@ def _check_facts(c):
     return out
 
 
-def facts(result, place, today):
-    """The computed facts sent to Claude. No coordinates, grid points or source names."""
+SPECIAL_NOTES = {  # what weather data missed at a replay's place (replays.SPECIAL_NOTES)
+    "storm": message.STORM_NOTE.replace("**", ""),
+    "geological": message.GEOLOGICAL_NOTE,
+}
+# How what_it_means must mention each special note.
+SPECIAL_NOTE_WORDS = {"storm": r"\bstorm warnings\b", "geological": r"\bcivil protection\b|\bgeological authorities\b"}
+# What a Typical day's what_it_means must say the checks don't cover.
+NOT_COVERED = {"thunderstorms": r"\b(thunder)?storms?\b", "ice": r"\b(ice|icy|freezing)\b",
+               "landslides or glacier collapse": r"\b(landslides?|glaciers?|geological)\b"}
+
+
+def facts(result, place, today, special=None):
+    """The computed facts sent to Claude. No coordinates, grid points or source names.
+
+    special: "storm" or "geological" for replays where that note matters most (replays.SPECIAL_NOTES).
+    """
     deciding = message.deciding_check(result)
     rain = result["checks"][-1]
     before = rain.get("before_total")
@@ -166,6 +184,8 @@ def facts(result, place, today):
         "official_warnings": message.OFFICIAL_LINE,
         "scope_notes": [message.SCOPE_LINE, message.STORM_NOTE.replace("**", ""), *risk.ALWAYS_NOTES[1:]],
         "data_notes": engine_notes + [n for c in result["checks"] for n in c["notes"]],
+        "special_note": SPECIAL_NOTES[special] if special else None,
+        "special_note_kind": special,
     }
 
 
@@ -194,7 +214,20 @@ BANNED = [
     (re.compile(r"\brisk[\s-]*free\b", re.I), "risk-free"),
     (re.compile(r"\bnothing to worry\b", re.I), "nothing to worry about"),
     (re.compile(r"\bno (\w+ )?(hazards?|danger|threats?)\b", re.I), "no hazard"),
-    (re.compile(r"\bcaus(e|ed|es|ing)\b", re.I), "caused"),
+    # Anything else that sounds like an all-clear.
+    (re.compile(r"\bnothing\b[^.!?]{0,40}\b(stands?|stood|standing) out\b|\b(does|did) ?n[o']t stand out\b", re.I),
+     "nothing stands out"),
+    (re.compile(r"\bnothing\b[^.!?]{0,30}\b(unusual|out of the ordinary|of note|notable|remarkable|significant|"
+                r"concerning|alarming|special|to (flag|report|note))\b|\bunremarkable\b|"
+                r"\b(do|does|did) ?n[o']t (show|find|see|flag|point to|suggest) (an? |any(thing)? )?unusual\b", re.I),
+     "nothing unusual"),
+    (re.compile(r"\b(no|little) (\w+ )?(concerns?|cause for concern|need to worry)\b|\b(do ?n[o']t|not to) worry\b",
+                re.I), "no concern"),
+    (re.compile(r"\b(all|everything) (looks|is|seems|appears|was) (fine|ok|okay|good|well|normal|typical)\b", re.I),
+     "everything is fine"),
+    (re.compile(r"\b(quiet|uneventful|benign|ordinary) (day|weather)\b", re.I), "a quiet day"),
+    # Attribution. The one allowed use is the storm note's own "a major cause of weather deaths".
+    (re.compile(r"\bcaus(e|ed|es|ing)\b(?! of weather deaths)", re.I), "caused"),
     (re.compile(r"\b(more|less) likely\b|\btimes as likely\b", re.I), "more likely"),
     (re.compile(r"\b(due to|because of|driven by|thanks to|result of) (the )?(climate|global warming)", re.I),
      "blames climate change"),
@@ -326,6 +359,21 @@ def check_reply(reply, f):
         problems.append(f"it has {len(why)} why bullets (needs {MIN_WHY} to {MAX_WHY})")
     if "official" not in reply["what_it_means"].lower():
         problems.append("what it means doesn't point to official warnings")
+    else:
+        sentences = [x for x in re.split(r"(?<=[.!?])\s+", reply["what_it_means"].strip()) if x]
+        if "official" not in sentences[-1].lower():
+            problems.append("what it means doesn't end by pointing to official warnings")
+
+    # 7. A Typical day must not sound like an all-clear: say what the checks don't cover.
+    if level == "Typical":
+        missing = [name for name, pattern in NOT_COVERED.items()
+                   if not re.search(pattern, reply["what_it_means"], re.I)]
+        if missing:
+            problems.append("on a Typical day, what it means doesn't say what the checks don't cover "
+                            f"(missing: {', '.join(missing)})")
+    kind = f.get("special_note_kind")
+    if kind and not re.search(SPECIAL_NOTE_WORDS[kind], reply["what_it_means"], re.I):
+        problems.append(f"what it means doesn't mention the {kind} note for this place")
     if "official" not in reply["sms"].lower():
         problems.append("the text message doesn't point to official warnings")
     return problems

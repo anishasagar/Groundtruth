@@ -54,6 +54,10 @@ def check_result(label, result, place="Somewhere, Far Away Land"):
     assert len(sms) <= 160, f"{label}: SMS is {len(sms)} characters"
     assert sms.isascii(), f"{label}: SMS should be plain ASCII"
     assert len(message.sms_text(result, "A" * 300)) <= 160, f"{label}: SMS too long with a very long place name"
+    # A Typical SMS says what is typical, never "Typical weather" (also with a very long place name).
+    for s in (sms, message.sms_text(result, "A" * 300)):
+        assert "Typical weather" not in s and "Typical risk" not in s, f"{label}: {s}"
+        assert ("Typical rain, temperature, snow and wind" in s) == (result["level"] == "Typical"), f"{label}: {s}"
 
     if result["level"] in risk.LEVELS:
         # The headline always matches the computed level (and no other level's headline appears).

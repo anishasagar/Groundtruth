@@ -33,12 +33,16 @@ def replay_facts(name):
     case = {c["name"]: c for c in replays.load_replays()}[name]
     with weather.offline():
         result = risk.assess(float(case["latitude"]), float(case["longitude"]), dt.date.fromisoformat(case["date"]))
-    return claude_text.facts(result, replays.place_of(case), TODAY), case
+    return claude_text.facts(result, replays.place_of(case), TODAY, replays.SPECIAL_NOTES.get(name)), case
 
 
 KOLKATA, _ = replay_facts("Kolkata heat (KK concert)")
 VALENCIA, _ = replay_facts("Valencia flash flood")
 PARIS, _ = replay_facts("Paris snow and cold")
+BAYESIAN, _ = replay_facts("Bayesian sinking")
+NEPAL, _ = replay_facts("Nepal-Tibet glacier-collapse flood")
+NOT_COVERED = ("Our checks don't cover thunderstorms, freezing rain or ice on roads, or landslides and glacier "
+               "collapse.")
 
 GOOD_KOLKATA = {
     "headline": "High risk from heat in Kolkata, India on 31 May 2022.",
@@ -64,10 +68,22 @@ GOOD_PARIS = {
     "headline": "Typical rain, temperature, snow and wind for Paris, France on 7 Jan 2026.",
     "why": ["Snowfall set the level: normal snowfall for here (3.0 cm).",
             "Normal wind for here (gusts up to 36 km/h)."],
-    "what_it_means": "Ice on roads is not checked. Check your official weather warnings.",
+    "what_it_means": f"{NOT_COVERED} Check your official weather warnings.",
     "sms": "Groundtruth Paris 7 Jan 2026: Typical rain, temperature, snow and wind. Check official warnings.",
     "confidence_note": "Freezing rain and ice are not checked, and the history misses very local storms.",
 }
+
+
+def typical_reply(facts, short_place, what_it_means):
+    """A good Typical reply for these facts: its why bullets copy the engine's own wording."""
+    return {
+        "headline": f"Typical rain, temperature, snow and wind for {facts['place']} on {facts['day']}.",
+        "why": [c["wording"] for c in facts["checks"][:2]],
+        "what_it_means": what_it_means,
+        "sms": f"Groundtruth {short_place} {facts['day']}: Typical rain, temperature, snow and wind. "
+               "Check official warnings.",
+        "confidence_note": "The history misses very local storms.",
+    }
 
 
 def changed(reply, **parts):
@@ -135,6 +151,52 @@ def guardrail_cases():
     expect_fail('"typical weather" on a High day without its scope',
                 why_with(GOOD_KOLKATA, "Apart from the heat it was typical weather."), KOLKATA, "without saying")
 
+    # A Typical day must not sound like an all-clear.
+    for words, label in [("Nothing stands out for this place on this day.", "nothing stands out"),
+                         ("Nothing in the checks stood out.", "nothing stands out"),
+                         ("This day does not stand out.", "nothing stands out"),
+                         ("Nothing unusual is forecast.", "nothing unusual"),
+                         ("Nothing in the checks points to unusual weather.", "nothing unusual"),
+                         ("The checks do not show an unusual day for this place.", "nothing unusual"),
+                         ("The checks don't find anything unusual.", "nothing unusual"),
+                         ("There is nothing to worry about.", "nothing to worry about"),
+                         ("There is no cause for concern.", "no concern"),
+                         ("Everything looks fine.", "everything is fine"),
+                         ("It is a quiet day.", "a quiet day")]:
+        expect_fail(f'all-clear: "{words}"',
+                    changed(GOOD_PARIS, what_it_means=f"{words} {GOOD_PARIS['what_it_means']}"),
+                    PARIS, f'("{label}")')
+    for left_out, text in [("thunderstorms", "Our checks don't cover freezing rain or ice on roads, or landslides."),
+                           ("ice", "Our checks don't cover thunderstorms or landslides."),
+                           ("landslides or glacier collapse", "Our checks don't cover thunderstorms or ice.")]:
+        expect_fail(f"Typical day: what it means leaves out {left_out}",
+                    changed(GOOD_PARIS, what_it_means=f"{text} Check your official weather warnings."),
+                    PARIS, f"(missing: {left_out})")
+    expect_pass("a High day doesn't need the not-covered list", GOOD_KOLKATA, KOLKATA)
+    expect_fail("what it means doesn't end with official warnings",
+                changed(GOOD_PARIS, what_it_means=f"Check your official weather warnings. {NOT_COVERED}"),
+                PARIS, "doesn't end by pointing to official warnings")
+    expect_fail("High day: official warnings not last",
+                changed(GOOD_KOLKATA, what_it_means="Check your official weather warnings. Drink water."),
+                KOLKATA, "doesn't end by pointing to official warnings")
+
+    # Where a special note applies, what it means must mention it.
+    assert BAYESIAN["special_note_kind"] == "storm" and NEPAL["special_note_kind"] == "geological"
+    assert PARIS["special_note_kind"] is None and PARIS["special_note"] is None
+    expect_fail("Bayesian without the storm note", typical_reply(BAYESIAN, "Porticello", f"{NOT_COVERED} Check "
+                                                                 "your official weather warnings."),
+                BAYESIAN, "storm note")
+    expect_pass("Bayesian with the storm note",
+                typical_reply(BAYESIAN, "Porticello", f"{NOT_COVERED} Storms are a major cause of weather deaths, "
+                                                      "so follow official storm warnings."), BAYESIAN)
+    expect_fail("Nepal-Tibet without the geological note", typical_reply(NEPAL, "Nepal-Tibet", f"{NOT_COVERED} "
+                                                                        "Check your official weather warnings."),
+                NEPAL, "geological note")
+    expect_pass("Nepal-Tibet with the geological note",
+                typical_reply(NEPAL, "Nepal-Tibet", f"{NOT_COVERED} For glacier collapse and landslides, check local "
+                                                    "civil protection and geological authorities. Check your "
+                                                    "official weather warnings."), NEPAL)
+
     # "Deciding check" stays out of the headline, and plain words are used instead of the term.
     expect_fail('"deciding check" in the headline',
                 changed(GOOD_PARIS, headline="Typical rain, temperature, snow and wind for Paris, France on "
@@ -165,6 +227,7 @@ def guardrail_cases():
     for words, label in [("You are safe outdoors.", "safe"), ("It's all clear after dark.", "all clear"),
                          ("There is no risk at night.", "no risk"), ("There is no hazard at night.", "no hazard"),
                          ("Climate change caused this heat.", "caused"),
+                         ("Climate change is the cause of this heat.", "caused"),
                          ("Climate change made this 3 times more likely.", "more likely"),
                          ("This heat is due to climate change.", "blames climate change")]:
         expect_fail(f'banned: "{label}"', why_with(GOOD_KOLKATA, words), KOLKATA, f'("{label}")')

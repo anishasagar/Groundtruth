@@ -28,6 +28,14 @@ REPLAY_PLACES = {
 }
 
 
+# Replays where one of the app's notes matters most: what weather data missed on that day.
+# Claude's "what it means" must mention that note (see claude_text.check_reply).
+SPECIAL_NOTES = {
+    "Bayesian sinking": "storm",  # a sudden local storm, too small for this data
+    "Nepal-Tibet glacier-collapse flood": "geological",  # a glacier collapse, invisible to weather data
+}
+
+
 def load_replays():
     """The cases.csv rows offered as replays (not the hidden ones, and only those with a date)."""
     cases = pd.read_csv(CASES_FILE, dtype=str, keep_default_na=False)

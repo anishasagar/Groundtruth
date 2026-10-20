@@ -1,6 +1,6 @@
 {
  "model": "claude-sonnet-5-5",
- "fingerprint": "4ab5542ca755d1f62a2375562690b8135f1621938190ff574bede238363ea36e",
+ "fingerprint": "75c5a30d9f5f8a67f5252123c8fdcb88b2b57db86b69056d5f32e389652b662a",
  "facts": {
   "place": "Kolkata, India",
   "day": "31 May 2022",
@@ -106,17 +106,19 @@
    "The history data is a ~25 km grid and misses very local storms.",
    "Groundtruth covers weather-driven hazards only. For landslides, glacier collapse or earthquakes, check local civil protection and geological authorities."
   ],
-  "data_notes": []
+  "data_notes": [],
+  "special_note": null,
+  "special_note_kind": null
  },
  "reply": {
   "headline": "High risk of feels-like heat in Kolkata, India on 31 May 2022.",
   "why": [
-   "Feels-like heat set the level, reaching 41 C, which is at or above the 40 C danger line.",
-   "Days like this happen about 48 times a year here now, based on the 30 years before this date.",
+   "Feels-like heat set the level, reaching 41 °C, at or above the 40 °C danger line.",
+   "Days with feels-like heat like this happen about 48 times a year here now.",
    "That is 1.4 times more common here than in 1951–1980, when it was about 34 times a year."
   ],
-  "what_it_means": "Avoid heavy exertion outdoors, drink water, and check on older or vulnerable people. Check your official weather warnings, as Groundtruth never replaces them.",
-  "sms": "Kolkata 31 May 2022: High risk of feels-like heat, up to 41 C. Avoid heavy exertion, drink water. Check your official weather warnings.",
-  "confidence_note": "The history data is a grid of about 25 km and misses very local storms, and thunderstorms are not checked. For landslides, glacier collapse or earthquakes, check local civil protection and geological authorities."
+  "what_it_means": "Avoid heavy exertion outdoors, drink water, and check on older or vulnerable people. Rain, snow and wind were not the concern: Normal wind for here (gusts up to 28 km/h). Check your official weather warnings, because Groundtruth never replaces them.",
+  "sms": "Kolkata, 31 May 2022: High risk of feels-like heat, 41 C. Avoid heavy exertion, drink water. Check your official weather warnings.",
+  "confidence_note": "Thunderstorms are not checked, and the history data is a grid of about 25 km that misses very local storms. Geological hazards such as landslides, glacier collapse or earthquakes need local civil protection and geological authorities."
  }
 }

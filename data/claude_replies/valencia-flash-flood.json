@@ -1,6 +1,6 @@
 {
  "model": "claude-sonnet-5-5",
- "fingerprint": "6113997144c3d6ec36f0767235336adda8b525897715d28d2a8e5ba9914527d4",
+ "fingerprint": "bd835601371c41eaa199df2e8d919729fa6e2455b7847f0e1efbd84ff5fcc8c9",
  "facts": {
   "place": "Paiporta, Valencia, Spain",
   "day": "29 Oct 2024",
@@ -107,17 +107,19 @@
    "The history data is a ~25 km grid and misses very local storms.",
    "Groundtruth covers weather-driven hazards only. For landslides, glacier collapse or earthquakes, check local civil protection and geological authorities."
   ],
-  "data_notes": []
+  "data_notes": [],
+  "special_note": null,
+  "special_note_kind": null
  },
  "reply": {
   "headline": "Extreme risk of heavy rain in Paiporta, Valencia, Spain on 29 Oct 2024.",
   "why": [
-   "Rain over 24 h set the level: 202 mm, at or above the 150 mm danger line.",
+   "Rain over 24 hours set the level, at 202 mm, which is at or above the 150 mm danger line.",
    "A day with this much rain was not seen in 1951–1980 or in the 30 years before this date.",
-   "Rain over the last 6 days also set the level: 257 mm in total, which includes 54.9 mm over the 5 days before and the forecast for the day itself."
+   "Rain over the last 6 days also set the level: the total of 257 mm includes 54.9 mm over the 5 days before, measured, plus the forecast for the day itself."
   ],
-  "what_it_means": "Avoid underpasses, low roads and riverbanks. Check your official weather warnings, because Groundtruth never replaces them.",
-  "sms": "Groundtruth: Extreme rain risk in Paiporta on 29 Oct 2024. 202 mm in 24 h. Avoid underpasses, low roads, riverbanks. Check official warnings.",
-  "confidence_note": "The history is a grid of about 25 km and misses very local storms, and thunderstorms are not checked. For landslides, glacier collapse or earthquakes, check local civil protection and geological authorities."
+  "what_it_means": "Avoid underpasses, low roads and riverbanks. Heavy rain like this can flood streets and rivers quickly, so plan around it today. Check your official weather warnings, because Groundtruth never replaces them.",
+  "sms": "Groundtruth: Extreme risk of heavy rain in Paiporta, Valencia, Spain on 29 Oct 2024. Avoid underpasses, low roads, riverbanks. Check official warnings.",
+  "confidence_note": "The history is a grid of about 25 km and misses very local storms, and thunderstorms are not checked. The 6-day rain total uses measured rain for the earlier days and the forecast for the day itself; for landslides, glacier collapse or earthquakes, check local civil protection and geological authorities."
  }
 }
