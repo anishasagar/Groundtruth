@@ -1,6 +1,6 @@
 {
  "model": "claude-sonnet-5-5",
- "fingerprint": "4ea18a0bb10c94820daa86bcbdcf19e239bf990401940948c39d7a978f2470e5",
+ "fingerprint": "98f69b1bdde938c95284da55c4af0d5ad09b9b51ea5f23b7238106712762856a",
  "facts": {
   "place": "Paiporta, Valencia, Spain",
   "day": "29 Oct 2024",
@@ -113,12 +113,11 @@
  "reply": {
   "headline": "Extreme risk of heavy rain in Paiporta, Valencia, Spain on 29 Oct 2024.",
   "why": [
-   "Rain over 24 hours set the level, with 202 mm forecast for the day, at or above the 150 mm danger line.",
-   "Rain like this was not seen in 1951–1980 or in the 30 years before this date.",
-   "Recent rain also set the level: 257 mm forecast over the 6-day total, made up of 54.9 mm measured over the 5 days before and the forecast for the day itself.",
-   "Wind is not what set the level: normal wind for here (gusts up to 61 km/h; the data misses sudden local storm gusts)."
+   "Rain over 24 hours and the 6-day rain total together set the level.",
+   "The day's rain is 202 mm forecast, which is at or above the 150 mm danger line and was not seen in 1951–1980 or in the 30 years before this date.",
+   "The 6-day total is 257 mm, made up of 54.9 mm measured over the 5 days before plus the forecast for the day itself, and this was also not seen in either period."
   ],
-  "confidence_note": "The history is a grid of about 25 km and misses very local storms, and the day's figures are a forecast and can be too low. Geological hazards such as landslides, glacier collapse and earthquakes need local civil protection and geological authorities."
+  "confidence_note": "The history is a grid of about 25 km and misses very local storms, and the day's figures are a forecast and can be too low. Landslides, glacier collapse or earthquakes are not covered, so check local civil protection and geological authorities."
  },
  "tries": 1
 }

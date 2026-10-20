@@ -22,8 +22,8 @@ Nothing calls Open-Meteo or Claude: it only uses the saved data in `data/` and t
    - reads each case's level from the current TESTLOG.md (the last run) before it is overwritten,
    - runs `scripts/replay.py`, which rewrites TESTLOG.md,
    - adds the section **"Replay check: date, level and sentence"**: one row per case with its date, level,
-     previous level, the sentence the app shows (Claude's headline, or the template sentence in template mode)
-     and the template sentence,
+     previous level, the sentence the app shows (the fixed wording on Typical days; on raised days Claude's
+     headline, or the template sentence in template mode) and the template sentence,
    - adds **"Level changes since the last run"** (or "None."),
    - adds **"Full output per case"**: what code writes on every day ("what it means" and the text message), the
      template-mode sentence and action line, and Claude's saved reply (headline, why, confidence note) with how

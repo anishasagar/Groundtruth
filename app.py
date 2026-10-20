@@ -21,6 +21,8 @@ REPLAY_MISSING = "Replay data for this event isn't saved yet. Please try again l
 # Replays that get the geological-hazards warning right under the level.
 GEOLOGICAL_REPLAYS = {name for name, note in replays.SPECIAL_NOTES.items() if note == "geological"}
 GEOLOGICAL_NOTE = message.GEOLOGICAL_NOTE
+TYPICAL_CAPTION = ("On Typical days this text is fixed wording, reviewed in advance; "
+                   "Claude only writes on raised days.")
 # Level colours. Never green: a green box could read as "all fine".
 LEVEL_STYLE = {
     "Typical": ("#3d5a80", "#ffffff"),
@@ -189,9 +191,14 @@ def show_assessment(result, place, replay_name=None):
         st.warning(f"**Weather data can't see everything.** {GEOLOGICAL_NOTE}", icon="⚠️")
 
     st.markdown(f"**{place} — {message.day_text(result['date'])}**")
-    reply, problems = claude_reply(result, place, replay_name)
     special = replays.SPECIAL_NOTES.get(replay_name)
-    if reply is not None:
+    typical = result["level"] == "Typical"
+    reply, problems = (None, []) if typical else claude_reply(result, place, replay_name)
+    if typical:  # fixed wording; Claude is never asked on Typical days
+        st.markdown(f"### {message.HEADLINES['Typical']}")
+        st.markdown(message.what_it_means(result, special))
+        st.caption(TYPICAL_CAPTION)
+    elif reply is not None:
         st.markdown(f"### {plain(reply['headline'])}")
         st.markdown(message.what_it_means(result, special))  # written by code, never by Claude
         st.markdown("\n".join(f"- {plain(b)}" for b in reply["why"]))

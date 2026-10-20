@@ -1,6 +1,6 @@
 {
  "model": "claude-sonnet-5-5",
- "fingerprint": "6e3aefcae9b2d45448fb8f2f64f61ed6a98741e29205ca56b83dc5657e5c354d",
+ "fingerprint": "1545ae2892687e169a8bdb2599f46a31e069bd4ea2c6ee04b4b08252611ab5ef",
  "facts": {
   "place": "Texas Hill Country, USA",
   "day": "4 Jul 2025",
@@ -112,9 +112,10 @@
  "reply": {
   "headline": "High risk of heavy rain in Texas Hill Country, USA on 4 Jul 2025.",
   "why": [
-   "Rain over the single day set the level, with 107 mm forecast for 4 Jul 2025.",
-   "A day with this much rain happens about once every 15 years here in the 30 years before this date, which is about as common here as in 1951–1980.",
-   "Rain over the last 6 days adds to this: 144 mm in total, made up of measured rain for the earlier days and the forecast for the day itself, and days like this are 3.5 times more common here than in 1951–1980."
+   "Rain over 24 hours set the level, with 107 mm forecast for the day.",
+   "Days with rain like this happen about once every 15 years here now, about as common here as in 1951–1980.",
+   "Rain over the last 6 days totals 144 mm, made up of 36.7 mm measured over the earlier 5 days plus the forecast for the day itself.",
+   "Rain totals like that happen about once every 4.3 years here now, 3.5 times more common here than in 1951–1980."
   ],
   "confidence_note": "The history is a grid of about 25 km and misses very local storms, and the day's figures are a forecast and can be too low. Geological hazards such as landslides, glacier collapse or earthquakes need local civil protection and geological authorities."
  },

@@ -1,6 +1,6 @@
 {
  "model": "claude-sonnet-5-5",
- "fingerprint": "c96a74463ebcb91fadd8fddf3ccb7a26b05f11318181c068e4f422c2bd4d0b51",
+ "fingerprint": "a81d6328d0b913006447e697a9f9b89c64a7cacf31e27591155930543f636113",
  "facts": {
   "place": "Kolkata, India",
   "day": "31 May 2022",
@@ -111,13 +111,13 @@
   "special_note_kind": null
  },
  "reply": {
-  "headline": "High risk of feels-like heat in Kolkata, India on 31 May 2022.",
+  "headline": "High risk of dangerous feels-like heat in Kolkata, India on 31 May 2022.",
   "why": [
-   "Feels-like heat set the level, at forecast to feel like 41 °C, which is at or above the 40 °C danger line, so it matters however often it happens here.",
-   "Days with feels-like heat like this happen about 48 times a year here now, and 1.4 times more common here than in 1951–1980.",
-   "Normal wind for here (gusts up to 28 km/h; the data misses sudden local storm gusts), and normal rain for here (8.2 mm forecast) did not set the level."
+   "Feels-like heat set the level, with the day forecast to feel like 41 °C, at or above the 40 °C danger line.",
+   "This is at or above the danger line, so it matters however often it happens here.",
+   "Days like this happen about 48 times a year here now, and are 1.4 times more common here than in 1951–1980."
   ],
-  "confidence_note": "The history is a grid of about 25 km and misses very local storms, and the day's figures are a forecast and can be too low. Thunderstorms are not checked, and for landslides, glacier collapse or earthquakes, local civil protection and geological authorities are the place to look."
+  "confidence_note": "The history is a grid of about 25 km and misses very local storms, and the day's figures are a forecast and can be too low. Geological hazards such as landslides, glacier collapse or earthquakes need local civil protection and geological authorities."
  },
  "tries": 1
 }

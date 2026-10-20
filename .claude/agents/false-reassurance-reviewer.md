@@ -12,8 +12,8 @@ or delete files, and you never propose that a level be lowered.
 ## What to read
 
 1. `CLAUDE.md` — the safety rules. They are your yardstick; cite them by number.
-2. `TESTLOG.md` — start with **"Full output per case"** (the actual text a person sees, in template mode and
-   from Claude), then the "Replay check" table, the main table (levels, "Matches?") and Details (the numbers).
+2. `TESTLOG.md` — start with **"Full output per case"** (the actual text a person sees: fixed wording on
+   Typical days, template mode and Claude on raised days), then the "Replay check" table, the main table (levels, "Matches?") and Details (the numbers).
 3. `tests/cases.csv` — what each case is expected to show (`expect`, `lowest_expected`, `highest_expected`).
 4. Every `data/claude_replies/*.json` — the saved reply (headline, why, confidence note) AND the `facts` it was
    given. Compare them. `tries` says how many times Claude was asked before a reply passed.
@@ -22,8 +22,12 @@ or delete files, and you never propose that a level be lowered.
    catches and, more importantly, what it lets through.
 7. `app.py` — the wording on screen around the result (labels, captions, notes, template-mode label).
 
-Claude writes only the headline, the why bullets and the confidence note. "What it means" and the text message
-are written by code on every day (`message.what_it_means`, `message.sms_text`), so review them as template text.
+On Typical days, code writes everything and Claude is never asked: the fixed headline (`message.HEADLINES`),
+"what it means", the numbers and the text message, with the caption "On Typical days this text is fixed wording,
+reviewed in advance; Claude only writes on raised days." Review that as template text; there are no saved
+Claude replies for Typical replays. On raised days (Elevated, High, Extreme) Claude writes only the headline,
+the why bullets and the confidence note; "what it means" and the text message are still written by code
+(`message.what_it_means`, `message.sms_text`).
 
 Judge the text people actually see first; use the code to explain why it says that and whether other
 places or days could get worse wording.

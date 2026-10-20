@@ -50,12 +50,16 @@ def full_output(case, result, place):
     special = replays.SPECIAL_NOTES.get(case["name"])
     action = message.action_line(result)
     lines = [f"#### {case['name']} — {case['date']} — {result['level']}", "",
-             "Written by code (shown in both modes):", "",
-             f"- What it means (shown with Claude's text): \"{message.what_it_means(result, special)}\"",
+             "Written by code:", "",
+             f"- What it means (shown on Typical days and with Claude's text, not in template mode): "
+             f"\"{message.what_it_means(result, special)}\"",
              f"- SMS: \"{message.sms_text(result, place, special)}\"", "",
              "Template mode:", "",
              f"- Sentence: \"{message.template_sentence(result)}\"",
              "- Action line: " + (f'"{action}"' if action else "none"), ""]
+    if result["level"] == "Typical":
+        return lines + [f"Headline (fixed wording): \"{message.HEADLINES['Typical']}\"", "",
+                        "Claude: not asked on Typical days (fixed wording).", ""]
     path = replays.claude_reply_file(case["name"])
     if case["name"] not in replays.REPLAY_PLACES or not path.exists():
         return lines + ["Claude: no saved Claude reply — template mode only.", ""]
@@ -96,7 +100,9 @@ def main():
         place = replays.place_of(case)
         template = message.template_sentence(result)
         shown = f"template mode: {template}"
-        if case["name"] in replays.REPLAY_PLACES:
+        if result["level"] == "Typical":
+            shown = f"fixed wording: {message.HEADLINES['Typical']}"
+        elif case["name"] in replays.REPLAY_PLACES:
             facts = claude_text.facts(result, place, dt.date.today(), replays.SPECIAL_NOTES.get(case["name"]))
             reply, _ = claude_text.saved_reply(replays.claude_reply_file(case["name"]), facts)
             if reply:

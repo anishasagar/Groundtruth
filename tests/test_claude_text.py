@@ -59,28 +59,12 @@ GOOD_VALENCIA = {
     "confidence_note": "Thunderstorms are not checked, the history is a grid of about 25 km that misses very local "
                        "storms, and the day's figures are a forecast.",
 }
-GOOD_PARIS = {
-    "headline": "Typical rain, temperature, snow and wind for Paris, France on 7 Jan 2026.",
-    "why": ["Snowfall set the level: normal snowfall for here (3.0 cm).",
-            "Normal wind for here (gusts up to 36 km/h; the data misses sudden local storm gusts)."],
-    "confidence_note": "Freezing rain and ice are not checked, the history is a grid of about 25 km that misses very "
-                       "local storms, and the day's figures are a forecast.",
-}
 GOOD_TEXAS = {
     "headline": "High risk of heavy rain in Texas Hill Country, USA on 4 Jul 2025.",
     "why": ["Rain over 24 h set the level, with 107 mm forecast.",
             "Rain like this happens about once every 15 years here now."],
     "confidence_note": CONFIDENCE,
 }
-
-
-def typical_reply(facts):
-    """A good Typical reply for these facts: its why bullets copy the engine's own wording."""
-    return {
-        "headline": f"Typical rain, temperature, snow and wind for {facts['place']} on {facts['day']}.",
-        "why": [c["wording"] for c in facts["checks"][:2]],
-        "confidence_note": CONFIDENCE,
-    }
 
 
 def changed(reply, **parts):
@@ -107,9 +91,7 @@ def expect_fail(label, reply, facts, reason):
 
 def guardrail_cases():
     for label, reply, facts in [("Kolkata", GOOD_KOLKATA, KOLKATA), ("Valencia", GOOD_VALENCIA, VALENCIA),
-                                ("Paris (Typical)", GOOD_PARIS, PARIS), ("Texas", GOOD_TEXAS, TEXAS),
-                                ("Bayesian (Typical)", typical_reply(BAYESIAN), BAYESIAN),
-                                ("Nepal-Tibet (Typical)", typical_reply(NEPAL), NEPAL)]:
+                                ("Texas", GOOD_TEXAS, TEXAS)]:
         expect_pass(f"good {label} reply", reply, facts)
 
     # Claude writes only the headline, the why bullets and the confidence note.
@@ -119,7 +101,7 @@ def guardrail_cases():
     expect_fail("missing part", {k: v for k, v in GOOD_KOLKATA.items() if k != "confidence_note"}, KOLKATA,
                 "expected parts")
     for name in ("action_line", "sms_action", "official_warnings", "ice_note"):
-        assert name not in PARIS, f"{name} is written by code now, so Claude doesn't get it"
+        assert name not in VALENCIA, f"{name} is written by code now, so Claude doesn't get it"
 
     # Lowercase higher level words are ordinary words; a capitalised other level label is not.
     expect_pass('"daily high" on an Extreme day',
@@ -137,44 +119,34 @@ def guardrail_cases():
     expect_fail("wrong level", changed(GOOD_KOLKATA, headline="Extreme risk from heat in Kolkata on 31 May 2022."),
                 KOLKATA, 'doesn\'t say the level "High"')
 
-    # Typical days: the headline says what is typical; no broad "typical weather" without that scope.
-    expect_pass("Typical headline with heat and cold for temperature",
-                changed(GOOD_PARIS, headline="Typical rain, heat, cold, snow and wind for Paris, France on "
-                                             "7 Jan 2026."), PARIS)
-    expect_fail('"Typical weather" headline', changed(GOOD_PARIS, headline="Typical weather in Paris, France on "
-                                                                          "7 Jan 2026."),
-                PARIS, "doesn't say what is typical (missing: rain, temperature, snow, wind)")
-    expect_fail("Typical headline missing wind", changed(GOOD_PARIS, headline="Typical rain, temperature and snow "
-                                                                             "for Paris, France on 7 Jan 2026."),
-                PARIS, "(missing: wind)")
+    # No broad "typical weather" or "normal conditions" without saying what it covers.
     for phrase in ("typical weather", "typical conditions", "typical day", "normal weather", "normal conditions"):
-        expect_fail(f'"{phrase}" in a bullet', why_with(GOOD_PARIS, f"It was a {phrase} for Paris."),
-                    PARIS, f'"{phrase}" without saying what it covers')
+        expect_fail(f'"{phrase}" in a bullet', why_with(GOOD_VALENCIA, f"Apart from rain it was a {phrase}."),
+                    VALENCIA, f'"{phrase}" without saying what it covers')
     expect_pass('"normal conditions" followed by its scope',
-                why_with(GOOD_PARIS, "These are normal conditions for the rain, temperature, snow and wind we check."),
-                PARIS)
+                why_with(GOOD_VALENCIA, "These are normal conditions for the heat, cold, snow and wind we check, "
+                                        "apart from the rain."), VALENCIA)
     for words in ("This matches the wording.", "These were in the facts for the day."):
-        expect_fail(f'talks about the prompt: "{words}"', why_with(GOOD_PARIS, words), PARIS, "talks about the facts")
+        expect_fail(f'talks about the prompt: "{words}"', why_with(GOOD_VALENCIA, words), VALENCIA,
+                    "talks about the facts")
 
-    # Nothing may sound like an all-clear, on any day.
-    for words, label in [("Nothing stands out for this place on this day.", "nothing stands out"),
-                         ("Nothing in the checks stood out.", "nothing stands out"),
-                         ("This day does not stand out.", "nothing stands out"),
-                         ("Nothing unusual is forecast.", "nothing unusual"),
-                         ("The checks don't find anything unusual.", "nothing unusual"),
-                         ("There is nothing to worry about.", "nothing to worry about"),
-                         ("There is no cause for concern.", "no concern"),
-                         ("Everything looks fine.", "everything is fine"),
-                         ("It is a quiet day.", "a quiet day")]:
-        expect_fail(f'all-clear: "{words}"', why_with(GOOD_PARIS, words), PARIS, f'("{label}")')
+    # Nothing may sound like an all-clear.
+    for words, label in [("Nothing stands out apart from the rain.", "nothing stands out"),
+                         ("Nothing in the other checks stood out.", "nothing stands out"),
+                         ("Nothing unusual is forecast for wind.", "nothing unusual"),
+                         ("The checks don't find anything unusual in the wind.", "nothing unusual"),
+                         ("There is nothing to worry about from the wind.", "nothing to worry about"),
+                         ("There is no cause for concern about wind.", "no concern"),
+                         ("Everything looks fine.", "everything is fine")]:
+        expect_fail(f'all-clear: "{words}"', why_with(GOOD_VALENCIA, words), VALENCIA, f'("{label}")')
 
     # "Deciding check" stays out, plain words instead.
     expect_fail('"deciding check" in the headline',
-                changed(GOOD_PARIS, headline="Typical rain, temperature, snow and wind for Paris, France on "
-                                             "7 Jan 2026, with snowfall the deciding check."),
-                PARIS, 'headline mentions the "deciding check"')
-    expect_fail('"deciding check" in a bullet', why_with(GOOD_PARIS, "Snowfall was the deciding check."),
-                PARIS, 'term "deciding check"')
+                changed(GOOD_VALENCIA, headline="Extreme risk of heavy rain in Paiporta, Valencia, Spain on "
+                                                "29 Oct 2024, with rain the deciding check."),
+                VALENCIA, 'headline mentions the "deciding check"')
+    expect_fail('"deciding check" in a bullet', why_with(GOOD_VALENCIA, "Rain was the deciding check."),
+                VALENCIA, 'term "deciding check"')
 
     # Numbers: extra, rounded, more precise, written as words.
     expect_fail("extra number", why_with(GOOD_KOLKATA, "It was the hottest day in 12 years."), KOLKATA, "(12)")
@@ -211,13 +183,29 @@ def guardrail_cases():
     expect_fail('"normal" after the thing', why_with(GOOD_KOLKATA, "Wind was normal for here."), KOLKATA, '"normal"')
     expect_fail('"normally"', why_with(GOOD_KOLKATA, "It is normally this hot."), KOLKATA, '"normal"')
     expect_pass('"normal" before a measured thing', why_with(GOOD_KOLKATA, "Normal rain for here (8.2 mm)."), KOLKATA)
-    expect_fail('"normal wind" without the limit', why_with(GOOD_PARIS, "Normal wind for here (gusts up to 36 km/h)."),
-                PARIS, "data misses sudden local storm gusts")
+    expect_fail('"normal wind" without the limit', why_with(GOOD_VALENCIA, "Normal wind for here (gusts up to 61 "
+                                                                           "km/h)."),
+                VALENCIA, "data misses sudden local storm gusts")
 
     # Bullets.
     expect_fail("1 why bullet", changed(GOOD_KOLKATA, why=GOOD_KOLKATA["why"][:1]), KOLKATA, "1 why bullets")
     expect_fail("5 why bullets", changed(GOOD_KOLKATA, why=GOOD_KOLKATA["why"] * 2 + GOOD_KOLKATA["why"][:1]),
                 KOLKATA, "5 why bullets")
+
+
+def typical_cases():
+    """Typical days use fixed wording: Claude is never asked, and no saved reply is used."""
+    for name, facts in [("Paris", PARIS), ("Bayesian", BAYESIAN), ("Nepal-Tibet", NEPAL)]:
+        assert facts["level"] == "Typical", (name, facts["level"])
+        reply, problems = claude_text.write(facts, NeverCall())
+        assert reply is None and problems == [claude_text.TYPICAL_FIXED], problems
+        reply, problems = claude_text.saved_reply(ROOT / "no-such-file.json", facts)
+        assert reply is None and problems == [claude_text.TYPICAL_FIXED], problems
+    for case in replays.load_replays():
+        facts, _ = replay_facts(case["name"])
+        if facts["level"] == "Typical":
+            assert not replays.claude_reply_file(case["name"]).exists(), f"{case['name']}: stale Typical reply"
+    print("ok: Typical days -> fixed wording, Claude never asked, no saved replies")
 
 
 def review_rule_cases():
@@ -230,20 +218,57 @@ def review_rule_cases():
         expect_fail(f"confidence note without {left_out}", changed(GOOD_KOLKATA, confidence_note=words), KOLKATA,
                     f"confidence note doesn't mention {left_out}")
 
-    # Softening words and reassuring phrases: banned on every day.
-    for words, label in [("Paris, France on 7 Jan 2026: a calm, low risk day.", "low risk"),
-                         ("It is a calm day.", "calm"), ("The cold is mild.", "mild"),
-                         ("It is a pleasant day.", "pleasant"), ("There are no warnings for Paris.", "no warnings"),
+    # Reassuring words and phrases.
+    for words, label in [("Rain eases to a calm, low risk night.", "low risk"),
+                         ("The night is calm.", "calm"), ("The cold is mild.", "mild"),
+                         ("The evening is pleasant.", "pleasant"), ("There are no warnings for Paiporta.", "no warnings"),
                          ("You can go ahead with your plans.", "go ahead"), ("This is a minimal risk.", "low risk"),
                          ("There is no need to change plans.", "no need"),
-                         ("No special precautions are needed for rain, heat, cold, snow or wind.", "no precautions"),
+                         ("No special precautions are needed for heat, cold, snow or wind.", "no precautions"),
                          ("No precautions are needed.", "no precautions"),
                          ("Outdoor plans can go on as planned.", "as planned"),
                          ("Outdoor plans can continue.", "can continue"), ("You can carry on as usual.", "carry on"),
                          ("It is fine to travel.", "fine to")]:
-        expect_fail(f'reassuring on a Typical day: "{label}"', why_with(GOOD_PARIS, words), PARIS, f'("{label}")')
+        expect_fail(f'reassuring: "{label}"', why_with(GOOD_VALENCIA, words), VALENCIA, f'("{label}")')
     expect_pass("a real warning with continue and precautions on an Extreme day",
                 why_with(GOOD_VALENCIA, "Heavy rain will continue overnight; take precautions."), VALENCIA)
+
+    # Critical #1: denials of risk, and of hazards the checks don't cover.
+    for words, label in [("There is no flood risk below the glacier.", "no ... risk"),
+                         ("There is no real risk.", "no ... risk"),
+                         ("The risk is low today.", "risk is low"),
+                         ("The risk from wind here is small.", "risk is low"),
+                         ("No thunderstorms are forecast.", "denies a hazard"),
+                         ("No ice is expected.", "denies a hazard"),
+                         ("Storms are unlikely.", "denies a hazard"),
+                         ("Hail is unlikely tonight.", "denies a hazard"),
+                         ("Roads stay without ice.", "denies a hazard"),
+                         ("There is no sign of flooding.", "denies a hazard"),
+                         ("A landslide is very unlikely.", "denies a hazard"),
+                         ("It is unlikely to flood.", "denies a hazard")]:
+        expect_fail(f'denial: "{words}"', why_with(GOOD_VALENCIA, words), VALENCIA, f'("{label}")')
+    for words in ("Thunderstorms are not checked.", "Flash floods can come without warning.",
+                  "The risk of flooding is highest in low-lying areas and on low roads.",
+                  "Ice and landslides are not checked, so follow official warnings."):
+        expect_pass(f'not a denial: "{words}"', why_with(GOOD_VALENCIA, words), VALENCIA)
+
+    # #4: "less common now" needs the exact phrase, also when said in words ("used to", "more frequent in").
+    expect_fail("the opposite meaning: so today is less serious",
+                why_with(GOOD_VALENCIA, "Days this cold happened about 246 times a year in 1951–1980, so today is "
+                                        "less serious."), VALENCIA, 'says "less serious" outside')
+    expect_fail('"less serious" on its own', why_with(GOOD_VALENCIA, "That makes today less serious."), VALENCIA,
+                'says "less serious" outside')
+    expect_fail('"used to" without the phrase', why_with(GOOD_VALENCIA, "Cold days like this used to be more frequent."),
+                VALENCIA, "without saying that doesn't make today any less serious")
+    expect_fail('"more frequent in" without a number or the phrase',
+                why_with(GOOD_VALENCIA, "Cold like this was more frequent in 1951–1980."), VALENCIA,
+                "without saying that doesn't make today any less serious")
+    expect_pass('"used to" with the exact phrase',
+                why_with(GOOD_VALENCIA, "Cold days like this used to be more frequent, but that doesn't make today any "
+                                        "less serious."), VALENCIA)
+    expect_pass('"used to", phrase in the next bullet',
+                changed(GOOD_VALENCIA, why=[*GOOD_VALENCIA["why"][:2], "Cold days like this used to be more frequent.",
+                                            "That does not make today any less serious."]), VALENCIA)
 
     # Elevated or higher: nothing softens the level.
     for words, label in [("The risk is slightly raised.", "slightly"), ("It is a bit hotter.", "a bit"),
@@ -257,8 +282,6 @@ def review_rule_cases():
                     f'softens the level ("{label}")')
     expect_fail("the reviewer's example on an Extreme day", why_with(GOOD_VALENCIA, "The rain was brief and isolated."),
                 VALENCIA, 'softens the level ("brief")')
-    expect_pass('"moderate" on a Typical day is not checked as softening',
-                why_with(GOOD_PARIS, "Gusts are moderate."), PARIS)
     expect_pass('"weather-driven hazards only" on a High day',
                 changed(GOOD_KOLKATA, confidence_note=CONFIDENCE + " Groundtruth covers weather-driven hazards only."),
                 KOLKATA)
@@ -273,9 +296,9 @@ def review_rule_cases():
         expect_fail(f'climate: "{words[:40]}…"', why_with(GOOD_KOLKATA, words), KOLKATA, '("climate change")')
 
     # "Rarer" and "fewer" are banned like "less common".
-    for words in ("Snow like this is 1.2 times rarer here than in 1951–1980.", "There are fewer days like this now.",
+    for words in ("Wind like this is 1.1 times rarer here than in 1951–1980.", "There are fewer days like this now.",
                   "Days like this happen less often now."):
-        expect_fail(f'less common: "{words[:40]}…"', why_with(GOOD_PARIS, words), PARIS, '("less common")')
+        expect_fail(f'less common: "{words[:40]}…"', why_with(GOOD_VALENCIA, words), VALENCIA, '("less common")')
 
     # When a danger line set the level: say "danger line" in a bullet, and never call that check routine.
     heat = next(c for c in KOLKATA["checks"] if c["name"] == "Feels-like heat")
@@ -299,7 +322,7 @@ def review_rule_cases():
                 changed(GOOD_TEXAS, why=["Rain over 24 h set the level, with 107 mm forecast, which is below the "
                                          "danger line of 150 mm.", GOOD_TEXAS["why"][1]]), TEXAS,
                 "danger line that wasn't crossed")
-    expect_fail("Typical day: any danger line", why_with(GOOD_PARIS, "No danger line was crossed."), PARIS,
+    expect_fail("no line crossed: any danger line", why_with(GOOD_TEXAS, "No danger line was crossed."), TEXAS,
                 "danger line that wasn't crossed")
 
 
@@ -400,6 +423,8 @@ def facts_cases():
 def saved_reply_cases():
     for case in replays.load_replays():
         facts, _ = replay_facts(case["name"])
+        if facts["level"] == "Typical":  # fixed wording, no saved reply (see typical_cases)
+            continue
         path = replays.claude_reply_file(case["name"])
         reply, problems = claude_text.saved_reply(path, facts)
         assert reply is not None, f"{case['name']}: saved reply not usable: {problems} " \
@@ -423,6 +448,7 @@ def saved_reply_cases():
 
 def main():
     guardrail_cases()
+    typical_cases()
     review_rule_cases()
     client_cases()
     not_enough_cases()
