@@ -457,6 +457,7 @@ Claude: not asked on Typical days (fixed wording).
 
 Written by code:
 
+- Line under the headline (ice): "Roads may be icy; ice itself isn't checked."
 - What it means (shown on Typical days and with Claude's text, not in template mode): "These checks don't cover thunderstorms, hail, freezing rain or ice, wildfire, air quality, coastal flooding, or geological hazards. Snow or rain on freezing ground can make roads icy, and ice isn't checked. Check your official weather warnings — Groundtruth never replaces them."
 - SMS: "Groundtruth Paris, France 7 Jan 2026: Typical rain, temperature, snow and wind. Roads may be icy; ice, storms, landslides not checked. Check official warnings."
 

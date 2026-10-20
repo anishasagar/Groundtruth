@@ -135,6 +135,11 @@ def ice_note(result):
     return ICE_NOTE if wet and lows and min(lows) <= ICE_IF_AT_OR_BELOW_C else None
 
 
+def ice_line(result):
+    """The line shown on its own right under the headline when the ice note applies, else None."""
+    return ICE_SMS if ice_note(result) else None
+
+
 def danger_line_set_level(c):
     """True when the danger line, not how rare the value is here, set this check's level."""
     return bool(c.get("crosses_danger_line")) and c.get("relative_level") in risk.LEVELS \

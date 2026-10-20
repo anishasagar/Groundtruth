@@ -225,6 +225,9 @@ BANNED = [
     # A hazard the checks don't cover is never said to be absent or unlikely: the data can't see it.
     (re.compile(rf"\b(no|without|unlikely)\b(\s+[\w-]+){{0,2}}?\s+{_UNCHECKED}", re.I), "denies a hazard"),
     (re.compile(rf"{_UNCHECKED}(\s+[\w-]+){{0,2}}?\s+unlikely\b", re.I), "denies a hazard"),
+    # "Thunderstorms are not forecast", "Ice isn't expected" (but "Thunderstorms are not checked" is fine)
+    (re.compile(rf"{_UNCHECKED}(\s+[\w'’-]+){{0,3}}?\s+(not|\w+n['’]t)\s+(forecast|expected|likely)\b", re.I),
+     "denies a hazard"),
     (re.compile(r"\ball[\s-]+clear\b", re.I), "all clear"),
     (re.compile(r"\brisk[\s-]*free\b", re.I), "risk-free"),
     (re.compile(r"\bnothing to worry\b", re.I), "nothing to worry about"),

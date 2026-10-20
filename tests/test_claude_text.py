@@ -247,6 +247,9 @@ def review_rule_cases():
                          ("A landslide is very unlikely.", "denies a hazard"),
                          ("It is unlikely to flood.", "denies a hazard")]:
         expect_fail(f'denial: "{words}"', why_with(GOOD_VALENCIA, words), VALENCIA, f'("{label}")')
+    for words in ("Thunderstorms are not forecast.", "Ice is not expected.", "Flooding is not likely.",
+                  "Thunderstorms aren't expected tonight.", "Hail isn't forecast."):
+        expect_fail(f'denial: "{words}"', why_with(GOOD_VALENCIA, words), VALENCIA, '("denies a hazard")')
     for words in ("Thunderstorms are not checked.", "Flash floods can come without warning.",
                   "The risk of flooding is highest in low-lying areas and on low roads.",
                   "Ice and landslides are not checked, so follow official warnings."):

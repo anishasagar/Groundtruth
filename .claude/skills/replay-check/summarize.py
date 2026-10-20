@@ -51,6 +51,8 @@ def full_output(case, result, place):
     action = message.action_line(result)
     lines = [f"#### {case['name']} — {case['date']} — {result['level']}", "",
              "Written by code:", "",
+             *([f"- Line under the headline (ice): \"{message.ice_line(result)}\""] if message.ice_line(result)
+               else []),
              f"- What it means (shown on Typical days and with Claude's text, not in template mode): "
              f"\"{message.what_it_means(result, special)}\"",
              f"- SMS: \"{message.sms_text(result, place, special)}\"", "",

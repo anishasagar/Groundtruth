@@ -179,7 +179,7 @@ def made_up_cases():
         "Typical rain, temperature, snow and wind for here. These checks can't see thunderstorms, ice on roads, or "
         "landslides and glacier collapse. Check your official weather warnings — Groundtruth never replaces them."), \
         message.template_sentence(r)
-    assert message.ice_note(r) is None  # 1 mm of rain on a day that stays above freezing
+    assert message.ice_note(r) is None and message.ice_line(r) is None  # 1 mm of rain, above freezing
     assert "**Temperature:** Normal temperatures for here (feels like 3 to 12 °C)" in bullets, bullets
     assert "**Snowfall (24 h):** No snow forecast" in bullets, bullets
     assert any(b.startswith("**Recent rain (6-day total):** Normal rain for the last 6 days") for b in bullets), bullets
@@ -228,6 +228,7 @@ def made_up_cases():
     check_result("made up: snow, +2 by day, -5 overnight", r)
     assert message.ice_note(r) == message.ICE_NOTE, "a day that drops to -5 °C with snow must get the ice note"
     assert message.ICE_NOTE in message.template_sentence(r) and "Roads may be icy" in message.sms_text(r, "Somewhere")
+    assert message.ice_line(r) == "Roads may be icy; ice itself isn't checked."  # its own line under the headline
     r, _ = fake_assess(snow_cm=2.0, feels_like_max_c=2.0, feels_like_min_c=-5.0)  # no air temperature saved
     check_result("made up: snow, feels-like low -5, no air temperature", r)
     assert message.ice_note(r) == message.ICE_NOTE, "falls back to the feels-like low"
@@ -300,13 +301,14 @@ def main():
                     "drink water, check on older people. Check official warnings.")
             if c["name"] == "Paris snow and cold":  # no air temperature saved: the feels-like low (-6.5 °C) is used
                 assert result.get("air_min_c") is None and message.ice_note(result) == message.ICE_NOTE
+                assert message.ice_line(result) == "Roads may be icy; ice itself isn't checked."
                 assert message.sms_text(result, "Paris, France") == (
                     "Groundtruth Paris, France 7 Jan 2026: Typical rain, temperature, snow and wind. Roads may be icy; "
                     "ice, storms, landslides not checked. Check official warnings.")
             if c["name"].startswith("Nepal-Tibet"):
                 assert "glacier floods not checked" in message.sms_text(result, replays.place_of(c), special)
             if c["name"] in ("Bayesian sinking", "Nepal-Tibet glacier-collapse flood"):
-                assert message.ice_note(result) is None
+                assert message.ice_note(result) is None and message.ice_line(result) is None
             if result["level"] != "Typical":
                 rows, _, _ = message.rarity_rows(result)
                 assert [r["label"] for r in rows] == [result["baseline_label"], result["recent_label"]]

@@ -194,18 +194,25 @@ def show_assessment(result, place, replay_name=None):
     special = replays.SPECIAL_NOTES.get(replay_name)
     typical = result["level"] == "Typical"
     reply, problems = (None, []) if typical else claude_reply(result, place, replay_name)
+    ice = message.ice_line(result)  # shown right under the headline in every mode
     if typical:  # fixed wording; Claude is never asked on Typical days
         st.markdown(f"### {message.HEADLINES['Typical']}")
+        if ice:
+            st.markdown(f"**{ice}**")
         st.markdown(message.what_it_means(result, special))
         st.caption(TYPICAL_CAPTION)
     elif reply is not None:
         st.markdown(f"### {plain(reply['headline'])}")
+        if ice:
+            st.markdown(f"**{ice}**")
         st.markdown(message.what_it_means(result, special))  # written by code, never by Claude
         st.markdown("\n".join(f"- {plain(b)}" for b in reply["why"]))
         st.caption("Written by Claude from the computed facts. The level is set in code, "
                    "and every number appears in those facts.")
     else:
         st.markdown(f"### {message.template_sentence(result)}")
+        if ice:
+            st.markdown(f"**{ice}**")
         st.caption("Template mode: this sentence is built from the numbers, not written by an AI.  \n"
                    f"Claude's text wasn't used: {plain(claude_text.short_reason(problems))}.")
     st.warning(message.STORM_NOTE, icon="⚡")
