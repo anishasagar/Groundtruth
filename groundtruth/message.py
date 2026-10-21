@@ -27,6 +27,9 @@ NOT_CHECKED_LINE = ("Groundtruth covers weather-driven hazards only. It doesn't 
                     "glacier collapse, earthquakes), check local civil protection and geological authorities.")
 # "Then and now", when the check is less common now than in the comparison period.
 RARER_NOW = "{noun} like this is rarer here now, so people and places may be less prepared for it."
+# On Typical days RARER_NOW is shown only for a check that happens fewer than this many times a year now
+# (Paris snow, about 1.1: yes; a few tenths of a mm of rain, about 45: no). Raised days always show it.
+RARER_NOW_TYPICAL_BELOW_PER_YEAR = 5
 ARROW = "→ "
 
 # Part of the facts sent to Claude (and so of each saved reply's fingerprint): keep these exactly as they are.
@@ -314,6 +317,11 @@ def why_bullets(result):
     return bullets
 
 
+def show_rarer_now(c, level):
+    """RARER_NOW applies: less common now, and on Typical days only for a check that happens < 5 times a year now."""
+    return less_common_now(c) and (level != "Typical" or c["recent"]["per_year"] < RARER_NOW_TYPICAL_BELOW_PER_YEAR)
+
+
 def less_common_now(c):
     """True when days like this were more frequent in the comparison period (or seen then, not recently)."""
     return (bool(c["baseline"]["count"]) and not c["recent"]["count"]) or (c["ratio"] is not None and c["ratio"] < 0.95)
@@ -324,7 +332,7 @@ def rarity_rows(result):
 
     None for Not enough data. A dict: rows (now first, then the comparison period; each with label,
     per_year, width 0-1 where the more frequent period is 1, and the engine's words), name, like_this,
-    rarer_now (RARER_NOW, or None) and danger_note (DANGER_LINE_NOTE when a danger line set the level).
+    rarer_now (RARER_NOW, or None; see show_rarer_now) and danger_note (DANGER_LINE_NOTE when a danger line set the level).
     """
     if result["level"] not in risk.LEVELS:
         return None
@@ -338,7 +346,8 @@ def rarity_rows(result):
              "words": words}
             for label, p, words in periods]
     return {"rows": rows, "name": check["name"], "like_this": LIKE_THIS[check["key"]],
-            "rarer_now": RARER_NOW.format(noun=LEAD[check["key"]][1]) if less_common_now(check) else None,
+            "rarer_now": RARER_NOW.format(noun=LEAD[check["key"]][1]) if show_rarer_now(check, result["level"])
+            else None,
             "danger_note": DANGER_LINE_NOTE if danger_line_set_level(check) else None}
 
 

@@ -375,7 +375,7 @@ Written by code, shown on the page in every mode:
 
 - Level box: "Porticello, Sicily, Italy · 19 Aug 2024" / **Typical** / "for rain, temperature, snow and wind"
 - Line under the level box: "These checks can't see thunderstorms, ice on roads, or landslides and glacier collapse."
-- Then and now (Recent rain (6-day total)): Now (1994–2024): about 21 times a year; 1951–1980: about 24 times a year — "A wet spell like this is rarer here now, so people and places may be less prepared for it."
+- Then and now (Recent rain (6-day total)): Now (1994–2024): about 21 times a year; 1951–1980: about 24 times a year
 - Yellow line: "Thunderstorms aren't checked. Follow official weather and storm warnings."
 
 Text message (not shown on the page; kept for Phase 2): "Groundtruth Porticello, Sicily, Italy 19 Aug 2024: Typical rain, temperature, snow and wind. Storms, ice, landslides not checked. Check official warnings."
@@ -402,7 +402,7 @@ Written by code, shown on the page in every mode:
 
 - Level box: "Paiporta, Valencia, Spain · 15 May 2024" / **Typical** / "for rain, temperature, snow and wind"
 - Line under the level box: "These checks can't see thunderstorms, ice on roads, or landslides and glacier collapse."
-- Then and now (Recent rain (6-day total)): Now (1994–2024): about 45 times a year; 1951–1980: about 51 times a year — "A wet spell like this is rarer here now, so people and places may be less prepared for it."
+- Then and now (Recent rain (6-day total)): Now (1994–2024): about 45 times a year; 1951–1980: about 51 times a year
 - Yellow line: "Thunderstorms aren't checked. Follow official weather and storm warnings."
 
 Text message (not shown on the page; kept for Phase 2): "Groundtruth Paiporta, Valencia, Spain 15 May 2024: Typical rain, temperature, snow and wind. Storms, ice, landslides not checked. Check official warnings."
@@ -428,7 +428,7 @@ Written by code, shown on the page in every mode:
 
 - Level box: "39.43, -0.42 · 27 Feb 2018" / **Typical** / "for rain, temperature, snow and wind"
 - Line under the level box: "These checks can't see thunderstorms, ice on roads, or landslides and glacier collapse."
-- Then and now (Rain (24 h)): Now (1988–2018): about 6.2 times a year; 1951–1980: about 6.6 times a year — "Rain like this is rarer here now, so people and places may be less prepared for it."
+- Then and now (Rain (24 h)): Now (1988–2018): about 6.2 times a year; 1951–1980: about 6.6 times a year
 - Yellow line: "Thunderstorms aren't checked. Follow official weather and storm warnings."
 
 Text message (not shown on the page; kept for Phase 2): "Groundtruth 39.43, -0.42 27 Feb 2018: Typical rain, temperature, snow and wind. Storms, ice, landslides not checked. Check official warnings."

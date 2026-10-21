@@ -122,7 +122,9 @@ def check_result(label, result, place="Somewhere, Far Away Land", special=None):
         assert rarity is not None, f"{label}: then and now missing"
         assert [r["label"] for r in rarity["rows"]] == [f"Now ({result['recent_label']})", result["baseline_label"]]
         assert max(r["width"] for r in rarity["rows"]) in (0.0, 1.0)
-        assert (rarity["rarer_now"] is not None) == message.less_common_now(message.deciding_check(result)), label
+        deciding = message.deciding_check(result)
+        rare_enough = not typical or deciding["recent"]["per_year"] < message.RARER_NOW_TYPICAL_BELOW_PER_YEAR
+        assert (rarity["rarer_now"] is not None) == (message.less_common_now(deciding) and rare_enough), label
         # What decided the level comes first in the Why list.
         first = bullets[0]
         assert result["level"] == "Typical" or first.startswith("**") and "Normal" not in first, f"{label}: {first}"
@@ -372,6 +374,10 @@ def main():
                 assert message.summary_lines(result)[:2] == [message.ICE_TYPICAL, message.TYPICAL_LIMITS]
                 rarity = message.rarity_rows(result)
                 assert rarity["name"] == "Snowfall (24 h)" and rarity["rarer_now"].startswith("Snow like this"), rarity
+            if c["name"] in ("Calm control 1, Paiporta", "Bayesian sinking"):  # less common now, but ~45 / ~21 a year
+                deciding = message.deciding_check(result)
+                assert message.less_common_now(deciding) and deciding["recent"]["per_year"] >= 5, deciding["name"]
+                assert message.rarity_rows(result)["rarer_now"] is None, c["name"]
             if c["name"].startswith("Nepal-Tibet"):
                 assert message.GEOLOGICAL_NOTE in message.summary_lines(result, special)
             print("ok:", c["name"], "->", result["level"])

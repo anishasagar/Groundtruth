@@ -69,7 +69,7 @@ A web app that tells a person, in one plain sentence, how unusual today's weathe
   - Live searches never get the bold geological note (only the Nepal-Tibet replay does); covered by the always-visible line above.
   - Search results with identical labels: choosing the second shows the first place. Add coordinates to repeated labels and select by position.
   - Yellow line: consider starting with "Follow official weather warnings." and moving it right under the lines below the level box.
-  - "Rarer here now" on trivial Typical checks (Paiporta calm control: a 6-day total of a few tenths of a mm): on Typical days show it only for checks that happen a few times a year. Don't lower anything.
+  - Fairer pick for "Then and now" on Typical days: today it shows the check with the lowest "times a year", but the 6-day rain total counts wet spells (at most about 61 a year) while the other checks count days (up to 365), so a few tenths of a mm of rain can win (Paiporta calm control, Bayesian). Only compare checks with a measurable amount (not trace rain or snow), or rank spells and days on the same scale. ("Rarer here now" on Typical days already shows only below 5 times a year.)
   - Captions: "didn't pass the wording checks" and "wording checked by code" (the page also uses "checks" for the weather checks).
   - "Then and now" caption uses amount(), so 149.6 mm would show as "150 mm" (see the rounding item above).
   - TESTLOG "Template sentence" column for Typical cases still shows the old Typical headline and ICE_NOTE, which aren't on the page.
