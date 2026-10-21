@@ -43,13 +43,19 @@ LEVEL_STYLE = {
     "Extreme": ("#9b1c1c", "#ffffff"),
     risk.NOT_ENOUGH: ("#5f6672", "#ffffff"),
 }
-# Open-Meteo (WMO) weather codes -> (day icon, night icon, words). The strip shows the worst code in each 3 hours.
+# Open-Meteo (WMO) weather codes -> (day icon, night icon, words). The strip shows the most dangerous code in
+# each 3 hours (weather.CODE_DANGER). Freezing codes get their own words, also shown in the cell (no hover on phones).
+FREEZING = {48: "Freezing fog", 56: "Freezing drizzle", 57: "Freezing drizzle", 66: "Freezing rain",
+            67: "Freezing rain"}
 WEATHER_ICONS = [
     (0, "☀️", "🌙", "Clear"), (1, "🌤️", "🌙", "Mostly clear"), (2, "⛅", "☁️", "Partly cloudy"),
-    (3, "☁️", "☁️", "Overcast"), (48, "🌫️", "🌫️", "Fog"), (57, "🌦️", "🌦️", "Drizzle"),
-    (67, "🌧️", "🌧️", "Rain"), (77, "🌨️", "🌨️", "Snow"), (82, "🌧️", "🌧️", "Rain showers"),
-    (86, "🌨️", "🌨️", "Snow showers"), (99, "⛈️", "⛈️", "Thunderstorm"),
+    (3, "☁️", "☁️", "Overcast"), (45, "🌫️", "🌫️", "Fog"), (55, "🌦️", "🌦️", "Drizzle"),
+    (65, "🌧️", "🌧️", "Rain"), (77, "🌨️", "🌨️", "Snow"), (82, "🌧️", "🌧️", "Rain showers"),
+    (86, "🌨️", "🌨️", "Snow showers"), (95, "⛈️", "⛈️", "Thunderstorm"), (99, "⛈️", "⛈️", "Thunderstorm with hail"),
 ]
+STRIP_CAPTION = ("Raw forecast, not checked by Groundtruth. It often misses sudden local storms, so no storm icon "
+                 "doesn't mean no storm. Feels-like temperature at each time; rain and snow are totals for the 3 "
+                 "hours, and the icon shows the worst weather forecast in them. The level above is for {day} only.")
 
 
 # ---- data (cached) ----------------------------------------------------------
@@ -140,18 +146,20 @@ def level_box(result, place):
 
 
 def weather_icon(code, is_day):
+    if code in FREEZING:
+        return "🧊", FREEZING[code] + " — roads may be icy"
     for top, day, night, words in WEATHER_ICONS:
         if code is not None and code <= top:
             return (day if is_day is not False else night), words
     return "·", "No weather code"
 
 
-def hourly_strip(slots, title):
+def hourly_strip(slots, title, day):
     """Every 3 hours: time, icon, feels-like temperature, and rain or snow when there is some."""
     cells, last_day = [], None
     for s in slots:
         icon, words = weather_icon(s["weather_code"], s["is_day"])
-        day = f"{s['time']:%a}" if s["time"].date() != last_day else "&nbsp;"
+        weekday = f"{s['time']:%a}" if s["time"].date() != last_day else "&nbsp;"
         last_day = s["time"].date()
         if s["snow_cm"]:
             wet = f"❄ {max(s['snow_cm'], 0.1):.1f} cm"
@@ -159,11 +167,13 @@ def hourly_strip(slots, title):
             wet = f"💧 {max(s['rain_mm'], 0.1):.1f} mm"
         else:
             wet = "&nbsp;"
+        icy = (f'<div class="gt-small gt-icy">{FREEZING[s["weather_code"]].replace("Freezing ", "Freezing<br>")}'
+               '</div>') if s["weather_code"] in FREEZING else ""
         cells.append(
             f'<div class="gt-hour" title="{html.escape(words)}">'
-            f'<div class="gt-small">{day}</div><div class="gt-small">{s["time"]:%H:%M}</div>'
+            f'<div class="gt-small">{weekday}</div><div class="gt-small">{s["time"]:%H:%M}</div>'
             f'<div class="gt-icon" role="img" aria-label="{html.escape(words)}">{icon}</div>'
-            f'<div><strong>{s["feels_like_c"]:.0f}°</strong></div><div class="gt-small">{wet}</div></div>'
+            f'<div><strong>{s["feels_like_c"]:.0f}°</strong></div><div class="gt-small">{wet}</div>{icy}</div>'
         )
     st.markdown(f"**{title}**")
     st.markdown(
@@ -171,11 +181,11 @@ def hourly_strip(slots, title):
         "-webkit-overflow-scrolling:touch}.gt-hour{flex:0 0 4.3rem;text-align:center;"
         "border:1px solid rgba(128,128,128,0.35);border-radius:0.5rem;padding:0.35rem 0.2rem}"
         ".gt-small{font-size:0.75rem;opacity:0.8;white-space:nowrap}.gt-icon{font-size:1.4rem;line-height:1.6}"
+        ".gt-icy{font-weight:700;opacity:1}"
         f"</style><div class=\"gt-strip\">{''.join(cells)}</div>",
         unsafe_allow_html=True,
     )
-    st.caption("Feels-like temperature. Rain and snow are totals for each 3 hours; the icon shows the worst "
-               "weather forecast in them.")
+    st.caption(STRIP_CAPTION.format(day=day))
 
 
 LONGEST_BAR = 0.6  # the more frequent period's line, as a share of the track
@@ -301,7 +311,7 @@ def show_assessment(result, place, replay_name=None, lat=None, lon=None):
             slots = []
         if slots:
             title = "Next 48 hours" if result["date"] == today else f"48 hours from {result['date']:%-d %b}"
-            hourly_strip(slots, title)
+            hourly_strip(slots, title, message.day_text(result["date"]))
 
     then_and_now(result)
     st.warning(storm_line, icon="⚡")

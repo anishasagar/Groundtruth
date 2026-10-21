@@ -196,6 +196,14 @@ def get_forecast_day(lat, lon, date, today=None):
 
 
 HOURLY_VARIABLES = ["apparent_temperature", "precipitation", "snowfall", "weather_code", "is_day"]
+# Weather codes from least to most dangerous (the code numbers aren't in that order). Freezing fog, drizzle
+# and rain (ice) rank above rain and snow; thunderstorms last. A code not listed counts as the worst.
+CODE_DANGER = [0, 1, 2, 3, 45, 51, 53, 55, 61, 80, 63, 81, 71, 73, 85, 77, 65, 82, 75, 86, 48, 56, 57, 66, 67,
+               95, 96, 99]
+
+
+def worst_code(codes):
+    return max(codes, key=lambda c: CODE_DANGER.index(c) if c in CODE_DANGER else len(CODE_DANGER))
 
 
 def get_hourly(lat, lon, date, today=None, hours=48, step=3):
@@ -218,7 +226,7 @@ def hourly_slots(raw, start, hours=48, step=3):
     """One slot every `step` hours for `hours` hours from `start` (rounded down to the hour).
 
     Each slot: time, feels_like_c (at that hour), rain_mm and snow_cm (totals over the slot's hours),
-    weather_code (the worst, i.e. highest, code in those hours) and is_day. Missing values stay None.
+    weather_code (the most dangerous code in those hours, CODE_DANGER) and is_day. Missing values stay None.
     An empty list when the forecast has nothing for that time.
     """
     h = raw.get("hourly") or {}
@@ -238,7 +246,7 @@ def hourly_slots(raw, start, hours=48, step=3):
         codes = block["weather_code"].dropna()
         slots.append({"time": first["time"].to_pydatetime(), "feels_like_c": float(first["apparent_temperature"]),
                       "rain_mm": total("precipitation"), "snow_cm": total("snowfall"),
-                      "weather_code": None if codes.empty else int(codes.max()),
+                      "weather_code": None if codes.empty else worst_code([int(c) for c in codes]),
                       "is_day": None if pd.isna(first["is_day"]) else bool(first["is_day"])})
     return slots
 

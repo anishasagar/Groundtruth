@@ -321,6 +321,9 @@ def hourly_cases():
     late = weather.hourly_slots(raw, dt.datetime(2026, 10, 23, 18))  # only 6 hours left in the forecast
     assert len(late) == 2
     assert weather.hourly_slots({}, dt.datetime(2026, 10, 21)) == []
+    # "Worst" is the most dangerous code, not the highest number: freezing rain (66) beats rain showers (80).
+    assert weather.worst_code([80, 66, 3]) == 66 and weather.worst_code([66, 95]) == 95
+    assert weather.worst_code([71, 56]) == 56 and weather.worst_code([2, 48]) == 48
     print("ok: 48-hour strip (3-hour totals, worst weather code)")
 
 
