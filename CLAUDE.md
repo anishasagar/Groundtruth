@@ -61,3 +61,15 @@ A web app that tells a person, in one plain sentence, how unusual today's weathe
   - Prompt rule 6 still suggests "Typical rain, temperature, snow and wind", which the guardrail rejects on raised days; remove it, and add "not expected", "not forecast", "not likely" to rule 3's examples.
   - TESTLOG: for Typical cases, label the template-mode block "not shown in the app" (or drop it) and list the screen order instead.
   - All-clear rule: "Everything else looks fine." passes; the rule only catches "everything looks fine" (allow "else").
+- From the review of the new page layout (no Critical findings):
+  - (High) Raised days hide what the data can't see: "forecast can be too low", "misses very local storms", geological hazards and the "Some data was missing" note are only in collapsed sections. Add one always-visible line on every result next to the yellow line (forecast can be too low, misses very local storms, not checked: thunderstorms, hail, ice, wildfire, coastal flooding, landslides, glacier collapse; geological hazards: local civil protection), and show "Some data was missing" visibly.
+  - (High) A second crossed danger line can be invisible: the level line names only the checks that set the level, and there is one action line. Show every crossed danger line visibly, each with its action line (e.g. Extreme rain plus 110 km/h gusts).
+  - (High) Typical ice line: "Snow or rain on freezing ground can make roads icy." reads as a general fact and is plain text. Tie it to the day and make it stand out: "Roads may be icy: snow or rain is forecast with temperatures near freezing. Ice isn't checked."
+  - Hourly strip: no wind shown; the temperature is the first hour of each block, not the hottest or coldest; freezing rain tomorrow gets no ice note (the ice note only covers the assessed date).
+  - Live searches never get the bold geological note (only the Nepal-Tibet replay does); covered by the always-visible line above.
+  - Search results with identical labels: choosing the second shows the first place. Add coordinates to repeated labels and select by position.
+  - Yellow line: consider starting with "Follow official weather warnings." and moving it right under the lines below the level box.
+  - Fairer pick for "Then and now" on Typical days: today it shows the check with the lowest "times a year", but the 6-day rain total counts wet spells (at most about 61 a year) while the other checks count days (up to 365), so a few tenths of a mm of rain can win (Paiporta calm control, Bayesian). Only compare checks with a measurable amount (not trace rain or snow), or rank spells and days on the same scale. ("Rarer here now" on Typical days already shows only below 5 times a year.)
+  - Captions: "didn't pass the wording checks" and "wording checked by code" (the page also uses "checks" for the weather checks).
+  - "Then and now" caption uses amount(), so 149.6 mm would show as "150 mm" (see the rounding item above).
+  - TESTLOG "Template sentence" column for Typical cases still shows the old Typical headline and ICE_NOTE, which aren't on the page.

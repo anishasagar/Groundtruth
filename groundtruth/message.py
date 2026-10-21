@@ -12,9 +12,28 @@ import pandas as pd
 
 from groundtruth import risk
 
-OFFICIAL_LINE = "Check your official weather warnings — Groundtruth never replaces them."
+# The first line of "How sure are we". The visible pointer to official warnings is STORM_LINE.
+OFFICIAL_LINE = risk.ALWAYS_NOTES[0]
+# The yellow line on every result: the page's one visible pointer to official warnings.
+STORM_LINE = "Thunderstorms aren't checked. Follow official weather and storm warnings."
 
-# What we check and what we don't (shown in "How sure are we"). Storms get their own callout.
+# The line under the level word on a Typical day: what is typical (never "Typical weather").
+TYPICAL_LEVEL_LINE = "for rain, temperature, snow and wind"
+# Shown on every Typical day, right under the level box.
+TYPICAL_LIMITS = "These checks can't see thunderstorms, ice on roads, or landslides and glacier collapse."
+# What the checks don't cover, in "How sure are we".
+NOT_CHECKED_LINE = ("Groundtruth covers weather-driven hazards only. It doesn't check thunderstorms, hail, freezing "
+                    "rain or ice, wildfire, air quality or coastal flooding. For geological hazards (landslides, "
+                    "glacier collapse, earthquakes), check local civil protection and geological authorities.")
+# "Then and now", when the check is less common now than in the comparison period.
+RARER_NOW = "{noun} like this is rarer here now, so people and places may be less prepared for it."
+# On Typical days RARER_NOW is shown only for a check that happens fewer than this many times a year now
+# (Paris snow, about 1.1: yes; a few tenths of a mm of rain, about 45: no). Raised days always show it.
+RARER_NOW_TYPICAL_BELOW_PER_YEAR = 5
+ARROW = "→ "
+
+# Part of the facts sent to Claude (and so of each saved reply's fingerprint): keep these exactly as they are.
+# SCOPE_LINE is no longer shown on the page; NOT_CHECKED_LINE says the same in "How sure are we".
 SCOPE_LINE = ("We check rain, heat, cold, snow, wind and recent rain. We don't yet check thunderstorms, "
               "hail, freezing rain or ice, wildfire, air quality, coastal flooding, or geological hazards. "
               "For those, follow official warnings.")
@@ -74,14 +93,11 @@ TYPICAL_SMS_LIMITS_GEOLOGICAL = "Storms, ice, landslides, glacier floods not che
 
 # Snow or rain on a day that drops to about freezing. Ice itself isn't checked yet (Phase 2).
 ICE_NOTE = "Snow or rain on freezing ground can make roads icy, and ice isn't checked."
-ICE_SMS = "Roads may be icy; ice itself isn't checked."
+ICE_SMS = "Roads may be icy; ice itself isn't checked."  # also the ice line on raised days
+ICE_TYPICAL = "Snow or rain on freezing ground can make roads icy."  # TYPICAL_LIMITS right after says ice isn't checked
 ICE_SMS_TYPICAL = "Roads may be icy; "  # + the not-checked list, starting with ice (one sentence, so it fits)
 ICE_IF_AT_OR_BELOW_C = 1.0  # a margin: black ice forms with air just above 0 °C over frozen ground
 
-# "What it means" (written by code on every day, also next to Claude's text).
-NOT_COVERED_LINE = ("These checks don't cover thunderstorms, hail, freezing rain or ice, wildfire, air quality, "
-                    "coastal flooding, or geological hazards.")
-STORM_SENTENCE = "Storms are a major cause of weather deaths, so check your official weather and storm warnings."
 # The day's values come from a forecast, also for past days (the past-forecast archive).
 FORECAST_NOTE = "The day's figures are a forecast and can be too low."
 # When a danger line set the level, how often it happens here must not sound reassuring.
@@ -146,36 +162,67 @@ def danger_line_set_level(c):
         and risk.LEVELS.index(c["relative_level"]) < risk.LEVELS.index(c["level"])
 
 
-def what_it_means(result, special=None):
-    """What this means for a decision, written by code on every day (also next to Claude's text).
+def level_line(result):
+    """The one line under the level word: what Typical covers, or what set a raised level."""
+    level = result["level"]
+    if level not in risk.LEVELS:
+        return "Check official sources."
+    if level == "Typical":
+        return TYPICAL_LEVEL_LINE
+    by_name = {c["name"]: c for c in result["checks"]}
+    parts = []
+    for name in result.get("decided_by") or []:
+        c = by_name.get(name, {})
+        if c.get("crosses_danger_line"):  # kept visible: the why bullets that also say it are folded away
+            how = "above" if c["value"] > c["danger_line"] else "at"
+            name += f", {how} the {c['danger_line']} {c['unit']} danger line"
+        parts.append(name)
+    if len(parts) > 1:  # "Rain (24 h), above the 150 mm danger line, and Recent rain (6-day total)"
+        joined = ", ".join(parts[:-1]) + ("," if "danger line" in parts[-2] else "") + " and " + parts[-1]
+    else:
+        joined = "".join(parts)
+    return f"Set by {joined}"
 
-    Typical: what the checks don't cover first. Other levels: the action line first. Then the ice note,
-    the special note ("storm" or "geological", replays.SPECIAL_NOTES), and official warnings, once, last.
+
+def summary_lines(result, special=None):
+    """The code-written lines under the level box (and the headline), in screen order.
+
+    Raised: the action line, the ice line, the geological note. Typical: the ice note, what the checks
+    can't see, the geological note. Always last: STORM_LINE, shown in yellow, the visible pointer to
+    official warnings. special: "storm" or "geological" (replays.SPECIAL_NOTES).
     """
-    if result["level"] not in risk.LEVELS:
-        return template_sentence(result)
-    parts = [NOT_COVERED_LINE if result["level"] == "Typical" else action_line(result)]
-    parts.append(ice_note(result))
+    level = result["level"]
+    ice = ice_note(result)
+    if level not in risk.LEVELS:
+        lines = []
+    elif level == "Typical":
+        lines = [ICE_TYPICAL if ice else None, TYPICAL_LIMITS]
+    else:
+        action = action_line(result)
+        lines = [ARROW + action if action else None, ICE_SMS if ice else None]
     if special == "geological":
-        parts.append(GEOLOGICAL_NOTE)
-    parts.append(STORM_SENTENCE if special == "storm" else OFFICIAL_LINE)
-    return " ".join(p for p in parts if p)
+        lines.append(GEOLOGICAL_NOTE)
+    return [line for line in lines if line] + [STORM_LINE]
+
+
+def what_it_means(result, special=None):
+    """The code-written lines under the level box as one text (summary_lines), for the test log."""
+    return " ".join(summary_lines(result, special))
 
 
 def template_sentence(result, today=None):
-    """Headline, one action line (not for Typical), the ice note if any, then the official-warnings line."""
+    """Headline, one action line (not for Typical) and the ice note if any. The yellow STORM_LINE follows it."""
+    if result["level"] not in risk.LEVELS:
+        return template_headline(result, today)
+    return " ".join(p for p in (template_headline(result, today), action_line(result), ice_note(result)) if p)
+
+
+def template_headline(result, today=None):
+    """The headline alone, for template mode on raised days (the action and ice lines follow from summary_lines)."""
     today = today or dt.date.today()
-    level = result["level"]
-    if level not in risk.LEVELS:
-        return f"{risk.NOT_ENOUGH_TEXT}. Groundtruth never replaces official weather warnings."
-    parts = [HEADLINES[level].format(when="today" if result["date"] == today else "on this day")]
-    action = action_line(result)
-    if action:
-        parts.append(action)
-    if ice_note(result):
-        parts.append(ice_note(result))
-    parts.append(OFFICIAL_LINE)
-    return " ".join(parts)
+    if result["level"] not in risk.LEVELS:
+        return f"{risk.NOT_ENOUGH_TEXT}."
+    return HEADLINES[result["level"]].format(when="today" if result["date"] == today else "on this day")
 
 
 LEAD = {  # how a check that is Elevated or higher opens its bullet, and what "like this" refers to
@@ -270,24 +317,38 @@ def why_bullets(result):
     return bullets
 
 
-def rarity_rows(result):
-    """(rows, check name, what "like this" means) for the "how often" lines, or None when hidden.
+def show_rarer_now(c, level):
+    """RARER_NOW applies: less common now, and on Typical days only for a check that happens < 5 times a year now."""
+    return less_common_now(c) and (level != "Typical" or c["recent"]["per_year"] < RARER_NOW_TYPICAL_BELOW_PER_YEAR)
 
-    Hidden for Typical and for Not enough data. Each row: label (period), per_year,
-    width (0-1, the more frequent period is 1), words (the engine's wording).
+
+def less_common_now(c):
+    """True when days like this were more frequent in the comparison period (or seen then, not recently)."""
+    return (bool(c["baseline"]["count"]) and not c["recent"]["count"]) or (c["ratio"] is not None and c["ratio"] < 0.95)
+
+
+def rarity_rows(result):
+    """"Then and now" for the check that set the level (on Typical days, the rarest one), or None.
+
+    None for Not enough data. A dict: rows (now first, then the comparison period; each with label,
+    per_year, width 0-1 where the more frequent period is 1, and the engine's words), name, like_this,
+    rarer_now (RARER_NOW, or None; see show_rarer_now) and danger_note (DANGER_LINE_NOTE when a danger line set the level).
     """
-    if result["level"] in ("Typical", risk.NOT_ENOUGH) or result["level"] not in risk.LEVELS:
+    if result["level"] not in risk.LEVELS:
         return None
     check = deciding_check(result)
     if check is None:
         return None
-    periods = [(result["baseline_label"], check["baseline"], check["baseline_text"]),
-               (result["recent_label"], check["recent"], check["recent_text"])]
+    periods = [(f"Now ({result['recent_label']})", check["recent"], check["recent_text"]),
+               (result["baseline_label"], check["baseline"], check["baseline_text"])]
     top = max(p["per_year"] for _, p, _ in periods)
     rows = [{"label": label, "per_year": p["per_year"], "width": (p["per_year"] / top) if top else 0.0,
              "words": words}
             for label, p, words in periods]
-    return rows, check["name"], LIKE_THIS[check["key"]]
+    return {"rows": rows, "name": check["name"], "like_this": LIKE_THIS[check["key"]],
+            "rarer_now": RARER_NOW.format(noun=LEAD[check["key"]][1]) if show_rarer_now(check, result["level"])
+            else None,
+            "danger_note": DANGER_LINE_NOTE if danger_line_set_level(check) else None}
 
 
 def _ascii(text):

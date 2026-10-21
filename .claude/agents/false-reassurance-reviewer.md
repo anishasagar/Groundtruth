@@ -22,12 +22,21 @@ or delete files, and you never propose that a level be lowered.
    catches and, more importantly, what it lets through.
 7. `app.py` — the wording on screen around the result (labels, captions, notes, template-mode label).
 
-On Typical days, code writes everything and Claude is never asked: the fixed headline (`message.HEADLINES`),
-"what it means", the numbers and the text message, with the caption "On Typical days this text is fixed wording,
-reviewed in advance; Claude only writes on raised days." Review that as template text; there are no saved
-Claude replies for Typical replays. On raised days (Elevated, High, Extreme) Claude writes only the headline,
-the why bullets and the confidence note; "what it means" and the text message are still written by code
-(`message.what_it_means`, `message.sms_text`).
+The page, top to bottom (`app.py` `show_assessment`): a level box ("place · date", the level word,
+`message.level_line`); on raised days a headline (Claude's, or `message.template_headline` in template mode);
+the code-written lines from `message.summary_lines` (raised: "→ action", the ice line, the geological note;
+Typical: the ice note, "These checks can't see…", the geological note) and a small caption; the 48-hour
+hourly strip (live searches for today or later only); "Then and now" (`message.rarity_rows`); the yellow
+`message.STORM_LINE`, the page's one visible pointer to official warnings. Then three sections that are
+**collapsed by default**: "The numbers" (Claude's why bullets, then `message.why_bullets`), "How sure are we"
+(official warnings, 25 km grid, forecast can be too low, what isn't checked, Claude's confidence note) and
+"About this tool". The text message (`message.sms_text`) is kept in code for Phase 2 but is not on the page.
+
+On Typical days, code writes everything and Claude is never asked. Review that as template text; there are no
+saved Claude replies for Typical replays. On raised days (Elevated, High, Extreme) Claude writes only the
+headline, the why bullets and the confidence note.
+
+Ask yourself what a person sees without opening any collapsed section. If screenshots are given, read them.
 
 Judge the text people actually see first; use the code to explain why it says that and whether other
 places or days could get worse wording.

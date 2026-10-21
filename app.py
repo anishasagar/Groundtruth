@@ -18,11 +18,23 @@ NO_REPLAY = "— none, use the search above —"
 LIVE_DOWN = "Live data is temporarily unavailable. Try a replay."
 REPLAY_MISSING = "Replay data for this event isn't saved yet. Please try again later."
 
-# Replays that get the geological-hazards warning right under the level.
-GEOLOGICAL_REPLAYS = {name for name, note in replays.SPECIAL_NOTES.items() if note == "geological"}
-GEOLOGICAL_NOTE = message.GEOLOGICAL_NOTE
-TYPICAL_CAPTION = ("On Typical days this text is fixed wording, reviewed in advance; "
-                   "Claude only writes on raised days.")
+SUBTITLE = ("How unusual is today's weather for this place, compared with how it used to be, "
+            "and what does it mean?")
+CLAUDE_CAPTION = "Written by Claude from the computed facts and checked by code."
+TYPICAL_CAPTION = "This is the same standard wording used on every Typical day."
+TEMPLATE_FAILED = "Template mode: Claude's text didn't pass the checks."
+TEMPLATE_UNREACHED = "Template mode: Claude couldn't be reached."
+# claude_text.write() reasons that mean Claude never answered (anything else: its text didn't pass the checks).
+UNREACHED = ("Claude took too long", "Claude couldn't be reached", "Claude returned an error", "no Claude key",
+             "something went wrong asking Claude")
+ABOUT_LINES = [
+    "Code computes every number and sets the level. Claude only puts them into words, and code checks every "
+    "reply: if it changes the level, adds a number or plays the risk down, the page shows fixed template "
+    "wording instead.",
+    "The level is the worse of how rare the day is here and fixed danger lines, so it leans toward warning. "
+    "Recent rain, cold and snow can only raise it.",
+    "On Typical days Claude isn't asked at all, so no AI wording can play the day down.",
+]
 # Level colours. Never green: a green box could read as "all fine".
 LEVEL_STYLE = {
     "Typical": ("#3d5a80", "#ffffff"),
@@ -31,6 +43,19 @@ LEVEL_STYLE = {
     "Extreme": ("#9b1c1c", "#ffffff"),
     risk.NOT_ENOUGH: ("#5f6672", "#ffffff"),
 }
+# Open-Meteo (WMO) weather codes -> (day icon, night icon, words). The strip shows the most dangerous code in
+# each 3 hours (weather.CODE_DANGER). Freezing codes get their own words, also shown in the cell (no hover on phones).
+FREEZING = {48: "Freezing fog", 56: "Freezing drizzle", 57: "Freezing drizzle", 66: "Freezing rain",
+            67: "Freezing rain"}
+WEATHER_ICONS = [
+    (0, "☀️", "🌙", "Clear"), (1, "🌤️", "🌙", "Mostly clear"), (2, "⛅", "☁️", "Partly cloudy"),
+    (3, "☁️", "☁️", "Overcast"), (45, "🌫️", "🌫️", "Fog"), (55, "🌦️", "🌦️", "Drizzle"),
+    (65, "🌧️", "🌧️", "Rain"), (77, "🌨️", "🌨️", "Snow"), (82, "🌧️", "🌧️", "Rain showers"),
+    (86, "🌨️", "🌨️", "Snow showers"), (95, "⛈️", "⛈️", "Thunderstorm"), (99, "⛈️", "⛈️", "Thunderstorm with hail"),
+]
+STRIP_CAPTION = ("Raw forecast, not checked by Groundtruth. It often misses sudden local storms, so no storm icon "
+                 "doesn't mean no storm. Feels-like temperature at each time; rain and snow are totals for the 3 "
+                 "hours, and the icon shows the worst weather forecast in them. The level above is for {day} only.")
 
 
 # ---- data (cached) ----------------------------------------------------------
@@ -54,6 +79,12 @@ def cached_live(lat, lon, date):
 def cached_replay(lat, lon, date):
     with weather.offline():  # a replay never calls Open-Meteo
         return risk.assess(lat, lon, date)
+
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def cached_hourly(lat, lon, date, hour):
+    """`hour` (the current hour) only makes the strip move on as the day goes on."""
+    return weather.get_hourly(lat, lon, date)
 
 
 def claude_key():
@@ -88,6 +119,11 @@ def claude_reply(result, place, replay_name):
         return claude_live(facts)
 
 
+def template_caption(problems):
+    last = problems[-1] if problems else ""
+    return TEMPLATE_UNREACHED if last.startswith(UNREACHED) else TEMPLATE_FAILED
+
+
 def plain(text):
     """Claude's text shown as written: no markdown formatting, no maths."""
     return re.sub(r"([\\`*_\[\]<>#$~|])", r"\\\1", text)
@@ -95,19 +131,61 @@ def plain(text):
 
 # ---- pieces of the screen -----------------------------------------------------
 
-def level_banner(result):
+def level_box(result, place):
     level = result["level"]
     background, colour = LEVEL_STYLE[level]
-    deciders = ", ".join(result.get("decided_by") or [])
-    note = f"Set by: {html.escape(deciders)}" if deciders else "Not enough data — check official sources"
+    where = f"{place} · {message.day_text(result['date'])}"
     st.markdown(
-        f'<div style="background:{background};color:{colour};padding:1rem 1.25rem;border-radius:0.5rem;'
+        f'<div style="background:{background};color:{colour};padding:0.9rem 1.25rem;border-radius:0.5rem;'
         f'margin:0.5rem 0 1rem 0" role="status">'
-        f'<div style="font-size:0.85rem;letter-spacing:0.05em;text-transform:uppercase;opacity:0.9">Level</div>'
+        f'<div style="font-size:0.85rem;opacity:0.9">{html.escape(where)}</div>'
         f'<div style="font-size:2.2rem;font-weight:700;line-height:1.2">{html.escape(level)}</div>'
-        f'<div style="font-size:0.95rem;opacity:0.95">{note}</div></div>',
+        f'<div style="font-size:0.95rem;opacity:0.95">{html.escape(message.level_line(result))}</div></div>',
         unsafe_allow_html=True,
     )
+
+
+def weather_icon(code, is_day):
+    if code in FREEZING:
+        return "🧊", FREEZING[code] + " — roads may be icy"
+    for top, day, night, words in WEATHER_ICONS:
+        if code is not None and code <= top:
+            return (day if is_day is not False else night), words
+    return "·", "No weather code"
+
+
+def hourly_strip(slots, title, day):
+    """Every 3 hours: time, icon, feels-like temperature, and rain or snow when there is some."""
+    cells, last_day = [], None
+    for s in slots:
+        icon, words = weather_icon(s["weather_code"], s["is_day"])
+        weekday = f"{s['time']:%a}" if s["time"].date() != last_day else "&nbsp;"
+        last_day = s["time"].date()
+        if s["snow_cm"]:
+            wet = f"❄ {max(s['snow_cm'], 0.1):.1f} cm"
+        elif s["rain_mm"]:
+            wet = f"💧 {max(s['rain_mm'], 0.1):.1f} mm"
+        else:
+            wet = "&nbsp;"
+        icy = (f'<div class="gt-small gt-icy">{FREEZING[s["weather_code"]].replace("Freezing ", "Freezing<br>")}'
+               '</div>') if s["weather_code"] in FREEZING else ""
+        cells.append(
+            f'<div class="gt-hour" title="{html.escape(words)}">'
+            f'<div class="gt-small">{weekday}</div><div class="gt-small">{s["time"]:%H:%M}</div>'
+            f'<div class="gt-icon" role="img" aria-label="{html.escape(words)}">{icon}</div>'
+            f'<div><strong>{s["feels_like_c"]:.0f}°</strong></div><div class="gt-small">{wet}</div>{icy}</div>'
+        )
+    st.markdown(f"**{title}**")
+    st.markdown(
+        "<style>.gt-strip{display:flex;gap:0.45rem;overflow-x:auto;padding-bottom:0.4rem;"
+        "-webkit-overflow-scrolling:touch}.gt-hour{flex:0 0 4.3rem;text-align:center;"
+        "border:1px solid rgba(128,128,128,0.35);border-radius:0.5rem;padding:0.35rem 0.2rem}"
+        ".gt-small{font-size:0.75rem;opacity:0.8;white-space:nowrap}.gt-icon{font-size:1.4rem;line-height:1.6}"
+        ".gt-icy{font-weight:700;opacity:1}"
+        f"</style><div class=\"gt-strip\">{''.join(cells)}</div>",
+        unsafe_allow_html=True,
+    )
+    st.caption(STRIP_CAPTION.format(day=day))
 
 
 LONGEST_BAR = 0.6  # the more frequent period's line, as a share of the track
@@ -117,13 +195,13 @@ OLDER_COLOUR = "#8a929c"
 def rarity_lines(rows, accent):
     """Two plain rows: period, a thin line, the engine's words. No axes, grid or scale numbers."""
     out = [
-        "<style>.gt-rows{display:grid;grid-template-columns:5.5rem 3fr 2fr;gap:0.6rem 0.9rem;align-items:center}"
-        ".gt-track{height:0.55rem}.gt-bar{height:100%;border-radius:0.3rem}"
-        "@media (max-width:600px){.gt-rows{grid-template-columns:5rem 1fr}.gt-words{grid-column:2}"
+        "<style>.gt-rows{display:grid;grid-template-columns:8.5rem 3fr 2fr;gap:0.6rem 0.9rem;align-items:center}"
+        ".gt-rows{margin-bottom:1rem}.gt-track{height:0.55rem}.gt-bar{height:100%;border-radius:0.3rem}"
+        "@media (max-width:600px){.gt-rows{grid-template-columns:7.5rem 1fr}.gt-words{grid-column:2}"
         ".gt-label{grid-row-start:auto}}</style><div class=\"gt-rows\">"
     ]
     for i, r in enumerate(rows):
-        colour = accent if i == len(rows) - 1 else OLDER_COLOUR  # the last row is the recent period
+        colour = accent if i == 0 else OLDER_COLOUR  # the first row is now
         width = r["width"] * LONGEST_BAR * 100
         if r["per_year"] > 0:
             width = max(width, 0.5)  # a tiny but real rate still shows
@@ -137,38 +215,61 @@ def rarity_lines(rows, accent):
     st.markdown("".join(out), unsafe_allow_html=True)
 
 
-def how_sure_box(result, confidence_note=None):
-    rain = result["checks"][-1]
-    with st.container(border=True):
-        st.subheader("How sure are we")
-        if confidence_note:
-            st.markdown(f"**In short (written by Claude):** {plain(confidence_note)}")
-        st.warning(message.STORM_NOTE, icon="⚡")
-        st.markdown(message.SCOPE_LINE)
-        st.markdown(
-            "- Official weather warnings come first. Groundtruth never replaces them.\n"
-            "- The history data is a grid of about 25 km, so it misses very local storms.\n"
-            f"- {message.FORECAST_NOTE}\n"
-            f"- {GEOLOGICAL_NOTE}"
-        )
-        if rain.get("source") == "forecast":
-            st.markdown("- The rain totals assume the forecast rain actually falls.")
-        with st.expander("Details"):
-            st.markdown(
-                f"- Forecast: {result['forecast_source']} (grid point "
-                f"{result['forecast_grid_point']['latitude']:.2f}, {result['forecast_grid_point']['longitude']:.2f})\n"
-                f"- History: {result['history_source']} (grid point "
-                f"{result['history_grid_point']['latitude']:.2f}, {result['history_grid_point']['longitude']:.2f})\n"
-                f"- Compared with {result['baseline_label']}; the level uses {result['recent_label']} "
-                f"({result['recent_phrase']})"
+def then_and_now(result):
+    rarity = message.rarity_rows(result)
+    if rarity is None:
+        return
+    check = message.deciding_check(result)
+    st.subheader("Then and now")
+    value = message.amount(check["value"], check["unit"])
+    if all(r["per_year"] == 0 for r in rarity["rows"]):
+        st.markdown(f"**{rarity['name']}, {value}:** a day like this was not seen in {result['baseline_label']} "
+                    f"or in {result['recent_label']}.")
+    else:
+        st.caption(f"{rarity['name']}, {value}: how often {rarity['like_this']} happen here.")
+        rarity_lines(rarity["rows"], LEVEL_STYLE[result["level"]][0])
+    for line in (rarity["danger_note"], rarity["rarer_now"]):
+        if line:
+            st.markdown(f"**{line}**")
+
+
+def numbers_section(result, reply):
+    with st.expander("The numbers"):
+        if reply is not None:
+            st.markdown("Written by Claude:\n\n" + "\n".join(f"- {plain(b)}" for b in reply["why"]))
+            st.markdown("The detailed numbers:")
+        st.markdown("\n".join(f"- {b}" for b in message.why_bullets(result)))
+        fc, hist = result.get("forecast_grid_point"), result.get("history_grid_point")
+        if fc and hist:
+            st.caption(
+                f"Forecast: {result['forecast_source']} (grid point {fc['latitude']:.2f}, {fc['longitude']:.2f}). "
+                f"History: {result['history_source']} (grid point {hist['latitude']:.2f}, "
+                f"{hist['longitude']:.2f}). Compared with {result['baseline_label']}; the level uses "
+                f"{result['recent_label']} ({result['recent_phrase']})."
             )
-            st.markdown(f"- Rain in the {risk.RECENT_RAIN_DAYS_BEFORE} days before: from {rain['source']}")
-            st.markdown("- There are no fixed danger lines for cold or snow yet; fixed cold lines need research. "
-                        "Those two checks use only how rare the day is here.")
-            engine_notes = result["notes"][: len(result["notes"]) - len(risk.ALWAYS_NOTES)]
-            engine_notes += [f"{c['name']}: {n}" for c in result["checks"] for n in c["notes"]]
-            for n in engine_notes:
-                st.markdown(f"- {n}")
+
+
+def how_sure_section(result, confidence_note=None):
+    rain = result["checks"][-1]
+    lines = [message.OFFICIAL_LINE,
+             "The history data is a grid of about 25 km, so it misses very local storms.",
+             message.FORECAST_NOTE,
+             message.NOT_CHECKED_LINE]
+    if rain.get("source") == "forecast":
+        lines.append("The rain totals assume the forecast rain actually falls.")
+    lines.append("There are no fixed danger lines for cold or snow yet; fixed cold lines need research. "
+                 "Those two checks use only how rare the day is here.")
+    lines += result["notes"][: len(result["notes"]) - len(risk.ALWAYS_NOTES)]
+    lines += [f"{c['name']}: {n}" for c in result["checks"] for n in c["notes"]]
+    with st.expander("How sure are we"):
+        st.markdown("\n".join(f"- {line}" for line in lines))
+        if confidence_note:
+            st.markdown(f"**Written by Claude:** {plain(confidence_note)}")
+
+
+def about_section():
+    with st.expander("About this tool"):
+        st.markdown("\n".join(f"- {line}" for line in ABOUT_LINES))
 
 
 def phase2_cards():
@@ -185,72 +286,69 @@ def phase2_cards():
         )
 
 
-def show_assessment(result, place, replay_name=None):
-    level_banner(result)
-    if replay_name in GEOLOGICAL_REPLAYS:
-        st.warning(f"**Weather data can't see everything.** {GEOLOGICAL_NOTE}", icon="⚠️")
-
-    st.markdown(f"**{place} — {message.day_text(result['date'])}**")
+def show_assessment(result, place, replay_name=None, lat=None, lon=None):
+    level_box(result, place)
     special = replays.SPECIAL_NOTES.get(replay_name)
-    typical = result["level"] == "Typical"
-    reply, problems = (None, []) if typical else claude_reply(result, place, replay_name)
-    ice = message.ice_line(result)  # shown right under the headline in every mode
-    if typical:  # fixed wording; Claude is never asked on Typical days
-        st.markdown(f"### {message.HEADLINES['Typical']}")
-        if ice:
-            st.markdown(f"**{ice}**")
-        st.markdown(message.what_it_means(result, special))
+    level = result["level"]
+    raised = level in risk.LEVELS[1:]
+    reply, problems = claude_reply(result, place, replay_name) if raised else (None, [])
+    *lines, storm_line = message.summary_lines(result, special)  # written by code, never by Claude
+
+    if raised:
+        st.markdown(f"### {plain(reply['headline']) if reply is not None else message.template_headline(result)}")
+    for line in lines:
+        st.markdown(f"**{line}**" if line == message.GEOLOGICAL_NOTE else line)
+    if raised:
+        st.caption(CLAUDE_CAPTION if reply is not None else template_caption(problems))
+    elif level == "Typical":
         st.caption(TYPICAL_CAPTION)
-    elif reply is not None:
-        st.markdown(f"### {plain(reply['headline'])}")
-        if ice:
-            st.markdown(f"**{ice}**")
-        st.markdown(message.what_it_means(result, special))  # written by code, never by Claude
-        st.markdown("\n".join(f"- {plain(b)}" for b in reply["why"]))
-        st.caption("Written by Claude from the computed facts. The level is set in code, "
-                   "and every number appears in those facts.")
-    else:
-        st.markdown(f"### {message.template_sentence(result)}")
-        if ice:
-            st.markdown(f"**{ice}**")
-        st.caption("Template mode: this sentence is built from the numbers, not written by an AI.  \n"
-                   f"Claude's text wasn't used: {plain(claude_text.short_reason(problems))}.")
-    st.warning(message.STORM_NOTE, icon="⚡")
 
-    st.subheader("The numbers")
-    st.markdown("\n".join(f"- {b}" for b in message.why_bullets(result)))
+    today = dt.date.today()
+    if replay_name is None and result["date"] >= today:  # never on past dates or replays
+        try:
+            slots = cached_hourly(lat, lon, result["date"], dt.datetime.now().strftime("%Y-%m-%d %H"))
+        except Exception:  # no strip rather than an error
+            slots = []
+        if slots:
+            title = "Next 48 hours" if result["date"] == today else f"48 hours from {result['date']:%-d %b}"
+            hourly_strip(slots, title, message.day_text(result["date"]))
 
-    rarity = message.rarity_rows(result)
-    if rarity is not None:
-        rows, check_name, like_this = rarity
-        st.subheader("How often a day like this happens")
-        if all(r["per_year"] == 0 for r in rows):
-            st.markdown(f"**{check_name}:** a day like this was not seen in {result['baseline_label']} "
-                        f"or in {result['recent_label']}.")
-        else:
-            rarity_lines(rows, LEVEL_STYLE[result["level"]][0])
-            st.caption(f"{check_name}: {like_this}. The longer line is the period with more of them.")
+    then_and_now(result)
+    st.warning(storm_line, icon="⚡")
 
-    st.subheader("Text message version")
-    sms = message.sms_text(result, place, special)  # written by code, never by Claude
-    st.code(sms, language=None, wrap_lines=True)
-    st.caption(f"{len(sms)} of 160 characters")
-
-    how_sure_box(result, reply["confidence_note"] if reply is not None else None)
+    numbers_section(result, reply)
+    how_sure_section(result, reply["confidence_note"] if reply is not None else None)
+    about_section()
 
 
 # ---- the page -----------------------------------------------------------------
 
 st.set_page_config(page_title="Groundtruth", page_icon="🌍")
 st.title("Groundtruth")
-st.write("How unusual is today's weather for your exact place, compared with how it used to be, and what does it mean?")
+st.write(SUBTITLE)
 
 replay_cases = {c["name"]: c for c in load_replays()}
 today = dt.date.today()
 
-query = st.text_input("Search for a place", placeholder="e.g. Valencia")
-date = st.date_input("Date", value=today, min_value=EARLIEST_DATE, max_value=today + dt.timedelta(days=weather.FORECAST_DAYS_AHEAD))
-replay_name = st.selectbox("Replay a past event", [NO_REPLAY, *replay_cases])
+query = st.text_input("Search for a place", placeholder="e.g. Kolkata")
+picked, search_problem = None, None
+if query.strip():
+    try:
+        matches = cached_search(query.strip())
+    except (weather.LimitReached, requests.RequestException):
+        search_problem = LIVE_DOWN
+    except weather.NotAvailable:
+        search_problem = "Couldn't search for that place. Try a replay."
+    else:
+        if not matches:
+            search_problem = "No place found with that name. Try another spelling."
+        else:
+            labels = [m["label"] for m in matches]
+            choice = st.selectbox("Which place?", labels)
+            picked = matches[labels.index(choice)]
+date = st.date_input("Date", value=today, min_value=EARLIEST_DATE,
+                     max_value=today + dt.timedelta(days=weather.FORECAST_DAYS_AHEAD))
+replay_name = st.columns([2, 3])[0].selectbox("Or replay a past event", [NO_REPLAY, *replay_cases])
 
 lat = lon = place = None
 problem = None
@@ -261,23 +359,10 @@ if replay_name != NO_REPLAY:
     date = dt.date.fromisoformat(case["date"])
     place = replays.place_of(case)
     st.caption("Replay: saved data, no live lookup. The place and date above are ignored.")
-elif query.strip():
-    try:
-        matches = cached_search(query.strip())
-    except (weather.LimitReached, requests.RequestException):
-        problem = LIVE_DOWN
-    except weather.NotAvailable:
-        problem = "Couldn't search for that place. Try a replay."
-    else:
-        if not matches:
-            problem = "No place found with that name. Try another spelling."
-        else:
-            labels = [m["label"] for m in matches]
-            choice = st.selectbox("Which place?", labels) if len(matches) > 1 else labels[0]
-            picked = matches[labels.index(choice)]
-            lat, lon, place = picked["latitude"], picked["longitude"], choice
+elif picked is not None:
+    lat, lon, place = picked["latitude"], picked["longitude"], picked["label"]
 else:
-    problem = "Search for a place above, or pick a replay."
+    problem = search_problem or "Search for a place above, or pick a replay."
 
 result = None
 if lat is not None:
@@ -299,7 +384,7 @@ if problem:
     (st.info if problem != LIVE_DOWN else st.warning)(problem)
 if result is not None:
     st.divider()
-    show_assessment(result, place, None if replay_name == NO_REPLAY else replay_name)
+    show_assessment(result, place, None if replay_name == NO_REPLAY else replay_name, lat, lon)
 
 st.divider()
 phase2_cards()

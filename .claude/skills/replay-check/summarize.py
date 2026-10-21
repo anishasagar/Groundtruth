@@ -49,19 +49,25 @@ def full_output(case, result, place):
     """The text written by code, the template sentence, and Claude's full saved reply, as Markdown lines."""
     special = replays.SPECIAL_NOTES.get(case["name"])
     action = message.action_line(result)
+    *lines_under, storm_line = message.summary_lines(result, special)
+    rarity = message.rarity_rows(result)
     lines = [f"#### {case['name']} — {case['date']} — {result['level']}", "",
-             "Written by code:", "",
-             *([f"- Line under the headline (ice): \"{message.ice_line(result)}\""] if message.ice_line(result)
-               else []),
-             f"- What it means (shown on Typical days and with Claude's text, not in template mode): "
-             f"\"{message.what_it_means(result, special)}\"",
-             f"- SMS: \"{message.sms_text(result, place, special)}\"", "",
-             "Template mode:", "",
-             f"- Sentence: \"{message.template_sentence(result)}\"",
-             "- Action line: " + (f'"{action}"' if action else "none"), ""]
+             "Written by code, shown on the page in every mode:", "",
+             f"- Level box: \"{place} · {message.day_text(result['date'])}\" / **{result['level']}** / "
+             f"\"{message.level_line(result)}\"",
+             *[f"- Line under the level box: \"{line}\"" for line in lines_under],
+             *([f"- Then and now ({rarity['name']}): "
+                + "; ".join(f"{r['label']}: {r['words']}" for r in rarity["rows"])
+                + "".join(f" — \"{x}\"" for x in (rarity["danger_note"], rarity["rarer_now"]) if x)]
+               if rarity else []),
+             f"- Yellow line: \"{storm_line}\"", "",
+             f"Text message (not shown on the page; kept for Phase 2): \"{message.sms_text(result, place, special)}\"",
+             ""]
     if result["level"] == "Typical":
-        return lines + [f"Headline (fixed wording): \"{message.HEADLINES['Typical']}\"", "",
-                        "Claude: not asked on Typical days (fixed wording).", ""]
+        return lines + ["Claude: not asked on Typical days (fixed wording).", ""]
+    lines += ["Template mode (when Claude's text isn't used):", "",
+              f"- Headline: \"{message.template_headline(result)}\"",
+              "- Then the lines under the level box above" + (f' (action: "{action}")' if action else ""), ""]
     path = replays.claude_reply_file(case["name"])
     if case["name"] not in replays.REPLAY_PLACES or not path.exists():
         return lines + ["Claude: no saved Claude reply — template mode only.", ""]
@@ -103,7 +109,7 @@ def main():
         template = message.template_sentence(result)
         shown = f"template mode: {template}"
         if result["level"] == "Typical":
-            shown = f"fixed wording: {message.HEADLINES['Typical']}"
+            shown = f"fixed wording: Typical {message.TYPICAL_LEVEL_LINE}. {message.TYPICAL_LIMITS}"
         elif case["name"] in replays.REPLAY_PLACES:
             facts = claude_text.facts(result, place, dt.date.today(), replays.SPECIAL_NOTES.get(case["name"]))
             reply, _ = claude_text.saved_reply(replays.claude_reply_file(case["name"]), facts)
@@ -132,9 +138,11 @@ def main():
         "",
         "### Full output per case",
         "",
-        "The actual text a person would see: what code writes on every day (what it means, the text message), "
-        "the template sentence (shown whenever Claude or the guardrail fails), and Claude's full saved reply "
-        "(headline, why, confidence note) with how many tries it took.",
+        "The actual text a person would see, in screen order: what code writes on every day (level box, the "
+        "lines under it, then and now, the yellow line), the template headline on raised days (shown whenever "
+        "Claude or the guardrail fails), and Claude's full saved reply (headline; why and confidence note, which "
+        "sit in the collapsed sections) with how many tries it took. The text message is kept in code for Phase 2 "
+        "but no longer shown on the page.",
         "",
         *full,
     ]
