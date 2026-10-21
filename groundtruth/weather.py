@@ -195,6 +195,54 @@ def get_forecast_day(lat, lon, date, today=None):
     return {"source": fc["source"], "grid_point": fc["grid_point"], "date": date, **values}
 
 
+HOURLY_VARIABLES = ["apparent_temperature", "precipitation", "snowfall", "weather_code", "is_day"]
+
+
+def get_hourly(lat, lon, date, today=None, hours=48, step=3):
+    """The hourly forecast strip: from the current hour at the place when `date` is today, otherwise from
+    midnight of `date`. Live only (never saved for replays). Returns hourly_slots(...)."""
+    today = today or dt.date.today()
+    end = min(date + dt.timedelta(days=2), today + dt.timedelta(days=FORECAST_DAYS_AHEAD))
+    raw = _get(FORECAST_URL, {"latitude": lat, "longitude": lon, "hourly": ",".join(HOURLY_VARIABLES),
+                              "start_date": (date - dt.timedelta(days=1)).isoformat(), "end_date": end.isoformat(),
+                              "timezone": "auto"})
+    if date == today:  # the place's own clock, not the server's
+        start = dt.datetime.now(dt.timezone.utc).replace(tzinfo=None) \
+            + dt.timedelta(seconds=raw.get("utc_offset_seconds") or 0)
+    else:
+        start = dt.datetime.combine(date, dt.time())
+    return hourly_slots(raw, start, hours, step)
+
+
+def hourly_slots(raw, start, hours=48, step=3):
+    """One slot every `step` hours for `hours` hours from `start` (rounded down to the hour).
+
+    Each slot: time, feels_like_c (at that hour), rain_mm and snow_cm (totals over the slot's hours),
+    weather_code (the worst, i.e. highest, code in those hours) and is_day. Missing values stay None.
+    An empty list when the forecast has nothing for that time.
+    """
+    h = raw.get("hourly") or {}
+    df = pd.DataFrame({"time": pd.to_datetime(h.get("time", []))})
+    for name in HOURLY_VARIABLES:
+        df[name] = pd.to_numeric(pd.Series(h.get(name, [None] * len(df)), dtype="object"), errors="coerce")
+    start = pd.Timestamp(start).floor("h")
+    df = df[(df["time"] >= start) & (df["time"] < start + pd.Timedelta(hours=hours))].reset_index(drop=True)
+    slots = []
+    for i in range(0, len(df), step):
+        block = df.iloc[i:i + step]
+        first = block.iloc[0]
+        if pd.isna(first["apparent_temperature"]):
+            continue
+        def total(col):
+            return None if block[col].isna().all() else float(block[col].sum())
+        codes = block["weather_code"].dropna()
+        slots.append({"time": first["time"].to_pydatetime(), "feels_like_c": float(first["apparent_temperature"]),
+                      "rain_mm": total("precipitation"), "snow_cm": total("snowfall"),
+                      "weather_code": None if codes.empty else int(codes.max()),
+                      "is_day": None if pd.isna(first["is_day"]) else bool(first["is_day"])})
+    return slots
+
+
 def _history_files(lat, lon):
     name = f"{lat:.2f}_{lon:.2f}"
     return HISTORY_DIR / f"{name}.csv", HISTORY_DIR / f"{name}.json"
