@@ -19,21 +19,32 @@ STORM_LINE = "Thunderstorms aren't checked. Follow official weather and storm wa
 
 # The line under the level word on a Typical day: what is typical (never "Typical weather").
 TYPICAL_LEVEL_LINE = "for rain, temperature, snow and wind"
-# Shown on every Typical day, right under the level box.
-TYPICAL_LIMITS = "These checks can't see thunderstorms, ice on roads, or landslides and glacier collapse."
-# What the checks don't cover, in "How sure are we".
-NOT_CHECKED_LINE = ("Groundtruth covers weather-driven hazards only. It doesn't check thunderstorms, hail, freezing "
-                    "rain or ice, wildfire, air quality or coastal flooding. For geological hazards (landslides, "
-                    "glacier collapse, earthquakes), check local civil protection and geological authorities.")
+# Shown on every Typical day, right under the level box. Thunderstorms are in STORM_LINE, so not here; with the
+# ice line (ICE_SMS) right above it, ice isn't repeated either.
+TYPICAL_LIMITS = "These checks can't see ice on roads, landslides or glacier collapse."
+TYPICAL_LIMITS_ICE = "These checks can't see landslides or glacier collapse."
+# "How sure are we": exactly these four lines.
+HOW_SURE_LINES = [
+    OFFICIAL_LINE,
+    "The history data is a grid of about 25 km, so it misses very local storms.",
+    "Forecasts can be too low.",
+    "Weather only: for landslides, glacier collapse and earthquakes, check local civil protection and geological "
+    "authorities.",
+]
+# "About this tool" (cold and snow have no danger line, so they can only be raised by how rare they are here).
+NO_COLD_SNOW_LINES = ("There are no fixed danger lines for cold or snow yet; fixed cold lines need research. "
+                      "Those two checks use only how rare the day is here.")
 # "Then and now", when the check is less common now than in the comparison period.
 RARER_NOW = "{noun} like this is rarer here now, so people and places may be less prepared for it."
 # On Typical days RARER_NOW is shown only for a check that happens fewer than this many times a year now
 # (Paris snow, about 1.1: yes; a few tenths of a mm of rain, about 45: no). Raised days always show it.
 RARER_NOW_TYPICAL_BELOW_PER_YEAR = 5
+# When either period has fewer than this many such days (or wet spells), the two rows can't show a change.
+TOO_FEW_TO_COMPARE_BELOW = 5
+TOO_FEW_LINE = "Too few days like this in either period to say whether it has changed."
 ARROW = "→ "
 
-# Part of the facts sent to Claude (and so of each saved reply's fingerprint): keep these exactly as they are.
-# SCOPE_LINE is no longer shown on the page; NOT_CHECKED_LINE says the same in "How sure are we".
+# Part of the facts sent to Claude (and so of each saved reply's fingerprint). Not shown on the page.
 SCOPE_LINE = ("We check rain, heat, cold, snow, wind and recent rain. We don't yet check thunderstorms, "
               "hail, freezing rain or ice, wildfire, air quality, coastal flooding, or geological hazards. "
               "For those, follow official warnings.")
@@ -94,7 +105,6 @@ TYPICAL_SMS_LIMITS_GEOLOGICAL = "Storms, ice, landslides, glacier floods not che
 # Snow or rain on a day that drops to about freezing. Ice itself isn't checked yet (Phase 2).
 ICE_NOTE = "Snow or rain on freezing ground can make roads icy, and ice isn't checked."
 ICE_SMS = "Roads may be icy; ice itself isn't checked."  # also the ice line on raised days
-ICE_TYPICAL = "Snow or rain on freezing ground can make roads icy."  # TYPICAL_LIMITS right after says ice isn't checked
 ICE_SMS_TYPICAL = "Roads may be icy; "  # + the not-checked list, starting with ice (one sentence, so it fits)
 ICE_IF_AT_OR_BELOW_C = 1.0  # a margin: black ice forms with air just above 0 °C over frozen ground
 
@@ -170,24 +180,25 @@ def level_line(result):
     if level == "Typical":
         return TYPICAL_LEVEL_LINE
     by_name = {c["name"]: c for c in result["checks"]}
-    parts = []
+    parts = []  # "Feels like 41 °C forecast, above the 40 °C danger line"
     for name in result.get("decided_by") or []:
-        c = by_name.get(name, {})
-        if c.get("crosses_danger_line"):  # kept visible: the why bullets that also say it are folded away
-            how = "above" if c["value"] > c["danger_line"] else "at"
-            name += f", {how} the {c['danger_line']} {c['unit']} danger line"
-        parts.append(name)
-    if len(parts) > 1:  # "Rain (24 h), above the 150 mm danger line, and Recent rain (6-day total)"
-        joined = ", ".join(parts[:-1]) + ("," if "danger line" in parts[-2] else "") + " and " + parts[-1]
-    else:
-        joined = "".join(parts)
-    return f"Set by {joined}"
+        c = by_name[name]
+        parts.append(LEVEL_VALUE[c["key"]].format(v=amount(c["value"], c["unit"])) + _danger_text(c))
+    return "; ".join(parts)
+
+
+def _danger_text(c):
+    """", above the 40 °C danger line" when the check crossed its line, else ""."""
+    if not c.get("crosses_danger_line"):
+        return ""
+    how = "above" if c["value"] > c["danger_line"] else "at"
+    return f", {how} the {c['danger_line']} {c['unit']} danger line"
 
 
 def summary_lines(result, special=None):
     """The code-written lines under the level box (and the headline), in screen order.
 
-    Raised: the action line, the ice line, the geological note. Typical: the ice note, what the checks
+    Raised: the action line, the ice line, the geological note. Typical: the ice line, what else the checks
     can't see, the geological note. Always last: STORM_LINE, shown in yellow, the visible pointer to
     official warnings. special: "storm" or "geological" (replays.SPECIAL_NOTES).
     """
@@ -196,7 +207,7 @@ def summary_lines(result, special=None):
     if level not in risk.LEVELS:
         lines = []
     elif level == "Typical":
-        lines = [ICE_TYPICAL if ice else None, TYPICAL_LIMITS]
+        lines = [ICE_SMS, TYPICAL_LIMITS_ICE] if ice else [TYPICAL_LIMITS]
     else:
         action = action_line(result)
         lines = [ARROW + action if action else None, ICE_SMS if ice else None]
@@ -225,15 +236,24 @@ def template_headline(result, today=None):
     return HEADLINES[result["level"]].format(when="today" if result["date"] == today else "on this day")
 
 
-LEAD = {  # how a check that is Elevated or higher opens its bullet, and what "like this" refers to
-    "rain_mm": ("Forecast rain of {v} in 24 h", "Rain"),
-    "recent_rain_mm": ("Rain of {v} over {n} days, including the forecast for the day", "A wet spell"),
-    "feels_like_max_c": ("Forecast to feel like {v}", "Heat"),
-    "feels_like_min_c": ("Forecast to feel as cold as {v}", "Cold"),
-    "snow_cm": ("Forecast snowfall of {v} in 24 h", "Snow"),
-    "gust_max_kmh": ("Forecast gusts up to {v}", "Wind"),
+# The level box line on raised days: the value that set the level.
+LEVEL_VALUE = {
+    "rain_mm": "{v} of rain forecast in 24 h",
+    "recent_rain_mm": "{v} of rain over 6 days",
+    "feels_like_max_c": "Feels like {v} forecast",
+    "feels_like_min_c": "Feels as cold as {v} forecast",
+    "snow_cm": "{v} of snow forecast in 24 h",
+    "gust_max_kmh": "Gusts up to {v} forecast",
 }
-HOW_COMMON = {"Typical": "common", "Elevated": "uncommon", "High": "rare", "Extreme": "very rare"}
+# What "like this" refers to ("Snow like this is rarer here now…").
+NOUN = {"rain_mm": "Rain", "recent_rain_mm": "A wet spell", "feels_like_max_c": "Heat", "feels_like_min_c": "Cold",
+        "snow_cm": "Snow", "gust_max_kmh": "Wind"}
+# "The numbers": label and value wording per check. {when} is "today" or "on 4 Jul 2025".
+NUMBER_LABEL = {"rain_mm": "Rain {when}", "recent_rain_mm": "Rain over 6 days", "feels_like_max_c": "Feels-like high",
+                "feels_like_min_c": "Feels-like low", "snow_cm": "Snow", "gust_max_kmh": "Gusts"}
+NUMBER_VALUE = {"rain_mm": "{v} forecast", "recent_rain_mm": "{v}", "feels_like_max_c": "{v} forecast",
+                "feels_like_min_c": "{v} forecast", "snow_cm": "{v} forecast", "gust_max_kmh": "up to {v} forecast"}
+NONE_FORECAST = {"rain_mm", "snow_cm"}  # "Snow: none forecast." (no rate for nothing)
 
 
 def _days(c, text):
@@ -241,80 +261,61 @@ def _days(c, text):
     return text if c["key"] == risk.RECENT_RAIN_KEY else text.replace(" times a year", " days a year")
 
 
-def _unusual_bullet(c, result):
-    """Value, danger line (if crossed), how often it happens here, and the comparison with the baseline."""
-    lead, noun = LEAD[c["key"]]
-    lead = lead.format(v=amount(c["value"], c["unit"]), n=risk.RECENT_RAIN_DAYS_BEFORE + 1)
-    line = c.get("danger_line")
-    if c.get("crosses_danger_line"):
-        how = "above" if c["value"] > line else "at"
-        danger = f" — {how} the {line} {c['unit']} danger line"
+def _how_often(c, baseline_label):
+    """"About once every 15 years here, about the same as in 1951–1980." from the engine's own wording."""
+    now, then = _days(c, c["recent_text"]), _days(c, c["baseline_text"])
+    if not c["recent"]["count"]:  # "A wet spell like this was not seen…" (says which check, so never twice)
+        seen = f"{NOUN[c['key']]} like this was not seen in the {risk.RECENT_WINDOW_YEARS} years before the day"
+        if c["baseline"]["count"]:
+            return f"{seen}; {then} in {baseline_label}."
+        return f"{seen} or in {baseline_label}."
+    now = now[0].upper() + now[1:] + " here"
+    if not c["baseline"]["count"]:
+        return f"{now}; not seen in {baseline_label}."
+    if c["ratio"] < 0.95:
+        return f"{now}, down from {then} in {baseline_label}."
+    if c["ratio"] < 1.05:
+        return f"{now}, about the same as in {baseline_label}."
+    more = c["ratio_text"].replace(" times more common here than", " times more often than")
+    return f"{now}, {more}."
+
+
+def _rain_before(rain, today_words):
+    """"36.7 mm measured before the day, plus the day's forecast" (where the earlier days' rain came from)."""
+    before, the_day = rain.get("before_total"), today_words
+    if before is None:
+        return None
+    if rain["source"] == "forecast":
+        how = "forecast"
+    elif rain["source"].startswith("history"):
+        how = "measured"
     else:
-        danger = ""
-    text = f"**{lead}**{danger}. "
-
-    recent, ratio_text = c["recent"], c["ratio_text"]
-    years = risk.RECENT_WINDOW_YEARS
-    not_less = f"but that doesn't make today any less serious: the level is based on the recent {years} years."
-    if danger_line_set_level(c):  # "common here" would undercut the danger line
-        often = _days(c, c["recent_text"])
-        if c["ratio"] is not None and c["ratio"] < 0.95:
-            return text + (f"That line matters however often this happens here: {often}. It was more frequent "
-                           f"in {result['baseline_label']} ({_days(c, c['baseline_text'])}), but that doesn't "
-                           "make today any less serious: the danger line sets the level.")
-        ratio_text = ratio_text.replace(" here than", " than").replace(" here as", " as")
-        return text + f"That line matters however often this happens here: {often}, {ratio_text}."
-    if c["baseline"]["count"] and not recent["count"]:  # seen then, not seen recently
-        return text + (f"Not seen in the {years} years before this date. It happened in {result['baseline_label']} "
-                       f"({c['baseline_text']}), {not_less}")
-    if c["ratio"] is not None and c["ratio"] < 0.95:  # less common now: must not sound reassuring
-        return text + (f"{noun} like this is {HOW_COMMON[c['relative_level']]} here ({_days(c, c['recent_text'])}). "
-                       f"It was more frequent in {result['baseline_label']} ({_days(c, c['baseline_text'])}), {not_less}")
-    if c["ratio"] is None:  # one of the periods has no such days: the engine's own sentence says it all
-        if recent["count"]:
-            text += f"{noun} like this is {HOW_COMMON[c['relative_level']]} here ({c['recent_text']}); {ratio_text}."
-        else:
-            text += f"{ratio_text[0].upper()}{ratio_text[1:]}."
-        return text
-    often = _days(c, c["recent_text"])
-    # "1.4 times more common than in 1951–1980" (the sentence already said "here")
-    ratio_text = ratio_text.replace(" here than", " than").replace(" here as", " as")
-    return text + f"{noun} like this is {HOW_COMMON[c['relative_level']]} here ({often}) and {ratio_text}."
+        how = "from past forecasts"
+    return f"{before:.1f} mm {how} before {the_day[0]}, plus {the_day[1]} forecast"
 
 
-def why_bullets(result):
-    """What decided the level comes first, then the other unusual checks, then the Typical ones.
-
-    Then the rain total for the days before the date, and last that the day's figures are a forecast.
-    """
-    def rank(c):  # higher = shown earlier; "Not enough data" sits just above Typical
-        return risk.LEVELS.index(c["level"]) if c["level"] in risk.LEVELS else 0.5
-    by_key = {c["key"]: c for c in result["checks"]}
-    heat, cold = by_key.get("feels_like_max_c"), by_key.get("feels_like_min_c")
-    # "Normal temperatures" only when both temperature checks are Typical; then they share one line.
-    both_normal = heat is not None and cold is not None and heat["level"] == cold["level"] == "Typical"
-    bullets = []
-    for c in sorted(result["checks"], key=lambda c: -rank(c)):  # sorted() keeps the engine's order on ties
-        if both_normal and c is cold:
+def number_lines(result, today=None):
+    """"The numbers": one plain line per check, in the engine's order, then the engine's data notes."""
+    today = today or dt.date.today()
+    is_today = result["date"] == today
+    when = "today" if is_today else f"on {day_text(result['date'])}"
+    the_day = ("today", "today's") if is_today else ("the day", "the day's")
+    lines = []
+    for c in result["checks"]:
+        label = NUMBER_LABEL[c["key"]].format(when=when)
+        if c["level"] == risk.NOT_ENOUGH:
+            lines.append(f"{label}: not enough data.")
             continue
-        if both_normal and c is heat:
-            bullets.append(f"**Temperature:** Normal temperatures for here "
-                           f"(feels like {cold['value']:.0f} to {heat['value']:.0f} °C)")
-        elif c["level"] == risk.NOT_ENOUGH:
-            bullets.append(f"**{c['name']}:** {risk.NOT_ENOUGH_TEXT}")
-        elif c["level"] == "Typical":
-            bullets.append(f"**{c['name']}:** {c['text']}")
-        else:
-            bullets.append(_unusual_bullet(c, result))
-    rain = result["checks"][-1]
-    days = risk.RECENT_RAIN_DAYS_BEFORE
-    if rain.get("before_total") is None:
-        bullets.append(f"**Rain in the {days} days before:** not available")
-    else:
-        forecast = " (forecast)" if rain["source"] == "forecast" else ""
-        bullets.append(f"**Rain in the {days} days before:** {rain['before_total']:.1f} mm{forecast}")
-    bullets.append(f"**About these figures:** {FORECAST_NOTE}")
-    return bullets
+        if c["key"] in NONE_FORECAST and c["value"] == 0:
+            lines.append(f"{label}: none forecast.")
+            continue
+        value = NUMBER_VALUE[c["key"]].format(v=amount(c["value"], c["unit"]))
+        if c["key"] == risk.RECENT_RAIN_KEY and _rain_before(c, the_day):
+            value += f" ({_rain_before(c, the_day)})"
+        line = f"{label}: {value}{_danger_text(c)}. {_how_often(c, result['baseline_label'])}"
+        lines.append(" ".join([line, *c["notes"]]))
+    lines += result["notes"][: len(result["notes"]) - len(risk.ALWAYS_NOTES)]
+    return lines
 
 
 def show_rarer_now(c, level):
@@ -332,7 +333,9 @@ def rarity_rows(result):
 
     None for Not enough data. A dict: rows (now first, then the comparison period; each with label,
     per_year, width 0-1 where the more frequent period is 1, and the engine's words), name, like_this,
-    rarer_now (RARER_NOW, or None; see show_rarer_now) and danger_note (DANGER_LINE_NOTE when a danger line set the level).
+    caption ("Rain (24 h), 107 mm forecast: how often … happen here."), too_few (TOO_FEW_LINE when either
+    period has fewer than 5 such days, else None), rarer_now (RARER_NOW, or None; see show_rarer_now; never with
+    too_few) and danger_note (DANGER_LINE_NOTE when a danger line set the level).
     """
     if result["level"] not in risk.LEVELS:
         return None
@@ -345,9 +348,13 @@ def rarity_rows(result):
     rows = [{"label": label, "per_year": p["per_year"], "width": (p["per_year"] / top) if top else 0.0,
              "words": words}
             for label, p, words in periods]
+    too_few = min(check["recent"]["count"], check["baseline"]["count"]) < TOO_FEW_TO_COMPARE_BELOW
+    value = amount(check["value"], check["unit"])
     return {"rows": rows, "name": check["name"], "like_this": LIKE_THIS[check["key"]],
-            "rarer_now": RARER_NOW.format(noun=LEAD[check["key"]][1]) if show_rarer_now(check, result["level"])
-            else None,
+            "caption": f"{check['name']}, {value} forecast: how often {LIKE_THIS[check['key']]} happen here.",
+            "too_few": TOO_FEW_LINE if too_few else None,
+            "rarer_now": RARER_NOW.format(noun=NOUN[check["key"]])
+            if show_rarer_now(check, result["level"]) and not too_few else None,
             "danger_note": DANGER_LINE_NOTE if danger_line_set_level(check) else None}
 
 

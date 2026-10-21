@@ -15,7 +15,7 @@ python scripts/paiporta.py
 streamlit run app.py
 ```
 
-Search a place (then pick it under **Which place?**, most populated first) and a date, or pick **Or replay a past event**. For today or later, a live search also shows the next 48 hours, every 3 hours (never on replays or past dates; hidden if the hourly forecast can't be fetched). Replays never call Open-Meteo: they use the saved history in `data/history/` and the saved forecasts in `data/forecasts/`. To download and save that data (needs Open-Meteo reachable; safe to run again, it continues where it stopped):
+Search a place (then pick it under **Which place?**, most populated first) and a date, or pick **Or replay a past event**, which fills in the replay's place and date (changing either switches the replay off). For today or later, a live search also shows the next 48 hours, every 3 hours (never on replays or past dates; hidden if the hourly forecast can't be fetched). Replays never call Open-Meteo: they use the saved history in `data/history/` and the saved forecasts in `data/forecasts/`. To download and save that data (needs Open-Meteo reachable; safe to run again, it continues where it stopped):
 
 ```
 python scripts/save_replay_data.py
@@ -25,7 +25,7 @@ Checks on the wording: `python tests/test_message.py`. Checks on the page itself
 
 ## Claude text
 
-On raised days Claude (`claude-sonnet-5-5`) writes the headline, short why bullets and a confidence note, from the computed facts only (`groundtruth/claude_text.py`). Code checks every reply: the level word, every number, banned words, "normal", 2–4 bullets. Code writes everything else (the action line, the ice and geological notes, the yellow storm line). If anything fails, or Claude times out or errors, the app shows the template headline labelled "template mode". The text message (`message.sms_text`) is kept in code for Phase 2 but not shown on the page. "Not enough data" days never go to Claude.
+On raised days Claude (`claude-sonnet-5-5`) writes only the headline ("High risk of dangerous feels-like heat."), from the computed facts (`groundtruth/claude_text.py`). Code checks it: the level word, no numbers, banned words, "normal". Code writes everything else: the value in the level box, the action line, the ice and geological notes, the yellow storm line, "Then and now", the numbers and "How sure are we". If anything fails, or Claude times out or errors, the app shows the template headline labelled "template mode". The text message (`message.sms_text`) is kept in code for Phase 2 but not shown on the page. "Not enough data" days never go to Claude.
 
 The key comes from `st.secrets` or the environment variable `GROUNDTRUTH_CLAUDE_KEY`. Never write it into a file.
 

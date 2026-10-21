@@ -1,6 +1,6 @@
 {
  "model": "claude-sonnet-5-5",
- "fingerprint": "98f69b1bdde938c95284da55c4af0d5ad09b9b51ea5f23b7238106712762856a",
+ "fingerprint": "89ea8edef4a4f3eb2de0db058c4f463ff7666e65eea04fab18aa5e8104d1faad",
  "facts": {
   "place": "Paiporta, Valencia, Spain",
   "day": "29 Oct 2024",
@@ -111,13 +111,7 @@
   "special_note_kind": null
  },
  "reply": {
-  "headline": "Extreme risk of heavy rain in Paiporta, Valencia, Spain on 29 Oct 2024.",
-  "why": [
-   "Rain over 24 hours and the 6-day rain total together set the level.",
-   "The day's rain is 202 mm forecast, which is at or above the 150 mm danger line and was not seen in 1951–1980 or in the 30 years before this date.",
-   "The 6-day total is 257 mm, made up of 54.9 mm measured over the 5 days before plus the forecast for the day itself, and this was also not seen in either period."
-  ],
-  "confidence_note": "The history is a grid of about 25 km and misses very local storms, and the day's figures are a forecast and can be too low. Landslides, glacier collapse or earthquakes are not covered, so check local civil protection and geological authorities."
+  "headline": "Extreme risk of heavy rain."
  },
  "tries": 1
 }

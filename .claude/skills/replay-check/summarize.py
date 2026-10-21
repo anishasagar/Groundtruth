@@ -58,9 +58,11 @@ def full_output(case, result, place):
              *[f"- Line under the level box: \"{line}\"" for line in lines_under],
              *([f"- Then and now ({rarity['name']}): "
                 + "; ".join(f"{r['label']}: {r['words']}" for r in rarity["rows"])
-                + "".join(f" — \"{x}\"" for x in (rarity["danger_note"], rarity["rarer_now"]) if x)]
+                + "".join(f" — \"{x}\"" for x in (rarity["too_few"], rarity["danger_note"], rarity["rarer_now"])
+                          if x)]
                if rarity else []),
-             f"- Yellow line: \"{storm_line}\"", "",
+             f"- Yellow line: \"{storm_line}\"",
+             "- The numbers (collapsed):", *[f"  - \"{line}\"" for line in message.number_lines(result)], "",
              f"Text message (not shown on the page; kept for Phase 2): \"{message.sms_text(result, place, special)}\"",
              ""]
     if result["level"] == "Typical":
@@ -78,11 +80,8 @@ def full_output(case, result, place):
     reply = json.loads(path.read_text())["reply"]
     lines += [f"Claude's saved reply ({saved_tries(case)} {'try' if saved_tries(case) == '1' else 'tries'}) — "
               f"{status}:", "",
-              *[f"- {k}: \"{v}\"" for k, v in reply.items() if isinstance(v, str)
-                and k not in ("headline", "confidence_note")],  # an old-format reply shows its extra parts
               f"- Headline: \"{reply.get('headline')}\"",
-              "- Why:", *[f"  - \"{b}\"" for b in reply.get("why", [])],
-              f"- Confidence note: \"{reply.get('confidence_note')}\"", ""]
+              *[f"- {k} (old format, not shown): \"{v}\"" for k, v in reply.items() if k != "headline"], ""]
     return lines
 
 
@@ -139,9 +138,9 @@ def main():
         "### Full output per case",
         "",
         "The actual text a person would see, in screen order: what code writes on every day (level box, the "
-        "lines under it, then and now, the yellow line), the template headline on raised days (shown whenever "
-        "Claude or the guardrail fails), and Claude's full saved reply (headline; why and confidence note, which "
-        "sit in the collapsed sections) with how many tries it took. The text message is kept in code for Phase 2 "
+        "lines under it, then and now, the yellow line, the numbers), the template headline on raised days (shown "
+        "whenever Claude or the guardrail fails), and Claude's saved headline (Claude writes only the headline) "
+        "with how many tries it took. The text message is kept in code for Phase 2 "
         "but no longer shown on the page.",
         "",
         *full,

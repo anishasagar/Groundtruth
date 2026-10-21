@@ -42,29 +42,9 @@ PARIS, _ = replay_facts("Paris snow and cold")
 BAYESIAN, _ = replay_facts("Bayesian sinking")
 NEPAL, _ = replay_facts("Nepal-Tibet glacier-collapse flood")
 TEXAS, _ = replay_facts("Texas Hill Country flood")
-CONFIDENCE = ("The history is a grid of about 25 km and misses very local storms, and the day's figures are a "
-              "forecast and can be too low.")
-
-GOOD_KOLKATA = {
-    "headline": "High risk from heat in Kolkata, India on 31 May 2022.",
-    "why": ["Feels-like heat is forecast at 41 °C, above the 40 °C danger line, and that set the level.",
-            "Heat like this happens about 48 times a year here now, 1.4 times more common here than in 1951–1980."],
-    "confidence_note": CONFIDENCE,
-}
-GOOD_VALENCIA = {
-    "headline": "Extreme risk of heavy rain in Paiporta, Valencia, Spain on 29 Oct 2024.",
-    "why": ["Rain of 202 mm in 24 h is forecast, above the 150 mm danger line, and set the level.",
-            "Rain like this was not seen in 1951–1980 or in the 30 years before this date.",
-            "Normal wind for here (gusts up to 61 km/h; the data misses sudden local storm gusts)."],
-    "confidence_note": "Thunderstorms are not checked, the history is a grid of about 25 km that misses very local "
-                       "storms, and the day's figures are a forecast.",
-}
-GOOD_TEXAS = {
-    "headline": "High risk of heavy rain in Texas Hill Country, USA on 4 Jul 2025.",
-    "why": ["Rain over 24 h set the level, with 107 mm forecast.",
-            "Rain like this happens about once every 15 years here now."],
-    "confidence_note": CONFIDENCE,
-}
+GOOD_KOLKATA = {"headline": "High risk of dangerous feels-like heat."}
+GOOD_VALENCIA = {"headline": "Extreme risk of heavy rain."}
+GOOD_TEXAS = {"headline": "High risk of heavy rain."}
 
 
 def changed(reply, **parts):
@@ -73,8 +53,9 @@ def changed(reply, **parts):
     return out
 
 
-def why_with(reply, bullet):
-    return changed(reply, why=[*reply["why"], bullet])
+def why_with(reply, sentence):
+    """The headline with one more sentence (Claude writes only the headline, so every rule runs on it)."""
+    return changed(reply, headline=f"{reply['headline']} {sentence}")
 
 
 def expect_pass(label, reply, facts):
@@ -94,19 +75,18 @@ def guardrail_cases():
                                 ("Texas", GOOD_TEXAS, TEXAS)]:
         expect_pass(f"good {label} reply", reply, facts)
 
-    # Claude writes only the headline, the why bullets and the confidence note.
-    for extra in ("what_it_means", "sms"):
+    # Claude writes only the headline.
+    for extra in ("why", "confidence_note", "what_it_means", "sms"):
         expect_fail(f"a reply that still writes {extra}", changed(GOOD_KOLKATA, **{extra: "Check official warnings."}),
                     KOLKATA, "expected parts")
-    expect_fail("missing part", {k: v for k, v in GOOD_KOLKATA.items() if k != "confidence_note"}, KOLKATA,
-                "expected parts")
+    expect_fail("missing headline", {}, KOLKATA, "expected parts")
+    expect_fail("empty headline", {"headline": " "}, KOLKATA, "empty or broken")
     for name in ("action_line", "sms_action", "official_warnings", "ice_note"):
         assert name not in VALENCIA, f"{name} is written by code now, so Claude doesn't get it"
 
     # Lowercase higher level words are ordinary words; a capitalised other level label is not.
     expect_pass('"daily high" on an Extreme day',
-                changed(GOOD_VALENCIA, why=[*GOOD_VALENCIA["why"][:2], "The daily high is forecast to feel like up "
-                                                                       "to 20 °C."]), VALENCIA)
+                why_with(GOOD_VALENCIA, "The daily high is forecast to feel hot."), VALENCIA)
     expect_pass('"extreme heat" on a High day', why_with(GOOD_KOLKATA, "This matters most in extreme heat."), KOLKATA)
     expect_fail("a capitalised other level label", why_with(GOOD_KOLKATA, "Rain was Typical."), KOLKATA,
                 "names another level (Typical)")
@@ -121,7 +101,7 @@ def guardrail_cases():
 
     # No broad "typical weather" or "normal conditions" without saying what it covers.
     for phrase in ("typical weather", "typical conditions", "typical day", "normal weather", "normal conditions"):
-        expect_fail(f'"{phrase}" in a bullet', why_with(GOOD_VALENCIA, f"Apart from rain it was a {phrase}."),
+        expect_fail(f'"{phrase}" in the headline', why_with(GOOD_VALENCIA, f"Apart from rain it was a {phrase}."),
                     VALENCIA, f'"{phrase}" without saying what it covers')
     expect_pass('"normal conditions" followed by its scope',
                 why_with(GOOD_VALENCIA, "These are normal conditions for the heat, cold, snow and wind we check, "
@@ -145,16 +125,17 @@ def guardrail_cases():
                 changed(GOOD_VALENCIA, headline="Extreme risk of heavy rain in Paiporta, Valencia, Spain on "
                                                 "29 Oct 2024, with rain the deciding check."),
                 VALENCIA, 'headline mentions the "deciding check"')
-    expect_fail('"deciding check" in a bullet', why_with(GOOD_VALENCIA, "Rain was the deciding check."),
+    expect_fail('"deciding check" in a second sentence', why_with(GOOD_VALENCIA, "Rain was the deciding check."),
                 VALENCIA, 'term "deciding check"')
 
     # Numbers: extra, rounded, more precise, written as words.
     expect_fail("extra number", why_with(GOOD_KOLKATA, "It was the hottest day in 12 years."), KOLKATA, "(12)")
+    expect_fail("a number in the headline, even one from the facts",
+                changed(GOOD_TEXAS, headline="High risk of heavy rain, with 107 mm forecast."), TEXAS,
+                "headline has a number")
     expect_fail("rounded number", changed(GOOD_VALENCIA, headline="Extreme risk of heavy rain in Paiporta on "
                                                                  "29 Oct 2024: about 200 mm."), VALENCIA, "(200)")
-    expect_fail("number with a decimal added", changed(GOOD_KOLKATA, why=["Feels like 41.3 °C, above the 40 °C "
-                                                                          "danger line.", GOOD_KOLKATA["why"][1]]),
-                KOLKATA, "(41.3)")
+    expect_fail("number with a decimal added", why_with(GOOD_KOLKATA, "Feels like 41.3 °C."), KOLKATA, "(41.3)")
     expect_fail("number written as a word", why_with(GOOD_KOLKATA, "Days like this are now twice as frequent."),
                 KOLKATA, "as words (twice)")
     expect_fail("minus sign added", why_with(GOOD_KOLKATA, "The low felt like -34 °C."), KOLKATA, "(-34)")
@@ -173,24 +154,18 @@ def guardrail_cases():
     reassuring = "Days this cold happened about 246 times a year in 1951–1980."
     expect_fail("less common now, said reassuringly", why_with(GOOD_VALENCIA, reassuring), VALENCIA,
                 "more frequent in 1951–1980")
-    expect_pass("less common now, with the note",
-                changed(GOOD_VALENCIA, why=[*GOOD_VALENCIA["why"][:2], reassuring,
-                                            "That doesn't make today any less serious: the level is based on the "
-                                            "recent 30 years."]), VALENCIA)
+    expect_fail("less common now, with the note, still has numbers in the headline",
+                why_with(GOOD_VALENCIA, reassuring + " That doesn't make today any less serious: the level is based "
+                                                     "on the recent 30 years."), VALENCIA, "headline has a number")
 
     # "Normal" only directly before what a check measures.
     expect_fail('misused "normal"', why_with(GOOD_KOLKATA, "Everything else was normal."), KOLKATA, '"normal"')
     expect_fail('"normal" after the thing', why_with(GOOD_KOLKATA, "Wind was normal for here."), KOLKATA, '"normal"')
     expect_fail('"normally"', why_with(GOOD_KOLKATA, "It is normally this hot."), KOLKATA, '"normal"')
-    expect_pass('"normal" before a measured thing', why_with(GOOD_KOLKATA, "Normal rain for here (8.2 mm)."), KOLKATA)
+    expect_pass('"normal" before a measured thing', why_with(GOOD_KOLKATA, "Normal rain for here."), KOLKATA)
     expect_fail('"normal wind" without the limit', why_with(GOOD_VALENCIA, "Normal wind for here (gusts up to 61 "
                                                                            "km/h)."),
                 VALENCIA, "data misses sudden local storm gusts")
-
-    # Bullets.
-    expect_fail("1 why bullet", changed(GOOD_KOLKATA, why=GOOD_KOLKATA["why"][:1]), KOLKATA, "1 why bullets")
-    expect_fail("5 why bullets", changed(GOOD_KOLKATA, why=GOOD_KOLKATA["why"] * 2 + GOOD_KOLKATA["why"][:1]),
-                KOLKATA, "5 why bullets")
 
 
 def typical_cases():
@@ -210,14 +185,6 @@ def typical_cases():
 
 def review_rule_cases():
     """The rules added after the false-reassurance reviews."""
-    # The confidence note says what the data can't see.
-    for left_out, words in [("the 25 km grid", "The history misses very local storms; the day is a forecast."),
-                            ("very local storms", "The history is a grid of about 25 km; the day is a forecast."),
-                            ("that the day's figures are a forecast",
-                             "The history is a grid of about 25 km and misses very local storms.")]:
-        expect_fail(f"confidence note without {left_out}", changed(GOOD_KOLKATA, confidence_note=words), KOLKATA,
-                    f"confidence note doesn't mention {left_out}")
-
     # Reassuring words and phrases.
     for words, label in [("Rain eases to a calm, low risk night.", "low risk"),
                          ("The night is calm.", "calm"), ("The cold is mild.", "mild"),
@@ -269,9 +236,9 @@ def review_rule_cases():
     expect_pass('"used to" with the exact phrase',
                 why_with(GOOD_VALENCIA, "Cold days like this used to be more frequent, but that doesn't make today any "
                                         "less serious."), VALENCIA)
-    expect_pass('"used to", phrase in the next bullet',
-                changed(GOOD_VALENCIA, why=[*GOOD_VALENCIA["why"][:2], "Cold days like this used to be more frequent.",
-                                            "That does not make today any less serious."]), VALENCIA)
+    expect_pass('"used to", phrase in the next sentence',
+                why_with(GOOD_VALENCIA, "Cold days like this used to be more frequent. That does not make today any "
+                                        "less serious."), VALENCIA)
 
     # Elevated or higher: nothing softens the level.
     for words, label in [("The risk is slightly raised.", "slightly"), ("It is a bit hotter.", "a bit"),
@@ -286,8 +253,7 @@ def review_rule_cases():
     expect_fail("the reviewer's example on an Extreme day", why_with(GOOD_VALENCIA, "The rain was brief and isolated."),
                 VALENCIA, 'softens the level ("brief")')
     expect_pass('"weather-driven hazards only" on a High day',
-                changed(GOOD_KOLKATA, confidence_note=CONFIDENCE + " Groundtruth covers weather-driven hazards only."),
-                KOLKATA)
+                why_with(GOOD_KOLKATA, "Groundtruth covers weather-driven hazards only."), KOLKATA)
     expect_fail('lowercase "elevated" on a High day', why_with(GOOD_KOLKATA, "The risk is elevated."), KOLKATA,
                 "lower level word (Elevated)")
     expect_fail('"high risk" in lowercase on an Extreme day', why_with(GOOD_VALENCIA, "This is a high risk day."),
@@ -303,18 +269,10 @@ def review_rule_cases():
                   "Days like this happen less often now."):
         expect_fail(f'less common: "{words[:40]}…"', why_with(GOOD_VALENCIA, words), VALENCIA, '("less common")')
 
-    # When a danger line set the level: say "danger line" in a bullet, and never call that check routine.
+    # When a danger line set the level, never call that check routine.
     heat = next(c for c in KOLKATA["checks"] if c["name"] == "Feels-like heat")
     assert heat["danger_line_note"] == message.DANGER_LINE_NOTE, heat
     assert not any(c.get("danger_line_note") for c in VALENCIA["checks"])  # rarity set Valencia's level too
-    expect_fail("danger line set the level, but no bullet says so",
-                changed(GOOD_KOLKATA, why=["Feels-like heat set the level, at 41 °C.",
-                                           "Days like this happen about 48 times a year here now."]), KOLKATA,
-                'no why bullet says "danger line"')
-    expect_fail('"danger line" only in the confidence note',
-                changed(GOOD_KOLKATA, why=["Feels-like heat set the level, at 41 °C.", GOOD_KOLKATA["why"][1]],
-                        confidence_note=CONFIDENCE + " The danger line is 40 °C."), KOLKATA,
-                'no why bullet says "danger line"')
     for words, found in [("Heat like this is common here.", "common"), ("Days like this are usual in May.", "usual"),
                          ("Heat like this is routine for Kolkata.", "routine")]:
         expect_fail(f'danger line set the level, but "{found}"', why_with(GOOD_KOLKATA, words), KOLKATA,
@@ -322,8 +280,7 @@ def review_rule_cases():
 
     # A danger line is mentioned only when it was crossed.
     expect_fail("Texas: below the danger line",
-                changed(GOOD_TEXAS, why=["Rain over 24 h set the level, with 107 mm forecast, which is below the "
-                                         "danger line of 150 mm.", GOOD_TEXAS["why"][1]]), TEXAS,
+                why_with(GOOD_TEXAS, "107 mm is forecast, which is below the danger line of 150 mm."), TEXAS,
                 "danger line that wasn't crossed")
     expect_fail("no line crossed: any danger line", why_with(GOOD_TEXAS, "No danger line was crossed."), TEXAS,
                 "danger line that wasn't crossed")
@@ -387,7 +344,7 @@ def client_cases():
     expect_template("broken JSON", FakeClient(answer(text="not json"), answer(text="[1, 2]")), "couldn't be read", 2)
     expect_template("unexpected error", FakeClient(RuntimeError("boom"), RuntimeError("boom")),
                     "something went wrong", 2)
-    bad = changed(GOOD_KOLKATA, why=["Feels like 41.3 °C.", GOOD_KOLKATA["why"][1]])
+    bad = why_with(GOOD_KOLKATA, "Feels like 41.3 °C.")
     expect_template("bad reply twice", FakeClient(answer(bad), answer(bad)), "(41.3)", 2)
     expect_template("no key", None, "no Claude key", 0)
 
