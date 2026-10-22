@@ -141,7 +141,12 @@ def check_result(label, result, place="Somewhere, Far Away Land", special=None):
             assert (block["too_few"] is not None) == (0 < events < message.ENOUGH_EVENTS), f"{label}: too few"
             assert (block["rough"] is not None) == (events >= message.ENOUGH_EVENTS and few), f"{label}: rough"
             assert (block["rarer_now"] is not None) == (message.less_common_now(c) and events >= message.ENOUGH_EVENTS)
-            assert block["caption"].startswith(f"{c['name']}, ") and " forecast: how often " in block["caption"]
+            assert block["title"] == message.THEN_AND_NOW_TITLE[c["key"]], label
+            assert block["caption"].endswith(f": how often {block['like_this']} happen here."), block["caption"]
+            if c["key"] == risk.RECENT_RAIN_KEY:  # part measured, part forecast: never just "forecast"
+                assert "forecast:" not in block["caption"] and "plus the day's forecast)" in block["caption"]
+            else:
+                assert block["caption"].startswith(f"{message.amount(c['value'], c['unit'])} forecast: "), label
         if len(blocks) == 2:  # only when the first has too few, and only a raised check with enough
             first, second = blocks[0]["check"], blocks[1]["check"]
             assert first["recent"]["count"] + first["baseline"]["count"] < message.ENOUGH_EVENTS, label
@@ -408,6 +413,9 @@ def main():
                 first, second = message.then_and_now(result)  # 24 h rain (2 + 2), then the 6-day rain (7 + 2)
                 assert first["name"] == "Rain (24 h)" and first["too_few"] == message.TOO_FEW_LINE and not first["rough"]
                 assert second["name"] == risk.RECENT_RAIN_NAME and second["rough"] == message.ROUGH_LINE
+                assert (first["title"], second["title"]) == ("Rain in 24 hours", "Rain over 6 days")
+                assert second["caption"] == ("144 mm (36.7 mm measured plus the day's forecast): how often wet spells "
+                                             "at least this wet happen here."), second["caption"]
                 assert second["too_few"] is None and second["rarer_now"] is None
             if c["name"] == "Paris snow and cold":  # no air temperature saved: the feels-like low (-6.5 °C) is used
                 assert result.get("air_min_c") is None and message.ice_note(result) == message.ICE_NOTE

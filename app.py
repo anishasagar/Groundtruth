@@ -223,6 +223,7 @@ def then_and_now(result):
         return
     st.subheader("Then and now")
     for block in blocks:
+        st.markdown(f"**{block['title']}**")
         st.caption(block["caption"])
         rarity_lines(block["rows"], LEVEL_STYLE[result["level"]][0])
         for line in (block["too_few"], block["rough"]):

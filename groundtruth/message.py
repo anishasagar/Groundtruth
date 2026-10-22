@@ -262,6 +262,10 @@ NUMBER_LABEL = {"rain_mm": "Rain {when}", "recent_rain_mm": "Rain over 6 days", 
                 "feels_like_min_c": "Feels-like low", "snow_cm": "Snow", "gust_max_kmh": "Gusts"}
 NUMBER_VALUE = {"rain_mm": "{v} forecast", "recent_rain_mm": "{v}", "feels_like_max_c": "{v} forecast",
                 "feels_like_min_c": "{v} forecast", "snow_cm": "{v} forecast", "gust_max_kmh": "up to {v} forecast"}
+# "Then and now": each block's title names the check plainly.
+THEN_AND_NOW_TITLE = {"rain_mm": "Rain in 24 hours", "recent_rain_mm": "Rain over 6 days",
+                      "feels_like_max_c": "Feels-like heat", "feels_like_min_c": "Feels-like cold",
+                      "snow_cm": "Snow in 24 hours", "gust_max_kmh": "Wind gusts"}
 NONE_FORECAST = {"rain_mm", "snow_cm"}  # "Snow: none forecast." (no rate for nothing)
 
 
@@ -289,18 +293,31 @@ def _how_often(c, baseline_label):
     return f"{now}, {more}."
 
 
+def _rain_source(rain):
+    """How the earlier days' rain is known: "measured", "forecast" or "from past forecasts"."""
+    if rain["source"] == "forecast":
+        return "forecast"
+    if rain["source"].startswith("history"):
+        return "measured"
+    return "from past forecasts"
+
+
+def _then_and_now_value(check):
+    """"107 mm forecast", or for the 6-day total "144 mm (36.7 mm measured plus the day's forecast)"."""
+    value = amount(check["value"], check["unit"])
+    if check["key"] != risk.RECENT_RAIN_KEY:
+        return f"{value} forecast"
+    if check.get("before_total") is None:
+        return f"{value} (including the day's forecast)"
+    return f"{value} ({check['before_total']:.1f} mm {_rain_source(check)} plus the day's forecast)"
+
+
 def _rain_before(rain, today_words):
     """"36.7 mm measured before the day, plus the day's forecast" (where the earlier days' rain came from)."""
     before, the_day = rain.get("before_total"), today_words
     if before is None:
         return None
-    if rain["source"] == "forecast":
-        how = "forecast"
-    elif rain["source"].startswith("history"):
-        how = "measured"
-    else:
-        how = "from past forecasts"
-    return f"{before:.1f} mm {how} before {the_day[0]}, plus {the_day[1]} forecast"
+    return f"{before:.1f} mm {_rain_source(rain)} before {the_day[0]}, plus {the_day[1]} forecast"
 
 
 def number_lines(result, today=None):
@@ -342,7 +359,7 @@ def _events(c):
 
 def _then_and_now_block(check, result):
     """One check's two rows: now first, then the comparison period (label, per_year, width 0-1, the engine's words),
-    with caption, too_few / rough (or None), rarer_now (RARER_NOW, or None) and danger_note (or None)."""
+    with title ("Rain over 6 days"), caption (the value and what is counted), too_few / rough (or None), rarer_now (RARER_NOW, or None) and danger_note (or None)."""
     periods = [(f"Now ({result['recent_label']})", check["recent"], check["recent_text"]),
                (result["baseline_label"], check["baseline"], check["baseline_text"])]
     top = max(p["per_year"] for _, p, _ in periods)
@@ -352,9 +369,9 @@ def _then_and_now_block(check, result):
     events = _events(check)
     enough = events >= ENOUGH_EVENTS
     rough = enough and min(check["recent"]["count"], check["baseline"]["count"]) < ENOUGH_EVENTS
-    value = amount(check["value"], check["unit"])
     return {"check": check, "rows": rows, "name": check["name"], "like_this": LIKE_THIS[check["key"]],
-            "caption": f"{check['name']}, {value} forecast: how often {LIKE_THIS[check['key']]} happen here.",
+            "title": THEN_AND_NOW_TITLE[check["key"]],
+            "caption": f"{_then_and_now_value(check)}: how often {LIKE_THIS[check['key']]} happen here.",
             # Not seen in either period: the two "not seen" rows already say it.
             "too_few": TOO_FEW_LINE if 0 < events < ENOUGH_EVENTS else None,
             "rough": ROUGH_LINE if rough else None,
