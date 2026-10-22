@@ -22,9 +22,10 @@ sys.path.insert(0, str(ROOT))
 from groundtruth import geocode, message, replays, risk, weather  # noqa: E402
 
 FORBIDDEN = re.compile(r"\bsafe\b|\bsafely\b|\bsafety\b|\bno risk\b|\ball clear\b|\bcaused\b", re.I)
-# "Normal" may only describe what a check measures (CLAUDE.md rule 8).
+# "Normal" may only describe what a check measures (CLAUDE.md rule 8): "Normal rain for here", or right after a
+# check's value in "The numbers" ("Gusts: up to 28 km/h forecast, normal for here.").
 ALLOWED_NORMAL = re.compile(r"Normal (rain for here|rain for the last|temperatures for here|highs for here|"
-                            r"lows for here|snowfall for here|wind for here)")
+                            r"lows for here|snowfall for here|wind for here)|normal for here\.$")
 
 
 def check_text(label, result, texts):
@@ -85,8 +86,11 @@ def check_result(label, result, place="Somewhere, Far Away Land", special=None):
     assert meaning == " ".join(lines)
     if result["level"] in risk.LEVELS:
         if typical:  # with the ice line, the limits line leaves ice out
-            expect = [message.ICE_SMS, message.TYPICAL_LIMITS_ICE] if ice else [message.TYPICAL_LIMITS]
-            assert len(re.findall(r"\bice\b", " ".join(lines).lower())) == 1, f"{label}: ice twice: {lines}"
+            low = message._value(result, "feels_like_min_c")
+            cold = low is None or low <= message.ICE_MENTION_AT_OR_BELOW_C
+            expect = [message.ICE_SMS, message.TYPICAL_LIMITS_ICE] if ice else \
+                [message.TYPICAL_LIMITS if cold else message.TYPICAL_LIMITS_ICE]
+            assert len(re.findall(r"\bice\b", " ".join(lines).lower())) <= 1, f"{label}: ice twice: {lines}"
         else:
             expect = [message.ARROW + message.action_line(result)] if message.action_line(result) else []
             expect += [message.ICE_SMS] if ice else []
@@ -121,22 +125,31 @@ def check_result(label, result, place="Somewhere, Far Away Land", special=None):
         # Action line: none for Typical, otherwise exactly one of the fixed lines.
         actions = [a for a in message.ACTIONS.values() if a in sentence]
         assert len(actions) == (0 if result["level"] == "Typical" else 1), f"{label}: action lines {actions}"
-        # "Then and now" on every level: now first, then the comparison period.
-        rarity = message.rarity_rows(result)
-        assert rarity is not None, f"{label}: then and now missing"
-        assert [r["label"] for r in rarity["rows"]] == [f"Now ({result['recent_label']})", result["baseline_label"]]
-        assert max(r["width"] for r in rarity["rows"]) in (0.0, 1.0)
+        # "Then and now": the check that set the level (Typical: only if it happens < 5 times a year now).
+        blocks = message.then_and_now(result)
         deciding = message.deciding_check(result)
-        rare_enough = not typical or deciding["recent"]["per_year"] < message.RARER_NOW_TYPICAL_BELOW_PER_YEAR
-        too_few = min(deciding["recent"]["count"], deciding["baseline"]["count"]) < message.TOO_FEW_TO_COMPARE_BELOW
-        assert (rarity["too_few"] == message.TOO_FEW_LINE) == too_few, f"{label}: too few line"
-        assert (rarity["rarer_now"] is not None) == (message.less_common_now(deciding) and rare_enough
-                                                     and not too_few), label
-        assert rarity["caption"].startswith(f"{deciding['name']}, ") and " forecast: how often " in rarity["caption"]
+        shown = not typical or deciding["recent"]["per_year"] < message.THEN_AND_NOW_TYPICAL_BELOW_PER_YEAR
+        assert bool(blocks) == shown, f"{label}: then and now shown {bool(blocks)}"
+        assert not blocks or blocks[0]["check"] is deciding, label
+        assert len(blocks) <= (1 if typical else 2), label
+        for block in blocks:
+            c = block["check"]
+            assert [r["label"] for r in block["rows"]] == [f"Now ({result['recent_label']})", result["baseline_label"]]
+            assert max(r["width"] for r in block["rows"]) in (0.0, 1.0)
+            events = c["recent"]["count"] + c["baseline"]["count"]
+            few = min(c["recent"]["count"], c["baseline"]["count"]) < message.ENOUGH_EVENTS
+            assert (block["too_few"] is not None) == (0 < events < message.ENOUGH_EVENTS), f"{label}: too few"
+            assert (block["rough"] is not None) == (events >= message.ENOUGH_EVENTS and few), f"{label}: rough"
+            assert (block["rarer_now"] is not None) == (message.less_common_now(c) and events >= message.ENOUGH_EVENTS)
+            assert block["caption"].startswith(f"{c['name']}, ") and " forecast: how often " in block["caption"]
+        if len(blocks) == 2:  # only when the first has too few, and only a raised check with enough
+            first, second = blocks[0]["check"], blocks[1]["check"]
+            assert first["recent"]["count"] + first["baseline"]["count"] < message.ENOUGH_EVENTS, label
+            assert second["level"] in risk.LEVELS[1:], label
         assert "Level:" not in sentence and "See the reasons" not in sentence
     else:
         assert risk.NOT_ENOUGH_TEXT in sentence and risk.NOT_ENOUGH_TEXT.replace("—", "-") in sms
-        assert message.rarity_rows(result) is None
+        assert message.then_and_now(result) == []
 
 
 def assert_headline(label, sentence, level, today):
@@ -208,11 +221,13 @@ def made_up_cases():
     assert message.level_line(r) == "for rain, temperature, snow and wind"
     assert message.ice_note(r) is None and message.ice_line(r) is None  # 1 mm of rain, above freezing
     assert "Snow: none forecast." in numbers, numbers
-    assert numbers[0].startswith("Rain on 15 Dec 2024: 1.0 mm forecast. About "), numbers[0]
-    assert numbers[1].startswith("Feels-like high: 12 °C forecast. About "), numbers[1]
-    assert numbers[2].startswith("Feels-like low: 3.0 °C forecast. About "), numbers[2]
-    assert numbers[5].startswith("Rain over 6 days: "), numbers[5]
-    assert message.number_lines(r, FAKE_DATE)[0].startswith("Rain today: 1.0 mm forecast."), "today's wording"
+    assert numbers[0] == "Rain on 15 Dec 2024: 1.0 mm forecast, normal for here.", numbers[0]
+    assert numbers[1] == "Feels-like high: 12 °C forecast, normal for here.", numbers[1]
+    assert numbers[2] == "Feels-like low: 3.0 °C forecast, normal for here.", numbers[2]
+    assert numbers[5].startswith("Rain over 6 days: ") and numbers[5].endswith(", normal for here."), numbers[5]
+    assert message.number_lines(r, FAKE_DATE)[0] == "Rain today: 1.0 mm forecast, normal for here.", "today's wording"
+    assert message.then_and_now(r) == []  # every check happens 5 or more times a year: no Then and now
+    assert message.summary_lines(r)[0] == message.TYPICAL_LIMITS  # feels-like low 3 °C: ice on roads is mentioned
     print("ok: made up: ordinary day -> Typical")
 
     # A rare cold day: raises the level, cold action line, and "less common now" isn't reassuring.
@@ -227,7 +242,7 @@ def made_up_cases():
     first = message.number_lines(r)[2]
     assert first.startswith("Feels-like low: ") and ", down from about " in first and " in 1951–1980." in first, first
     assert message.level_line(r).startswith("Feels as cold as "), message.level_line(r)
-    rarity = message.rarity_rows(r)
+    rarity = message.then_and_now(r)[0]
     assert rarity["too_few"] is None, rarity
     assert rarity["name"] == "Feels-like cold" and rarity["like_this"] == "days at least this cold"
     assert rarity["rarer_now"] == ("Cold like this is rarer here now, so people and places may be less prepared "
@@ -245,14 +260,14 @@ def made_up_cases():
     r, _ = fake_assess(snow_cm=2.0)
     check_result("made up: routine snow", r)
     assert check(r, "snow_cm")["level"] == "Typical" and r["level"] == "Typical", check(r, "snow_cm")
-    assert message.number_lines(r)[3].startswith("Snow: 2.0 cm forecast. About "), message.number_lines(r)[3]
+    assert message.number_lines(r)[3] == "Snow: 2.0 cm forecast, normal for here.", message.number_lines(r)[3]
     print("ok: made up: routine snow -> Typical")
 
     # Snow far beyond the record: Extreme, snow action line, snow "how often" caption.
     r, _ = fake_assess(snow_cm=30.0)
     check_result("made up: record snow", r)
     assert r["level"] == "Extreme" and message.ACTIONS["snow"] in message.template_sentence(r)
-    assert message.rarity_rows(r)["like_this"] == "days with at least this much snow"
+    assert message.then_and_now(r)[0]["like_this"] == "days with at least this much snow"
     print("ok: made up: record snow -> Extreme")
 
     # The ice note uses the lower of the day's lowest air temperature and its feels-like low, at +1 °C or below.
@@ -390,7 +405,10 @@ def main():
                                       "forecast). About once every 4.3 years here, 3.5 times more often than in "
                                       "1951–1980."), numbers[5]
                 assert message.level_line(result) == "107 mm of rain forecast in 24 h"
-                assert message.rarity_rows(result)["too_few"] == message.TOO_FEW_LINE  # about 2 days in each period
+                first, second = message.then_and_now(result)  # 24 h rain (2 + 2), then the 6-day rain (7 + 2)
+                assert first["name"] == "Rain (24 h)" and first["too_few"] == message.TOO_FEW_LINE and not first["rough"]
+                assert second["name"] == risk.RECENT_RAIN_NAME and second["rough"] == message.ROUGH_LINE
+                assert second["too_few"] is None and second["rarer_now"] is None
             if c["name"] == "Paris snow and cold":  # no air temperature saved: the feels-like low (-6.5 °C) is used
                 assert result.get("air_min_c") is None and message.ice_note(result) == message.ICE_NOTE
                 assert message.ice_line(result) == "Roads may be icy; ice itself isn't checked."
@@ -403,21 +421,31 @@ def main():
                 assert message.ice_note(result) is None and message.ice_line(result) is None
             if c["name"].startswith("Kolkata heat"):
                 assert message.level_line(result) == "Feels like 41 °C forecast, above the 40 °C danger line"
-                assert message.rarity_rows(result)["too_few"] is None
-                assert message.rarity_rows(result)["danger_note"] == message.DANGER_LINE_NOTE
+                [block] = message.then_and_now(result)
+                assert block["too_few"] is None and block["rough"] is None
+                assert block["danger_note"] == message.DANGER_LINE_NOTE
+                assert message.number_lines(result)[0] == "Rain on 31 May 2022: 8.2 mm forecast, normal for here."
             if c["name"] == "Valencia flash flood":
                 assert message.level_line(result) == ("202 mm of rain forecast in 24 h, above the 150 mm danger "
                                                       "line; 257 mm of rain over 6 days"), message.level_line(result)
-                assert message.rarity_rows(result)["too_few"] == message.TOO_FEW_LINE  # not seen in either period
+                [block] = message.then_and_now(result)  # not seen in either period: the rows say so, no extra line
+                assert block["too_few"] is None and block["rough"] is None, block
+                assert [r["words"] for r in block["rows"]] == ["not seen in those 30 years", "not seen in 1951–1980"]
             if c["name"] == "Paris snow and cold":  # ice first, then what the checks can't see; snow is rarer now
                 assert message.summary_lines(result)[:2] == [message.ICE_SMS, message.TYPICAL_LIMITS_ICE]
                 assert message.TYPICAL_LIMITS_ICE == "These checks can't see landslides or glacier collapse."
-                rarity = message.rarity_rows(result)
+                [rarity] = message.then_and_now(result)
                 assert rarity["name"] == "Snowfall (24 h)" and rarity["rarer_now"].startswith("Snow like this"), rarity
-            if c["name"] in ("Calm control 1, Paiporta", "Bayesian sinking"):  # less common now, but ~45 / ~21 a year
-                deciding = message.deciding_check(result)
-                assert message.less_common_now(deciding) and deciding["recent"]["per_year"] >= 5, deciding["name"]
-                assert message.rarity_rows(result)["rarer_now"] is None, c["name"]
+                numbers = message.number_lines(result)  # snow (1.1 a year) keeps its rate; cold (12 a year) is normal
+                assert numbers[3] == ("Snow: 3.0 cm forecast. About 1.1 days a year here, down from about 1.3 days a "
+                                      "year in 1951–1980."), numbers[3]
+                assert numbers[2] == "Feels-like low: -6.5 °C forecast, normal for here.", numbers[2]
+            if result["level"] == "Typical" and c["name"] != "Paris snow and cold":  # every check 5+ times a year
+                assert message.then_and_now(result) == [], c["name"]
+                warm = message._value(result, "feels_like_min_c") > message.ICE_MENTION_AT_OR_BELOW_C
+                assert (message.summary_lines(result, special)[0] == message.TYPICAL_LIMITS_ICE) == warm, c["name"]
+            if c["name"].startswith("Ordinary rain 1"):  # feels-like low 1.8 °C, no snow or rain on ice: ice mentioned
+                assert message.summary_lines(result)[0] == message.TYPICAL_LIMITS, message.summary_lines(result)
             if c["name"].startswith("Nepal-Tibet"):
                 assert message.GEOLOGICAL_NOTE in message.summary_lines(result, special)
             print("ok:", c["name"], "->", result["level"])

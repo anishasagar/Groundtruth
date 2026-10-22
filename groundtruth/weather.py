@@ -210,7 +210,8 @@ def get_hourly(lat, lon, date, today=None, hours=48, step=3):
     """The hourly forecast strip: from the current hour at the place when `date` is today, otherwise from
     midnight of `date`. Live only (never saved for replays). Returns hourly_slots(...)."""
     today = today or dt.date.today()
-    end = min(date + dt.timedelta(days=2), today + dt.timedelta(days=FORECAST_DAYS_AHEAD))
+    # Today: one more day, because a place ahead of UTC may already be on tomorrow.
+    end = min(date + dt.timedelta(days=3 if date == today else 2), today + dt.timedelta(days=FORECAST_DAYS_AHEAD))
     raw = _get(FORECAST_URL, {"latitude": lat, "longitude": lon, "hourly": ",".join(HOURLY_VARIABLES),
                               "start_date": (date - dt.timedelta(days=1)).isoformat(), "end_date": end.isoformat(),
                               "timezone": "auto"})

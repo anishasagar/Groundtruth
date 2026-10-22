@@ -20,7 +20,6 @@ REPLAY_MISSING = "Replay data for this event isn't saved yet. Please try again l
 
 SUBTITLE = ("How unusual is today's weather for this place, compared with how it used to be, "
             "and what does it mean?")
-TYPICAL_CAPTION = "This is the same standard wording used on every Typical day."
 TEMPLATE_FAILED = "Template mode: Claude's text didn't pass the checks."
 TEMPLATE_UNREACHED = "Template mode: Claude couldn't be reached."
 # claude_text.write() reasons that mean Claude never answered (anything else: its text didn't pass the checks).
@@ -31,7 +30,8 @@ ABOUT_LINES = [
     "changes the level, adds a number or plays the risk down, the page shows fixed template wording instead.",
     "The level is the worse of how rare the day is here and fixed danger lines, so it leans toward warning. "
     "Recent rain, cold and snow can only raise it.",
-    "On Typical days Claude isn't asked at all, so no AI wording can play the day down.",
+    "On Typical days Claude isn't asked: they get the same standard wording every time, so no AI wording can "
+    "play the day down.",
     message.NO_COLD_SNOW_LINES,
 ]
 # Level colours. Never green: a green box could read as "all fine".
@@ -52,9 +52,7 @@ WEATHER_ICONS = [
     (65, "🌧️", "🌧️", "Rain"), (77, "🌨️", "🌨️", "Snow"), (82, "🌧️", "🌧️", "Rain showers"),
     (86, "🌨️", "🌨️", "Snow showers"), (95, "⛈️", "⛈️", "Thunderstorm"), (99, "⛈️", "⛈️", "Thunderstorm with hail"),
 ]
-STRIP_CAPTION = ("Raw forecast, not checked by Groundtruth. It often misses sudden local storms, so no storm icon "
-                 "doesn't mean no storm. Feels-like temperature at each time; rain and snow are totals for the 3 "
-                 "hours, and the icon shows the worst weather forecast in them. The level above is for {day} only.")
+STRIP_CAPTION = "Raw forecast, not checked by Groundtruth. No storm icon doesn't mean no storm."
 
 
 # ---- data (cached) ----------------------------------------------------------
@@ -153,7 +151,7 @@ def weather_icon(code, is_day):
     return "·", "No weather code"
 
 
-def hourly_strip(slots, title, day):
+def hourly_strip(slots, title):
     """Every 3 hours: time, icon, feels-like temperature, and rain or snow when there is some."""
     cells, last_day = [], None
     for s in slots:
@@ -184,7 +182,7 @@ def hourly_strip(slots, title, day):
         f"</style><div class=\"gt-strip\">{''.join(cells)}</div>",
         unsafe_allow_html=True,
     )
-    st.caption(STRIP_CAPTION.format(day=day))
+    st.caption(STRIP_CAPTION)
 
 
 LONGEST_BAR = 0.6  # the more frequent period's line, as a share of the track
@@ -192,12 +190,17 @@ OLDER_COLOUR = "#8a929c"
 
 
 def rarity_lines(rows, accent):
-    """Two plain rows: period, a thin line, the engine's words. No axes, grid or scale numbers."""
+    """Two plain rows: period, a thin line, the engine's words. No axes, grid or scale numbers.
+
+    On phones each row is "period …… words" on one line, with the line under it.
+    """
     out = [
-        "<style>.gt-rows{display:grid;grid-template-columns:8.5rem 3fr 2fr;gap:0.6rem 0.9rem;align-items:center}"
-        ".gt-rows{margin-bottom:1rem}.gt-track{height:0.55rem}.gt-bar{height:100%;border-radius:0.3rem}"
-        "@media (max-width:600px){.gt-rows{grid-template-columns:7.5rem 1fr}.gt-words{grid-column:2}"
-        ".gt-label{grid-row-start:auto}}</style><div class=\"gt-rows\">"
+        "<style>.gt-rows{margin-bottom:1rem}.gt-row{display:grid;grid-template-columns:8.5rem 3fr 2fr;"
+        "gap:0.3rem 0.9rem;align-items:center;margin-bottom:0.6rem}.gt-track{height:0.55rem}"
+        ".gt-bar{height:100%;border-radius:0.3rem}"
+        "@media (max-width:600px){.gt-row{grid-template-columns:1fr auto;grid-template-areas:'label words' "
+        "'track track'}.gt-label{grid-area:label}.gt-words{grid-area:words;text-align:right}"
+        ".gt-track{grid-area:track}}</style><div class=\"gt-rows\">"
     ]
     for i, r in enumerate(rows):
         colour = accent if i == 0 else OLDER_COLOUR  # the first row is now
@@ -205,27 +208,29 @@ def rarity_lines(rows, accent):
         if r["per_year"] > 0:
             width = max(width, 0.5)  # a tiny but real rate still shows
         out.append(
-            f'<div class="gt-label"><strong>{html.escape(r["label"])}</strong></div>'
+            f'<div class="gt-row"><div class="gt-label"><strong>{html.escape(r["label"])}</strong></div>'
             f'<div class="gt-track" aria-hidden="true"><div class="gt-bar" '
             f'style="width:{width:.1f}%;background:{colour}"></div></div>'
-            f'<div class="gt-words">{html.escape(r["words"])}</div>'
+            f'<div class="gt-words">{html.escape(r["words"])}</div></div>'
         )
     out.append("</div>")
     st.markdown("".join(out), unsafe_allow_html=True)
 
 
 def then_and_now(result):
-    rarity = message.rarity_rows(result)
-    if rarity is None:
+    blocks = message.then_and_now(result)
+    if not blocks:  # e.g. a Typical day where every check happens 5 or more times a year
         return
     st.subheader("Then and now")
-    st.caption(rarity["caption"])
-    rarity_lines(rarity["rows"], LEVEL_STYLE[result["level"]][0])
-    if rarity["too_few"]:
-        st.markdown(rarity["too_few"])
-    for line in (rarity["danger_note"], rarity["rarer_now"]):
-        if line:
-            st.markdown(f"**{line}**")
+    for block in blocks:
+        st.caption(block["caption"])
+        rarity_lines(block["rows"], LEVEL_STYLE[result["level"]][0])
+        for line in (block["too_few"], block["rough"]):
+            if line:
+                st.markdown(line)
+        for line in (block["danger_note"], block["rarer_now"]):
+            if line:
+                st.markdown(f"**{line}**")
 
 
 def numbers_section(result):
@@ -276,11 +281,12 @@ def show_assessment(result, place, replay_name=None, lat=None, lon=None):
     if raised:
         st.markdown(f"### {plain(reply['headline']) if reply is not None else message.template_headline(result)}")
     for line in lines:
-        st.markdown(f"**{line}**" if line == message.GEOLOGICAL_NOTE else line)
+        if line == message.ICE_SMS:
+            st.warning(line, icon="🧊")  # the same yellow style as the storm line
+        else:
+            st.markdown(f"**{line}**" if line == message.GEOLOGICAL_NOTE else line)
     if raised and reply is None:
         st.caption(template_caption(problems))
-    elif level == "Typical":
-        st.caption(TYPICAL_CAPTION)
 
     today = dt.date.today()
     if replay_name is None and result["date"] >= today:  # never on past dates or replays
@@ -289,8 +295,8 @@ def show_assessment(result, place, replay_name=None, lat=None, lon=None):
         except Exception:  # no strip rather than an error
             slots = []
         if slots:
-            title = "Next 48 hours" if result["date"] == today else f"48 hours from {result['date']:%-d %b}"
-            hourly_strip(slots, title, message.day_text(result["date"]))
+            title = "Next 48 hours" if result["date"] == today else f"{message.day_text(result['date'])}, hour by hour"
+            hourly_strip(slots, title)
 
     then_and_now(result)
     st.warning(storm_line, icon="⚡")

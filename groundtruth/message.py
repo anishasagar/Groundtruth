@@ -36,12 +36,19 @@ NO_COLD_SNOW_LINES = ("There are no fixed danger lines for cold or snow yet; fix
                       "Those two checks use only how rare the day is here.")
 # "Then and now", when the check is less common now than in the comparison period.
 RARER_NOW = "{noun} like this is rarer here now, so people and places may be less prepared for it."
-# On Typical days RARER_NOW is shown only for a check that happens fewer than this many times a year now
-# (Paris snow, about 1.1: yes; a few tenths of a mm of rain, about 45: no). Raised days always show it.
-RARER_NOW_TYPICAL_BELOW_PER_YEAR = 5
-# When either period has fewer than this many such days (or wet spells), the two rows can't show a change.
-TOO_FEW_TO_COMPARE_BELOW = 5
+# On Typical days "Then and now" is shown only for a check that happens fewer than this many times a year now
+# (Paris snow, about 1.1: yes; a few tenths of a mm of rain, about 45: no, the section is hidden).
+THEN_AND_NOW_TYPICAL_BELOW_PER_YEAR = 5
+# Fewer than this many such days (or wet spells) in both periods together: too few to compare.
+# This many or more, but fewer in one of the periods: a rough sign only.
+ENOUGH_EVENTS = 5
 TOO_FEW_LINE = "Too few days like this in either period to say whether it has changed."
+ROUGH_LINE = "Based on only a few events, so treat this as a rough sign."
+# "The numbers": a check that happens at least this many times a year now (and crossed no danger line) is
+# "normal for here", with no rate.
+NORMAL_FROM_PER_YEAR = 5
+# The Typical limits line mentions ice on roads only when the day's feels-like low is at or below this.
+ICE_MENTION_AT_OR_BELOW_C = 5
 ARROW = "→ "
 
 # Part of the facts sent to Claude (and so of each saved reply's fingerprint). Not shown on the page.
@@ -206,8 +213,10 @@ def summary_lines(result, special=None):
     ice = ice_note(result)
     if level not in risk.LEVELS:
         lines = []
-    elif level == "Typical":
-        lines = [ICE_SMS, TYPICAL_LIMITS_ICE] if ice else [TYPICAL_LIMITS]
+    elif level == "Typical":  # ice on roads only on a cold day (or when the low is missing: over-warn)
+        low = _value(result, "feels_like_min_c")
+        cold = low is None or low <= ICE_MENTION_AT_OR_BELOW_C
+        lines = [ICE_SMS, TYPICAL_LIMITS_ICE] if ice else [TYPICAL_LIMITS if cold else TYPICAL_LIMITS_ICE]
     else:
         action = action_line(result)
         lines = [ARROW + action if action else None, ICE_SMS if ice else None]
@@ -312,15 +321,13 @@ def number_lines(result, today=None):
         value = NUMBER_VALUE[c["key"]].format(v=amount(c["value"], c["unit"]))
         if c["key"] == risk.RECENT_RAIN_KEY and _rain_before(c, the_day):
             value += f" ({_rain_before(c, the_day)})"
-        line = f"{label}: {value}{_danger_text(c)}. {_how_often(c, result['baseline_label'])}"
+        if c["recent"]["per_year"] >= NORMAL_FROM_PER_YEAR and not c.get("crosses_danger_line"):
+            line = f"{label}: {value}, normal for here."
+        else:
+            line = f"{label}: {value}{_danger_text(c)}. {_how_often(c, result['baseline_label'])}"
         lines.append(" ".join([line, *c["notes"]]))
     lines += result["notes"][: len(result["notes"]) - len(risk.ALWAYS_NOTES)]
     return lines
-
-
-def show_rarer_now(c, level):
-    """RARER_NOW applies: less common now, and on Typical days only for a check that happens < 5 times a year now."""
-    return less_common_now(c) and (level != "Typical" or c["recent"]["per_year"] < RARER_NOW_TYPICAL_BELOW_PER_YEAR)
 
 
 def less_common_now(c):
@@ -328,34 +335,52 @@ def less_common_now(c):
     return (bool(c["baseline"]["count"]) and not c["recent"]["count"]) or (c["ratio"] is not None and c["ratio"] < 0.95)
 
 
-def rarity_rows(result):
-    """"Then and now" for the check that set the level (on Typical days, the rarest one), or None.
+def _events(c):
+    """Such days (or wet spells) in both periods together."""
+    return c["recent"]["count"] + c["baseline"]["count"]
 
-    None for Not enough data. A dict: rows (now first, then the comparison period; each with label,
-    per_year, width 0-1 where the more frequent period is 1, and the engine's words), name, like_this,
-    caption ("Rain (24 h), 107 mm forecast: how often … happen here."), too_few (TOO_FEW_LINE when either
-    period has fewer than 5 such days, else None), rarer_now (RARER_NOW, or None; see show_rarer_now; never with
-    too_few) and danger_note (DANGER_LINE_NOTE when a danger line set the level).
-    """
-    if result["level"] not in risk.LEVELS:
-        return None
-    check = deciding_check(result)
-    if check is None:
-        return None
+
+def _then_and_now_block(check, result):
+    """One check's two rows: now first, then the comparison period (label, per_year, width 0-1, the engine's words),
+    with caption, too_few / rough (or None), rarer_now (RARER_NOW, or None) and danger_note (or None)."""
     periods = [(f"Now ({result['recent_label']})", check["recent"], check["recent_text"]),
                (result["baseline_label"], check["baseline"], check["baseline_text"])]
     top = max(p["per_year"] for _, p, _ in periods)
     rows = [{"label": label, "per_year": p["per_year"], "width": (p["per_year"] / top) if top else 0.0,
              "words": words}
             for label, p, words in periods]
-    too_few = min(check["recent"]["count"], check["baseline"]["count"]) < TOO_FEW_TO_COMPARE_BELOW
+    events = _events(check)
+    enough = events >= ENOUGH_EVENTS
+    rough = enough and min(check["recent"]["count"], check["baseline"]["count"]) < ENOUGH_EVENTS
     value = amount(check["value"], check["unit"])
-    return {"rows": rows, "name": check["name"], "like_this": LIKE_THIS[check["key"]],
+    return {"check": check, "rows": rows, "name": check["name"], "like_this": LIKE_THIS[check["key"]],
             "caption": f"{check['name']}, {value} forecast: how often {LIKE_THIS[check['key']]} happen here.",
-            "too_few": TOO_FEW_LINE if too_few else None,
-            "rarer_now": RARER_NOW.format(noun=NOUN[check["key"]])
-            if show_rarer_now(check, result["level"]) and not too_few else None,
+            # Not seen in either period: the two "not seen" rows already say it.
+            "too_few": TOO_FEW_LINE if 0 < events < ENOUGH_EVENTS else None,
+            "rough": ROUGH_LINE if rough else None,
+            "rarer_now": RARER_NOW.format(noun=NOUN[check["key"]]) if less_common_now(check) and enough else None,
             "danger_note": DANGER_LINE_NOTE if danger_line_set_level(check) else None}
+
+
+def then_and_now(result):
+    """The "Then and now" blocks (0, 1 or 2).
+
+    Typical: the rarest check, only when it happens fewer than 5 times a year now (else none: the section is
+    hidden). Raised: the check that set the level; when it has fewer than 5 such days in both periods together,
+    also the next raised check (rarest first) that has 5 or more. Not enough data: none.
+    """
+    check = deciding_check(result)
+    if check is None:
+        return []
+    if result["level"] == "Typical" and check["recent"]["per_year"] >= THEN_AND_NOW_TYPICAL_BELOW_PER_YEAR:
+        return []
+    blocks = [_then_and_now_block(check, result)]
+    if result["level"] != "Typical" and _events(check) < ENOUGH_EVENTS:
+        others = [c for c in result["checks"] if c is not check and c["level"] in risk.LEVELS[1:] and "recent" in c
+                  and _events(c) >= ENOUGH_EVENTS]
+        if others:
+            blocks.append(_then_and_now_block(min(others, key=lambda c: c["recent"]["per_year"]), result))
+    return blocks
 
 
 def _ascii(text):
