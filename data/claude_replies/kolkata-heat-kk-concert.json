@@ -1,6 +1,6 @@
 {
  "model": "claude-sonnet-5-5",
- "fingerprint": "a81d6328d0b913006447e697a9f9b89c64a7cacf31e27591155930543f636113",
+ "fingerprint": "c21c2c155716225835601a9401d14c707b65c58fc544a5da6fec2dc28c88be64",
  "facts": {
   "place": "Kolkata, India",
   "day": "31 May 2022",
@@ -111,13 +111,7 @@
   "special_note_kind": null
  },
  "reply": {
-  "headline": "High risk of dangerous feels-like heat in Kolkata, India on 31 May 2022.",
-  "why": [
-   "Feels-like heat set the level, with the day forecast to feel like 41 °C, at or above the 40 °C danger line.",
-   "This is at or above the danger line, so it matters however often it happens here.",
-   "Days like this happen about 48 times a year here now, and are 1.4 times more common here than in 1951–1980."
-  ],
-  "confidence_note": "The history is a grid of about 25 km and misses very local storms, and the day's figures are a forecast and can be too low. Geological hazards such as landslides, glacier collapse or earthquakes need local civil protection and geological authorities."
+  "headline": "High risk of dangerous feels-like heat."
  },
  "tries": 1
 }

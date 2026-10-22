@@ -20,7 +20,6 @@ REPLAY_MISSING = "Replay data for this event isn't saved yet. Please try again l
 
 SUBTITLE = ("How unusual is today's weather for this place, compared with how it used to be, "
             "and what does it mean?")
-CLAUDE_CAPTION = "Written by Claude from the computed facts and checked by code."
 TYPICAL_CAPTION = "This is the same standard wording used on every Typical day."
 TEMPLATE_FAILED = "Template mode: Claude's text didn't pass the checks."
 TEMPLATE_UNREACHED = "Template mode: Claude couldn't be reached."
@@ -28,12 +27,12 @@ TEMPLATE_UNREACHED = "Template mode: Claude couldn't be reached."
 UNREACHED = ("Claude took too long", "Claude couldn't be reached", "Claude returned an error", "no Claude key",
              "something went wrong asking Claude")
 ABOUT_LINES = [
-    "Code computes every number and sets the level. Claude only puts them into words, and code checks every "
-    "reply: if it changes the level, adds a number or plays the risk down, the page shows fixed template "
-    "wording instead.",
+    "Code computes every number and sets the level. Claude writes only the headline, and code checks it: if it "
+    "changes the level, adds a number or plays the risk down, the page shows fixed template wording instead.",
     "The level is the worse of how rare the day is here and fixed danger lines, so it leans toward warning. "
     "Recent rain, cold and snow can only raise it.",
     "On Typical days Claude isn't asked at all, so no AI wording can play the day down.",
+    message.NO_COLD_SNOW_LINES,
 ]
 # Level colours. Never green: a green box could read as "all fine".
 LEVEL_STYLE = {
@@ -219,26 +218,19 @@ def then_and_now(result):
     rarity = message.rarity_rows(result)
     if rarity is None:
         return
-    check = message.deciding_check(result)
     st.subheader("Then and now")
-    value = message.amount(check["value"], check["unit"])
-    if all(r["per_year"] == 0 for r in rarity["rows"]):
-        st.markdown(f"**{rarity['name']}, {value}:** a day like this was not seen in {result['baseline_label']} "
-                    f"or in {result['recent_label']}.")
-    else:
-        st.caption(f"{rarity['name']}, {value}: how often {rarity['like_this']} happen here.")
-        rarity_lines(rarity["rows"], LEVEL_STYLE[result["level"]][0])
+    st.caption(rarity["caption"])
+    rarity_lines(rarity["rows"], LEVEL_STYLE[result["level"]][0])
+    if rarity["too_few"]:
+        st.markdown(rarity["too_few"])
     for line in (rarity["danger_note"], rarity["rarer_now"]):
         if line:
             st.markdown(f"**{line}**")
 
 
-def numbers_section(result, reply):
-    with st.expander("The numbers"):
-        if reply is not None:
-            st.markdown("Written by Claude:\n\n" + "\n".join(f"- {plain(b)}" for b in reply["why"]))
-            st.markdown("The detailed numbers:")
-        st.markdown("\n".join(f"- {b}" for b in message.why_bullets(result)))
+def numbers_section(result):
+    with st.expander("The numbers"):  # written by code, never by Claude
+        st.markdown("\n".join(f"- {line}" for line in message.number_lines(result)))
         fc, hist = result.get("forecast_grid_point"), result.get("history_grid_point")
         if fc and hist:
             st.caption(
@@ -249,22 +241,9 @@ def numbers_section(result, reply):
             )
 
 
-def how_sure_section(result, confidence_note=None):
-    rain = result["checks"][-1]
-    lines = [message.OFFICIAL_LINE,
-             "The history data is a grid of about 25 km, so it misses very local storms.",
-             message.FORECAST_NOTE,
-             message.NOT_CHECKED_LINE]
-    if rain.get("source") == "forecast":
-        lines.append("The rain totals assume the forecast rain actually falls.")
-    lines.append("There are no fixed danger lines for cold or snow yet; fixed cold lines need research. "
-                 "Those two checks use only how rare the day is here.")
-    lines += result["notes"][: len(result["notes"]) - len(risk.ALWAYS_NOTES)]
-    lines += [f"{c['name']}: {n}" for c in result["checks"] for n in c["notes"]]
+def how_sure_section():
     with st.expander("How sure are we"):
-        st.markdown("\n".join(f"- {line}" for line in lines))
-        if confidence_note:
-            st.markdown(f"**Written by Claude:** {plain(confidence_note)}")
+        st.markdown("\n".join(f"- {line}" for line in message.HOW_SURE_LINES))
 
 
 def about_section():
@@ -298,8 +277,8 @@ def show_assessment(result, place, replay_name=None, lat=None, lon=None):
         st.markdown(f"### {plain(reply['headline']) if reply is not None else message.template_headline(result)}")
     for line in lines:
         st.markdown(f"**{line}**" if line == message.GEOLOGICAL_NOTE else line)
-    if raised:
-        st.caption(CLAUDE_CAPTION if reply is not None else template_caption(problems))
+    if raised and reply is None:
+        st.caption(template_caption(problems))
     elif level == "Typical":
         st.caption(TYPICAL_CAPTION)
 
@@ -316,8 +295,8 @@ def show_assessment(result, place, replay_name=None, lat=None, lon=None):
     then_and_now(result)
     st.warning(storm_line, icon="⚡")
 
-    numbers_section(result, reply)
-    how_sure_section(result, reply["confidence_note"] if reply is not None else None)
+    numbers_section(result)
+    how_sure_section()
     about_section()
 
 
@@ -329,10 +308,30 @@ st.write(SUBTITLE)
 
 replay_cases = {c["name"]: c for c in load_replays()}
 today = dt.date.today()
+st.session_state.setdefault("date", today)
+st.session_state.setdefault("replay", NO_REPLAY)
 
-query = st.text_input("Search for a place", placeholder="e.g. Kolkata")
+
+def replay_picked():
+    """A replay fills the place and date fields; "none" clears the place."""
+    name = st.session_state.replay
+    if name == NO_REPLAY:
+        st.session_state.query = ""
+        return
+    case = replay_cases[name]
+    st.session_state.query = replays.place_of(case)
+    st.session_state.date = dt.date.fromisoformat(case["date"])
+
+
+def place_or_date_changed():
+    """Changing the place or the date switches the replay off."""
+    st.session_state.replay = NO_REPLAY
+
+
+replaying = st.session_state.replay != NO_REPLAY
+query = st.text_input("Search for a place", placeholder="e.g. Kolkata", key="query", on_change=place_or_date_changed)
 picked, search_problem = None, None
-if query.strip():
+if query.strip() and not replaying:  # a replay never searches
     try:
         matches = cached_search(query.strip())
     except (weather.LimitReached, requests.RequestException):
@@ -346,9 +345,10 @@ if query.strip():
             labels = [m["label"] for m in matches]
             choice = st.selectbox("Which place?", labels)
             picked = matches[labels.index(choice)]
-date = st.date_input("Date", value=today, min_value=EARLIEST_DATE,
+date = st.date_input("Date", key="date", min_value=EARLIEST_DATE, on_change=place_or_date_changed,
                      max_value=today + dt.timedelta(days=weather.FORECAST_DAYS_AHEAD))
-replay_name = st.columns([2, 3])[0].selectbox("Or replay a past event", [NO_REPLAY, *replay_cases])
+replay_name = st.columns([2, 3])[0].selectbox("Or replay a past event", [NO_REPLAY, *replay_cases], key="replay",
+                                              on_change=replay_picked)
 
 lat = lon = place = None
 problem = None
@@ -358,7 +358,6 @@ if replay_name != NO_REPLAY:
     lat, lon = float(case["latitude"]), float(case["longitude"])
     date = dt.date.fromisoformat(case["date"])
     place = replays.place_of(case)
-    st.caption("Replay: saved data, no live lookup. The place and date above are ignored.")
 elif picked is not None:
     lat, lon, place = picked["latitude"], picked["longitude"], picked["label"]
 else:
