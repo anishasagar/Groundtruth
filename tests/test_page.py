@@ -13,7 +13,7 @@ from streamlit.testing.v1 import AppTest
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from groundtruth import geocode, message, replays  # noqa: E402
+from groundtruth import geocode, message, replays, risk, weather  # noqa: E402
 
 FOLDED = ["The numbers", "How sure are we", "About this tool"]
 NO_REPLAY = "— none, use the search above —"
@@ -76,8 +76,11 @@ def main():
         name = case["name"]
         at = render(name)
         warnings = texts(at.warning)
-        assert warnings.count(message.STORM_LINE) == 1, f"{name}: the yellow storm line: {warnings}"
-        assert len(warnings) == 1, f"{name}: one yellow line only: {warnings}"
+        with weather.offline():
+            result = risk.assess(float(case["latitude"]), float(case["longitude"]), dt.date.fromisoformat(case["date"]))
+        # Yellow boxes: the ice line (on ice days) and the storm line on every result.
+        ice = [message.ICE_SMS] if message.ice_note(result) else []
+        assert warnings == ice + [message.STORM_LINE], f"{name}: yellow boxes: {warnings}"
         shown = visible_text(at)
         # The yellow line is the one visible pointer to official warnings.
         assert message.OFFICIAL_LINE not in shown and "Check your official weather warnings" not in shown, name
@@ -96,7 +99,10 @@ def main():
         # The replay fills the place and date fields.
         assert at.text_input(key="query").value == replays.place_of(case), name
         assert at.date_input(key="date").value == dt.date.fromisoformat(case["date"]), name
-        assert "Then and now" in texts(at.subheader), f"{name}: then and now"
+        assert ("Then and now" in texts(at.subheader)) == bool(message.then_and_now(result)), f"{name}: then and now"
+        assert "standard wording" not in shown, f"{name}: the Typical caption moved to About this tool"
+        about = next(e for e in at.expander if e.label == "About this tool")
+        assert "same standard wording every time" in about.markdown[0].value, name
         assert "Next 48 hours" not in shown, f"{name}: no hourly strip on a replay"
         geological = replays.SPECIAL_NOTES.get(name) == "geological"
         assert (message.GEOLOGICAL_NOTE in shown) == geological, f"{name}: geological note"

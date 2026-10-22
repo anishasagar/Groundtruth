@@ -50,17 +50,16 @@ def full_output(case, result, place):
     special = replays.SPECIAL_NOTES.get(case["name"])
     action = message.action_line(result)
     *lines_under, storm_line = message.summary_lines(result, special)
-    rarity = message.rarity_rows(result)
+    blocks = message.then_and_now(result)
     lines = [f"#### {case['name']} — {case['date']} — {result['level']}", "",
              "Written by code, shown on the page in every mode:", "",
              f"- Level box: \"{place} · {message.day_text(result['date'])}\" / **{result['level']}** / "
              f"\"{message.level_line(result)}\"",
              *[f"- Line under the level box: \"{line}\"" for line in lines_under],
-             *([f"- Then and now ({rarity['name']}): "
-                + "; ".join(f"{r['label']}: {r['words']}" for r in rarity["rows"])
-                + "".join(f" — \"{x}\"" for x in (rarity["too_few"], rarity["danger_note"], rarity["rarer_now"])
-                          if x)]
-               if rarity else []),
+             *[f"- Then and now ({b['name']}): " + "; ".join(f"{r['label']}: {r['words']}" for r in b["rows"])
+               + "".join(f" — \"{x}\"" for x in (b["too_few"], b["rough"], b["danger_note"], b["rarer_now"]) if x)
+               for b in blocks],
+             *([] if blocks else ["- Then and now: not shown"]),
              f"- Yellow line: \"{storm_line}\"",
              "- The numbers (collapsed):", *[f"  - \"{line}\"" for line in message.number_lines(result)], "",
              f"Text message (not shown on the page; kept for Phase 2): \"{message.sms_text(result, place, special)}\"",

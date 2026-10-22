@@ -1,6 +1,6 @@
 # Test log
 
-Last run: 2026-10-21 with `python scripts/replay.py`.
+Last run: 2026-10-22 with `python scripts/replay.py`.
 1 case(s) pending: their test day hasn't been picked yet.
 Settings: comparison period 1951–1980; the level uses the 30 years before this date; recent rain = 5 days before + the date.
 
@@ -269,7 +269,7 @@ Each replay shows Claude's saved text (claude-sonnet-5-5) only if its fingerprin
 
 ## Replay check: date, level and sentence
 
-Added by the replay-check skill on 2026-10-21. "Previous level" is the level in TESTLOG.md before this run.
+Added by the replay-check skill on 2026-10-22. "Previous level" is the level in TESTLOG.md before this run.
 
 | Case | Date | Level | Previous level | Sentence shown | Template sentence | Claude tries |
 |---|---|---|---|---|---|---|
@@ -299,14 +299,14 @@ Written by code, shown on the page in every mode:
 
 - Level box: "Paiporta, Valencia, Spain · 29 Oct 2024" / **Extreme** / "202 mm of rain forecast in 24 h, above the 150 mm danger line; 257 mm of rain over 6 days"
 - Line under the level box: "→ Avoid underpasses, low roads and riverbanks."
-- Then and now (Rain (24 h)): Now (1994–2024): not seen in those 30 years; 1951–1980: not seen in 1951–1980 — "Too few days like this in either period to say whether it has changed."
+- Then and now (Rain (24 h)): Now (1994–2024): not seen in those 30 years; 1951–1980: not seen in 1951–1980
 - Yellow line: "Thunderstorms aren't checked. Follow official weather and storm warnings."
 - The numbers (collapsed):
   - "Rain on 29 Oct 2024: 202 mm forecast, above the 150 mm danger line. Rain like this was not seen in the 30 years before the day or in 1951–1980."
-  - "Feels-like high: 20 °C forecast. About 215 days a year here, 1.1 times more often than in 1951–1980."
-  - "Feels-like low: 17 °C forecast. About 226 days a year here, down from about 246 days a year in 1951–1980."
+  - "Feels-like high: 20 °C forecast, normal for here."
+  - "Feels-like low: 17 °C forecast, normal for here."
   - "Snow: none forecast."
-  - "Gusts: up to 61 km/h forecast. About 8.7 days a year here, 1.1 times more often than in 1951–1980."
+  - "Gusts: up to 61 km/h forecast, normal for here."
   - "Rain over 6 days: 257 mm (54.9 mm measured before the day, plus the day's forecast). A wet spell like this was not seen in the 30 years before the day or in 1951–1980."
 
 Text message (not shown on the page; kept for Phase 2): "Groundtruth Paiporta, Valencia, Spain 29 Oct 2024: Extreme risk. Rain 202 mm forecast. Avoid low roads and riverbanks. Check official warnings."
@@ -327,13 +327,14 @@ Written by code, shown on the page in every mode:
 - Level box: "Texas Hill Country, USA · 4 Jul 2025" / **High** / "107 mm of rain forecast in 24 h"
 - Line under the level box: "→ Avoid underpasses, low roads and riverbanks."
 - Then and now (Rain (24 h)): Now (1995–2025): about once every 15 years; 1951–1980: about once every 15 years — "Too few days like this in either period to say whether it has changed."
+- Then and now (Recent rain (6-day total)): Now (1995–2025): about once every 4.3 years; 1951–1980: about once every 15 years — "Based on only a few events, so treat this as a rough sign."
 - Yellow line: "Thunderstorms aren't checked. Follow official weather and storm warnings."
 - The numbers (collapsed):
   - "Rain on 4 Jul 2025: 107 mm forecast. About once every 15 years here, about the same as in 1951–1980."
-  - "Feels-like high: 29 °C forecast. About 158 days a year here, 1.1 times more often than in 1951–1980."
-  - "Feels-like low: 23 °C forecast. About 275 days a year here, down from about 299 days a year in 1951–1980."
+  - "Feels-like high: 29 °C forecast, normal for here."
+  - "Feels-like low: 23 °C forecast, normal for here."
   - "Snow: none forecast."
-  - "Gusts: up to 50 km/h forecast. About 70 days a year here, about the same as in 1951–1980."
+  - "Gusts: up to 50 km/h forecast, normal for here."
   - "Rain over 6 days: 144 mm (36.7 mm measured before the day, plus the day's forecast). About once every 4.3 years here, 3.5 times more often than in 1951–1980."
 
 Text message (not shown on the page; kept for Phase 2): "Groundtruth Texas Hill Country, USA 4 Jul 2025: High risk. Rain 107 mm forecast. Avoid low roads and riverbanks. Check official warnings."
@@ -356,12 +357,12 @@ Written by code, shown on the page in every mode:
 - Then and now (Feels-like heat): Now (1992–2022): about 48 times a year; 1951–1980: about 34 times a year — "This is at or above the danger line, so it matters however often it happens here."
 - Yellow line: "Thunderstorms aren't checked. Follow official weather and storm warnings."
 - The numbers (collapsed):
-  - "Rain on 31 May 2022: 8.2 mm forecast. About 67 days a year here, about the same as in 1951–1980."
+  - "Rain on 31 May 2022: 8.2 mm forecast, normal for here."
   - "Feels-like high: 41 °C forecast, above the 40 °C danger line. About 48 days a year here, 1.4 times more often than in 1951–1980."
-  - "Feels-like low: 34 °C forecast. About 340 days a year here, down from about 359 days a year in 1951–1980."
+  - "Feels-like low: 34 °C forecast, normal for here."
   - "Snow: none forecast."
-  - "Gusts: up to 28 km/h forecast. About 177 days a year here, about the same as in 1951–1980."
-  - "Rain over 6 days: 16 mm (8.3 mm measured before the day, plus the day's forecast). About 29 times a year here, about the same as in 1951–1980."
+  - "Gusts: up to 28 km/h forecast, normal for here."
+  - "Rain over 6 days: 16 mm (8.3 mm measured before the day, plus the day's forecast), normal for here."
 
 Text message (not shown on the page; kept for Phase 2): "Groundtruth Kolkata, India 31 May 2022: High risk. Feels-like 41 C forecast. Avoid exertion, drink water, check on older people. Check official warnings."
 
@@ -379,16 +380,16 @@ Claude's saved reply (1 try) — passes the guardrail (shown in the app):
 Written by code, shown on the page in every mode:
 
 - Level box: "Porticello, Sicily, Italy · 19 Aug 2024" / **Typical** / "for rain, temperature, snow and wind"
-- Line under the level box: "These checks can't see ice on roads, landslides or glacier collapse."
-- Then and now (Recent rain (6-day total)): Now (1994–2024): about 21 times a year; 1951–1980: about 24 times a year
+- Line under the level box: "These checks can't see landslides or glacier collapse."
+- Then and now: not shown
 - Yellow line: "Thunderstorms aren't checked. Follow official weather and storm warnings."
 - The numbers (collapsed):
-  - "Rain on 19 Aug 2024: 2.5 mm forecast. About 64 days a year here, down from about 72 days a year in 1951–1980."
-  - "Feels-like high: 33 °C forecast. About 57 days a year here, 2.0 times more often than in 1951–1980."
-  - "Feels-like low: 28 °C forecast. About 327 days a year here, down from about 354 days a year in 1951–1980."
+  - "Rain on 19 Aug 2024: 2.5 mm forecast, normal for here."
+  - "Feels-like high: 33 °C forecast, normal for here."
+  - "Feels-like low: 28 °C forecast, normal for here."
   - "Snow: none forecast."
-  - "Gusts: up to 45 km/h forecast. About 58 days a year here, about the same as in 1951–1980."
-  - "Rain over 6 days: 14 mm (11.3 mm measured before the day, plus the day's forecast). About 21 times a year here, down from about 24 times a year in 1951–1980."
+  - "Gusts: up to 45 km/h forecast, normal for here."
+  - "Rain over 6 days: 14 mm (11.3 mm measured before the day, plus the day's forecast), normal for here."
 
 Text message (not shown on the page; kept for Phase 2): "Groundtruth Porticello, Sicily, Italy 19 Aug 2024: Typical rain, temperature, snow and wind. Storms, ice, landslides not checked. Check official warnings."
 
@@ -399,17 +400,17 @@ Claude: not asked on Typical days (fixed wording).
 Written by code, shown on the page in every mode:
 
 - Level box: "Nepal–Tibet border area · 26 Aug 2026" / **Typical** / "for rain, temperature, snow and wind"
-- Line under the level box: "These checks can't see ice on roads, landslides or glacier collapse."
+- Line under the level box: "These checks can't see landslides or glacier collapse."
 - Line under the level box: "Groundtruth covers weather-driven hazards only. For geological hazards (landslides, glacier collapse, earthquakes), check local civil protection and geological authorities."
-- Then and now (Recent rain (6-day total)): Now (1996–2026): about 18 times a year; 1951–1980: about 19 times a year
+- Then and now: not shown
 - Yellow line: "Thunderstorms aren't checked. Follow official weather and storm warnings."
 - The numbers (collapsed):
-  - "Rain on 26 Aug 2026: 6.1 mm forecast. About 129 days a year here, about the same as in 1951–1980."
-  - "Feels-like high: 30 °C forecast. About 68 days a year here, 3.2 times more often than in 1951–1980."
-  - "Feels-like low: 23 °C forecast. About 319 days a year here, down from about 354 days a year in 1951–1980."
+  - "Rain on 26 Aug 2026: 6.1 mm forecast, normal for here."
+  - "Feels-like high: 30 °C forecast, normal for here."
+  - "Feels-like low: 23 °C forecast, normal for here."
   - "Snow: none forecast."
-  - "Gusts: up to 31 km/h forecast. About 228 days a year here, 1.1 times more often than in 1951–1980."
-  - "Rain over 6 days: 66 mm (59.5 mm measured before the day, plus the day's forecast). About 18 times a year here, about the same as in 1951–1980."
+  - "Gusts: up to 31 km/h forecast, normal for here."
+  - "Rain over 6 days: 66 mm (59.5 mm measured before the day, plus the day's forecast), normal for here."
 
 Text message (not shown on the page; kept for Phase 2): "Groundtruth Nepal-Tibet bo. 26 Aug 2026: Typical rain, temperature, snow and wind. Storms, ice, landslides, glacier floods not checked. Check official warnings."
 
@@ -420,16 +421,16 @@ Claude: not asked on Typical days (fixed wording).
 Written by code, shown on the page in every mode:
 
 - Level box: "Paiporta, Valencia, Spain · 15 May 2024" / **Typical** / "for rain, temperature, snow and wind"
-- Line under the level box: "These checks can't see ice on roads, landslides or glacier collapse."
-- Then and now (Recent rain (6-day total)): Now (1994–2024): about 45 times a year; 1951–1980: about 51 times a year
+- Line under the level box: "These checks can't see landslides or glacier collapse."
+- Then and now: not shown
 - Yellow line: "Thunderstorms aren't checked. Follow official weather and storm warnings."
 - The numbers (collapsed):
-  - "Rain on 15 May 2024: 0.1 mm forecast. About 107 days a year here, down from about 132 days a year in 1951–1980."
-  - "Feels-like high: 22 °C forecast. About 194 days a year here, 1.1 times more often than in 1951–1980."
-  - "Feels-like low: 14 °C forecast. About 189 days a year here, down from about 211 days a year in 1951–1980."
+  - "Rain on 15 May 2024: 0.1 mm forecast, normal for here."
+  - "Feels-like high: 22 °C forecast, normal for here."
+  - "Feels-like low: 14 °C forecast, normal for here."
   - "Snow: none forecast."
-  - "Gusts: up to 34 km/h forecast. About 154 days a year here, 1.1 times more often than in 1951–1980."
-  - "Rain over 6 days: 0.3 mm (0.2 mm measured before the day, plus the day's forecast). About 45 times a year here, down from about 51 times a year in 1951–1980."
+  - "Gusts: up to 34 km/h forecast, normal for here."
+  - "Rain over 6 days: 0.3 mm (0.2 mm measured before the day, plus the day's forecast), normal for here."
 
 Text message (not shown on the page; kept for Phase 2): "Groundtruth Paiporta, Valencia, Spain 15 May 2024: Typical rain, temperature, snow and wind. Storms, ice, landslides not checked. Check official warnings."
 
@@ -440,16 +441,16 @@ Claude: not asked on Typical days (fixed wording).
 Written by code, shown on the page in every mode:
 
 - Level box: "Kolkata, India · 15 Jan 2022" / **Typical** / "for rain, temperature, snow and wind"
-- Line under the level box: "These checks can't see ice on roads, landslides or glacier collapse."
-- Then and now (Recent rain (6-day total)): Now (1992–2022): about 29 times a year; 1951–1980: about 29 times a year
+- Line under the level box: "These checks can't see landslides or glacier collapse."
+- Then and now: not shown
 - Yellow line: "Thunderstorms aren't checked. Follow official weather and storm warnings."
 - The numbers (collapsed):
-  - "Rain on 15 Jan 2022: 0.2 mm forecast. About 186 days a year here, down from about 196 days a year in 1951–1980."
-  - "Feels-like high: 24 °C forecast. About 350 days a year here, about the same as in 1951–1980."
-  - "Feels-like low: 14 °C forecast. About 42 days a year here, down from about 49 days a year in 1951–1980."
+  - "Rain on 15 Jan 2022: 0.2 mm forecast, normal for here."
+  - "Feels-like high: 24 °C forecast, normal for here."
+  - "Feels-like low: 14 °C forecast, normal for here."
   - "Snow: none forecast."
-  - "Gusts: up to 24 km/h forecast. About 242 days a year here, about the same as in 1951–1980."
-  - "Rain over 6 days: 17 mm (16.8 mm measured before the day, plus the day's forecast). About 29 times a year here, about the same as in 1951–1980."
+  - "Gusts: up to 24 km/h forecast, normal for here."
+  - "Rain over 6 days: 17 mm (16.8 mm measured before the day, plus the day's forecast), normal for here."
 
 Text message (not shown on the page; kept for Phase 2): "Groundtruth Kolkata, India 15 Jan 2022: Typical rain, temperature, snow and wind. Storms, ice, landslides not checked. Check official warnings."
 
@@ -461,15 +462,15 @@ Written by code, shown on the page in every mode:
 
 - Level box: "39.43, -0.42 · 27 Feb 2018" / **Typical** / "for rain, temperature, snow and wind"
 - Line under the level box: "These checks can't see ice on roads, landslides or glacier collapse."
-- Then and now (Rain (24 h)): Now (1988–2018): about 6.2 times a year; 1951–1980: about 6.6 times a year
+- Then and now: not shown
 - Yellow line: "Thunderstorms aren't checked. Follow official weather and storm warnings."
 - The numbers (collapsed):
-  - "Rain on 27 Feb 2018: 15 mm forecast. About 6.2 days a year here, down from about 6.6 days a year in 1951–1980."
-  - "Feels-like high: 7.1 °C forecast. About 363 days a year here, about the same as in 1951–1980."
-  - "Feels-like low: 1.8 °C forecast. About 18 days a year here, down from about 26 days a year in 1951–1980."
+  - "Rain on 27 Feb 2018: 15 mm forecast, normal for here."
+  - "Feels-like high: 7.1 °C forecast, normal for here."
+  - "Feels-like low: 1.8 °C forecast, normal for here."
   - "Snow: none forecast."
-  - "Gusts: up to 58 km/h forecast. About 10 days a year here, down from about 11 days a year in 1951–1980."
-  - "Rain over 6 days: 16 mm (0.3 mm measured before the day, plus the day's forecast). About 11 times a year here, down from about 13 times a year in 1951–1980."
+  - "Gusts: up to 58 km/h forecast, normal for here."
+  - "Rain over 6 days: 16 mm (0.3 mm measured before the day, plus the day's forecast), normal for here."
 
 Text message (not shown on the page; kept for Phase 2): "Groundtruth 39.43, -0.42 27 Feb 2018: Typical rain, temperature, snow and wind. Storms, ice, landslides not checked. Check official warnings."
 
@@ -480,16 +481,16 @@ Claude: not asked on Typical days (fixed wording).
 Written by code, shown on the page in every mode:
 
 - Level box: "39.43, -0.42 · 18 Sep 2024" / **Typical** / "for rain, temperature, snow and wind"
-- Line under the level box: "These checks can't see ice on roads, landslides or glacier collapse."
-- Then and now (Rain (24 h)): Now (1994–2024): about 6.2 times a year; 1951–1980: about 6.5 times a year
+- Line under the level box: "These checks can't see landslides or glacier collapse."
+- Then and now: not shown
 - Yellow line: "Thunderstorms aren't checked. Follow official weather and storm warnings."
 - The numbers (collapsed):
-  - "Rain on 18 Sep 2024: 16 mm forecast. About 6.2 days a year here, about the same as in 1951–1980."
-  - "Feels-like high: 24 °C forecast. About 176 days a year here, 1.2 times more often than in 1951–1980."
-  - "Feels-like low: 20 °C forecast. About 255 days a year here, down from about 277 days a year in 1951–1980."
+  - "Rain on 18 Sep 2024: 16 mm forecast, normal for here."
+  - "Feels-like high: 24 °C forecast, normal for here."
+  - "Feels-like low: 20 °C forecast, normal for here."
   - "Snow: none forecast."
-  - "Gusts: up to 24 km/h forecast. About 310 days a year here, about the same as in 1951–1980."
-  - "Rain over 6 days: 16 mm (0.3 mm measured before the day, plus the day's forecast). About 11 times a year here, down from about 13 times a year in 1951–1980."
+  - "Gusts: up to 24 km/h forecast, normal for here."
+  - "Rain over 6 days: 16 mm (0.3 mm measured before the day, plus the day's forecast), normal for here."
 
 Text message (not shown on the page; kept for Phase 2): "Groundtruth 39.43, -0.42 18 Sep 2024: Typical rain, temperature, snow and wind. Storms, ice, landslides not checked. Check official warnings."
 
@@ -505,12 +506,12 @@ Written by code, shown on the page in every mode:
 - Then and now (Snowfall (24 h)): Now (1996–2026): about 1.1 times a year; 1951–1980: about 1.3 times a year — "Snow like this is rarer here now, so people and places may be less prepared for it."
 - Yellow line: "Thunderstorms aren't checked. Follow official weather and storm warnings."
 - The numbers (collapsed):
-  - "Rain on 7 Jan 2026: 5.1 mm forecast. About 49 days a year here, 1.1 times more often than in 1951–1980."
-  - "Feels-like high: -0.6 °C forecast. About 350 days a year here, about the same as in 1951–1980."
-  - "Feels-like low: -6.5 °C forecast. About 12 days a year here, down from about 19 days a year in 1951–1980."
+  - "Rain on 7 Jan 2026: 5.1 mm forecast, normal for here."
+  - "Feels-like high: -0.6 °C forecast, normal for here."
+  - "Feels-like low: -6.5 °C forecast, normal for here."
   - "Snow: 3.0 cm forecast. About 1.1 days a year here, down from about 1.3 days a year in 1951–1980."
-  - "Gusts: up to 36 km/h forecast. About 172 days a year here, 1.1 times more often than in 1951–1980."
-  - "Rain over 6 days: 11 mm (5.5 mm measured before the day, plus the day's forecast). About 33 times a year here, about the same as in 1951–1980."
+  - "Gusts: up to 36 km/h forecast, normal for here."
+  - "Rain over 6 days: 11 mm (5.5 mm measured before the day, plus the day's forecast), normal for here."
 
 Text message (not shown on the page; kept for Phase 2): "Groundtruth Paris, France 7 Jan 2026: Typical rain, temperature, snow and wind. Roads may be icy; ice, storms, landslides not checked. Check official warnings."
 

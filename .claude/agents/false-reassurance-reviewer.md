@@ -27,7 +27,8 @@ The page, top to bottom (`app.py` `show_assessment`): a level box ("place · dat
 "<Level> risk of <hazard>.", or `message.template_headline` in template mode);
 the code-written lines from `message.summary_lines` (raised: "→ action", the ice line, the geological note;
 Typical: the ice note, "These checks can't see…", the geological note) and a small caption; the 48-hour
-hourly strip (live searches for today or later only); "Then and now" (`message.rarity_rows`); the yellow
+hourly strip (live searches for today or later only); "Then and now" (`message.then_and_now`; hidden on Typical days unless the rarest check happens fewer than 5
+times a year); the yellow
 `message.STORM_LINE`, the page's one visible pointer to official warnings. Then three sections that are
 **collapsed by default**: "The numbers" (`message.number_lines`, one line per check, by code), "How sure are we"
 (`message.HOW_SURE_LINES`: official warnings, 25 km grid, forecasts can be too low, weather only / geological
