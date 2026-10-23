@@ -33,6 +33,7 @@ A web app that tells a person, in one plain sentence, how unusual today's weathe
 - No sentence may appear twice on the page (tests/test_page.py checks every replay).
 - One yellow "Not checked" box near the top, on every result: what the checks can't see, and the pointer to official warnings. No separate notes that repeat it.
 - When events are few (fewer than 5 in either period), "Then and now" shows counts ("7 times in 30 years"), not extra caveat sentences.
+- One shared bar scale across "Then and now": the most frequent row on the page sets the scale, so bars compare across cards.
 
 ## Phase 2 (don't build yet)
 - Top priority — Storm heads-up: flag thunderstorm and hail conditions from the forecast (weather codes, CAPE), as an absolute flag because history can't measure storm rarity. Test on the Bayesian and Valencia replays and on ordinary summer storm days. It must use both weather codes and CAPE: the Bayesian forecast showed high CAPE with no thunderstorm codes.

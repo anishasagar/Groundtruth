@@ -18,7 +18,8 @@ OFFICIAL_LINE = risk.ALWAYS_NOTES[0]
 # to official warnings. "ice on roads, " is left out when the ice box shows or the feels-like low is above 5 °C.
 NOT_CHECKED = "Not checked: thunderstorms, {ice}landslides, glacier collapse. Follow official weather and storm warnings."
 NOT_CHECKED_ICE = "ice on roads, "
-NOT_CHECKED_GEOLOGICAL = "For glacier collapse and landslides, check civil protection and geological authorities."
+# The Nepal-Tibet replay (glacier collapse): the box's last sentence ends with this instead of ".".
+NOT_CHECKED_GEOLOGICAL_END = ", and civil protection and geological authorities."
 
 # The line under the level word on a Typical day: what is typical (never "Typical weather").
 TYPICAL_LEVEL_LINE = "for rain, temperature, snow and wind"
@@ -33,8 +34,36 @@ HOW_SURE_LINES = [
 # "About this tool" (cold and snow have no danger line, so they can only be raised by how rare they are here).
 NO_COLD_SNOW_LINES = ("There are no fixed danger lines for cold or snow yet; fixed cold lines need research. "
                       "Those two checks use only how rare the day is here.")
+# "About this tool": how the level is set and what the levels mean (every number from the risk.py settings).
+_DAYS = risk.RECENT_RAIN_DAYS_BEFORE + 1
+_LINES = risk.DANGER_LINES
+HOW_LEVEL_SET = (
+    f"For each check (rain in 24 hours, rain over {_DAYS} days, heat, cold, snow and wind), we count how often a "
+    f"day at least this extreme happened at this spot in the last {risk.RECENT_WINDOW_YEARS} years. "
+    f"Three danger lines ({_LINES['rain_mm']} mm of rain in 24 hours, feels-like {_LINES['feels_like_max_c']} °C, "
+    f"gusts of {_LINES['gust_max_kmh']} km/h) mean at least High, however often they happen here. "
+    "The page shows the worst level of all the checks. "
+    f"The {risk.baseline_label()} figures are only for comparison; they don't change the level."
+)
+
+
+def _once_every(years):
+    return "once a year" if years == 1 else f"once every {years} years"
+
+
+LEVELS_MEAN = [
+    f"Typical: happens more than {_once_every(risk.TYPICAL_IF_MORE_OFTEN_THAN_YEARS)} here.",
+    f"Elevated: about once every {risk.TYPICAL_IF_MORE_OFTEN_THAN_YEARS} to "
+    f"{risk.ELEVATED_IF_MORE_OFTEN_THAN_YEARS} years.",
+    f"High: about once every {risk.ELEVATED_IF_MORE_OFTEN_THAN_YEARS} to {risk.HIGH_IF_MORE_OFTEN_THAN_YEARS} "
+    "years, or past a danger line.",
+    f"Extreme: rarer than {_once_every(risk.HIGH_IF_MORE_OFTEN_THAN_YEARS)}, or never seen here.",
+    f"{risk.NOT_ENOUGH}: we couldn't check reliably; follow official sources.",
+]
 # "Then and now", when the check is less common now than in the comparison period.
 RARER_NOW = "{noun} like this is rarer here now, so people and places may be less prepared for it."
+# "Then and now", when the check wasn't seen in either period (no bars). Names the check, so never said twice.
+NEVER_SEEN = "{noun} like this was never seen here in either period."
 # On Typical days "Then and now" is shown only for a check that happens fewer than this many times a year now
 # (Paris snow, about 1.1: yes; a few tenths of a mm of rain, about 45: no, the section is hidden).
 THEN_AND_NOW_TYPICAL_BELOW_PER_YEAR = 5
@@ -45,9 +74,26 @@ ENOUGH_EVENTS = 5
 THEN_AND_NOW_CAPTION = "How often days like this happen here."
 # Added to the level box when a danger line, not how rare the day is here, set the level.
 HOWEVER_OFTEN = ", however often it happens here"
-# "The numbers": a check that happens at least this many times a year now (and crossed no danger line) is
-# "normal for here", with no rate.
+# "Normal for here": a check that happens fewer than this many times a year now keeps its rate after the value.
 NORMAL_FROM_PER_YEAR = 5
+NORMAL_SMALL_PRINT = "All values are forecasts unless marked measured."
+# Streamlit's built-in Material icons, one per check.
+ICONS = {"rain_mm": ":material/rainy:", "recent_rain_mm": ":material/water_drop:",
+         "feels_like_max_c": ":material/thermostat:", "feels_like_min_c": ":material/severe_cold:",
+         "snow_cm": ":material/weather_snowy:", "gust_max_kmh": ":material/air:"}
+
+# The hero line in the level box on raised days, from the check that set the level and the history at that spot.
+# Rain and snow: the value as a share of an average year's total. "{noun}" is rain or snow.
+HERO_SHARE = {"rain_mm": ("rain", ", forecast in one day"),
+              "recent_rain_mm": ("rain", f" in {risk.RECENT_RAIN_DAYS_BEFORE + 1} days, including the day's forecast"),
+              "snow_cm": ("snow", ", forecast in one day")}
+HERO_SHARE_COLUMN = {"rain_mm": "rain_mm", "recent_rain_mm": "rain_mm", "snow_cm": "snow_cm"}
+# Heat, cold and wind: the last year a day at least this extreme happened here, or none since the record began.
+HERO_SINCE = {"feels_like_max_c": ("The hottest feels-like day here since {year}", "Hotter than any day here since {year}"),
+              "feels_like_min_c": ("The coldest feels-like day here since {year}", "Colder than any day here since {year}"),
+              "gust_max_kmh": ("The strongest gusts here since {year}", "Stronger gusts than any day here since {year}")}
+# No hero line when the last such day was this recent ("the hottest since 2022" on a 2022 date says nothing).
+HERO_RECENT_DAYS = 365
 # The "Not checked" box mentions ice on roads only when the day's feels-like low is at or below this.
 ICE_MENTION_AT_OR_BELOW_C = 5
 ARROW = "→ "
@@ -197,7 +243,7 @@ def not_checked(result, special=None):
     low = _value(result, "feels_like_min_c")
     cold = low is None or low <= ICE_MENTION_AT_OR_BELOW_C  # a missing low counts as cold: over-warn
     text = NOT_CHECKED.format(ice=NOT_CHECKED_ICE if cold and not ice_note(result) else "")
-    return f"{text} {NOT_CHECKED_GEOLOGICAL}" if special == "geological" else text
+    return text[:-1] + NOT_CHECKED_GEOLOGICAL_END if special == "geological" else text
 
 
 def _danger_text(c):
@@ -235,41 +281,82 @@ LEVEL_VALUE = {
 # What "like this" refers to ("Snow like this is rarer here now…").
 NOUN = {"rain_mm": "Rain", "recent_rain_mm": "A wet spell", "feels_like_max_c": "Heat", "feels_like_min_c": "Cold",
         "snow_cm": "Snow", "gust_max_kmh": "Wind"}
-# "The numbers": label and value wording per check. {when} is "today" or "on 4 Jul 2025".
-NUMBER_LABEL = {"rain_mm": "Rain {when}", "recent_rain_mm": "Rain over 6 days", "feels_like_max_c": "Feels-like high",
+# "Normal for here": one quiet line per check, label and value.
+NORMAL_LABEL = {"rain_mm": "Rain in 24 hours", "recent_rain_mm": "Rain over 6 days", "feels_like_max_c": "Feels-like high",
                 "feels_like_min_c": "Feels-like low", "snow_cm": "Snow", "gust_max_kmh": "Gusts"}
-NUMBER_VALUE = {"rain_mm": "{v} forecast", "recent_rain_mm": "{v}", "feels_like_max_c": "{v} forecast",
-                "feels_like_min_c": "{v} forecast", "snow_cm": "{v} forecast", "gust_max_kmh": "up to {v} forecast"}
-# "Then and now": each block's title names the check plainly.
+# "Then and now": each card's title names the check plainly.
 THEN_AND_NOW_TITLE = {"rain_mm": "Rain in 24 hours", "recent_rain_mm": "Rain over 6 days",
                       "feels_like_max_c": "Feels-like heat", "feels_like_min_c": "Feels-like cold",
                       "snow_cm": "Snow in 24 hours", "gust_max_kmh": "Wind gusts"}
-NONE_FORECAST = {"rain_mm", "snow_cm"}  # "Snow: none forecast." (no rate for nothing)
+NONE_FORECAST = {"rain_mm", "snow_cm"}  # "Snow  none forecast" (no rate for nothing)
 
 
-def _days(c, text):
-    """"about 48 times a year" -> "about 48 days a year" (whole days, not wet spells)."""
-    return text if c["key"] == risk.RECENT_RAIN_KEY else text.replace(" times a year", " days a year")
+# ---- the hero line ------------------------------------------------------------
+
+def hero_history_range(date, today=None):
+    """The history `risk.assess` reads for this date: from the record's start to the day before the date."""
+    today = today or dt.date.today()
+    rec_start, rec_end = risk.recent_window(date)
+    return dt.date(min(risk.BASELINE_START_YEAR, rec_start.year), 1, 1), min(rec_end, today - dt.timedelta(days=1))
 
 
-def _how_often(c, baseline_label):
-    """"About once every 15 years here, about the same as in 1951–1980." from the engine's own wording."""
-    now, then = _days(c, c["recent_text"]), _days(c, c["baseline_text"])
-    if not c["recent"]["count"]:  # "A wet spell like this was not seen…" (says which check, so never twice)
-        seen = f"{NOUN[c['key']]} like this was not seen in the {risk.RECENT_WINDOW_YEARS} years before the day"
-        if c["baseline"]["count"]:
-            return f"{seen}; {then} in {baseline_label}."
-        return f"{seen} or in {baseline_label}."
-    now = now[0].upper() + now[1:] + " here"
-    if not c["baseline"]["count"]:
-        return f"{now}; not seen in {baseline_label}."
-    if c["ratio"] < 0.95:
-        return f"{now}, down from {then} in {baseline_label}."
-    if c["ratio"] < 1.05:
-        return f"{now}, about the same as in {baseline_label}."
-    more = c["ratio_text"].replace(" times more common here than", " times more often than")
-    return f"{now}, {more}."
+def _average_year(history, column, date):
+    """The average yearly total of `column` over the full calendar years before the date's year, or None.
 
+    A year missing more than risk.MAX_MISSING_SHARE of its days is left out; fewer than
+    risk.RECENT_WINDOW_YEARS good years left is too thin (None, never a guess).
+    """
+    df = history[history["date"].dt.year < date.year]
+    years = df.groupby(df["date"].dt.year)[column].agg(["sum", "count"])
+    days_in_year = pd.Series([366 if pd.Timestamp(y, 12, 31).dayofyear == 366 else 365 for y in years.index],
+                             index=years.index)
+    good = years[years["count"] >= days_in_year * (1 - risk.MAX_MISSING_SHARE)]
+    return float(good["sum"].mean()) if len(good) >= risk.RECENT_WINDOW_YEARS else None
+
+
+def hero_line(result, history):
+    """The bold line in the level box on raised days (Elevated, High, Extreme), from the check that set the level.
+
+    Rain (24 h or 6 days) and snow: the value as a share of an average year's total here. Heat, cold and wind:
+    the last year a day at least this extreme happened here. None on Typical and Not enough data days, when the
+    history is too thin, or when the last such day was less than HERO_RECENT_DAYS before the date.
+    """
+    if result["level"] not in risk.LEVELS[1:] or history is None or history.empty:
+        return None
+    c = deciding_check(result)
+    if c is None:
+        return None
+    key, value = c["key"], c["value"]
+    known = history.dropna(subset=[HERO_SHARE_COLUMN.get(key, key)])
+    if known.empty:
+        return None
+    first_year = known["date"].min().year
+    if key in HERO_SHARE:
+        noun, tail = HERO_SHARE[key]
+        average = _average_year(history, HERO_SHARE_COLUMN[key], result["date"])
+        if average is None:
+            return None
+        if average <= 0:  # an average year here has none at all
+            return f"More {noun} than any {'day' if key != risk.RECENT_RAIN_KEY else f'{_DAYS} days'} here " \
+                   f"since {first_year}"
+        share = 100 * value / average
+        if share >= 100:
+            return f"More than a year's {noun}{tail}"
+        if share < 1:
+            return f"Less than 1% of a year's {noun}{tail}"
+        return f"About {min(round(share), 99)}% of a year's {noun}{tail}"
+    since, never = HERO_SINCE[key]
+    values = known[key]
+    hits = known[values <= value] if c.get("lower_is_worse") else known[values >= value]
+    if hits.empty:
+        return never.format(year=first_year)
+    last = hits["date"].max().date()
+    if (result["date"] - last).days < HERO_RECENT_DAYS:
+        return None
+    return since.format(year=last.year)
+
+
+# ---- "Then and now" cards -------------------------------------------------------
 
 def _rain_source(rain):
     """How the earlier days' rain is known: "measured", "forecast" or "from past forecasts"."""
@@ -280,49 +367,20 @@ def _rain_source(rain):
     return "from past forecasts"
 
 
-def _then_and_now_value(check):
-    """"107 mm forecast", or for the 6-day total "144 mm (36.7 mm measured plus the day's forecast)"."""
-    value = amount(check["value"], check["unit"])
-    if check["key"] != risk.RECENT_RAIN_KEY:
-        return f"{value} forecast"
-    if check.get("before_total") is None:
-        return f"{value} (including the day's forecast)"
-    return f"{value} ({check['before_total']:.1f} mm {_rain_source(check)} plus the day's forecast)"
+def _rain_parts(rain):
+    """Where the 6-day total comes from: "36.7 mm measured + the day's forecast", "forecast for all 6 days"."""
+    if rain.get("before_total") is None:
+        return "including the day's forecast"
+    if _rain_source(rain) == "forecast":
+        return f"forecast for all {_DAYS} days"
+    return f"{rain['before_total']:.1f} mm {_rain_source(rain)} + the day's forecast"
 
 
-def _rain_before(rain, today_words):
-    """"36.7 mm measured before the day, plus the day's forecast" (where the earlier days' rain came from)."""
-    before, the_day = rain.get("before_total"), today_words
-    if before is None:
-        return None
-    return f"{before:.1f} mm {_rain_source(rain)} before {the_day[0]}, plus {the_day[1]} forecast"
-
-
-def number_lines(result, today=None):
-    """"The numbers": one plain line per check, in the engine's order, then the engine's data notes."""
-    today = today or dt.date.today()
-    is_today = result["date"] == today
-    when = "today" if is_today else f"on {day_text(result['date'])}"
-    the_day = ("today", "today's") if is_today else ("the day", "the day's")
-    lines = []
-    for c in result["checks"]:
-        label = NUMBER_LABEL[c["key"]].format(when=when)
-        if c["level"] == risk.NOT_ENOUGH:
-            lines.append(f"{label}: not enough data.")
-            continue
-        if c["key"] in NONE_FORECAST and c["value"] == 0:
-            lines.append(f"{label}: none forecast.")
-            continue
-        value = NUMBER_VALUE[c["key"]].format(v=amount(c["value"], c["unit"]))
-        if c["key"] == risk.RECENT_RAIN_KEY and _rain_before(c, the_day):
-            value += f" ({_rain_before(c, the_day)})"
-        if c["recent"]["per_year"] >= NORMAL_FROM_PER_YEAR and not c.get("crosses_danger_line"):
-            line = f"{label}: {value}, normal for here."
-        else:
-            line = f"{label}: {value}{_danger_text(c)}. {_how_often(c, result['baseline_label'])}"
-        lines.append(" ".join([line, *c["notes"]]))
-    lines += result["notes"][: len(result["notes"]) - len(risk.ALWAYS_NOTES)]
-    return lines
+def _value_note(c):
+    """The small words after a card's value: "forecast", with its danger line when crossed."""
+    if c["key"] == risk.RECENT_RAIN_KEY:
+        return _rain_parts(c)
+    return "forecast" + _danger_text(c)
 
 
 def less_common_now(c):
@@ -342,44 +400,95 @@ def _count_text(count, years, never_text):
     return f"{'once' if count == 1 else f'{count} times'} in {years:.0f} years"
 
 
-def _then_and_now_block(check, result):
-    """One check's two rows: now first, then the comparison period (label, per_year, width 0-1, words), with
-    title ("Rain in 24 hours: 107 mm forecast") and rarer_now (RARER_NOW, or None).
+def _card(check, result):
+    """One check's card (widths are filled in by then_and_now, on one scale for the whole section).
 
-    When either period has fewer than 5 such days (or wet spells), both rows give counts, not rates.
+    rows: now first, then the comparison period (label, per_year, words). Counts ("2 times in 30 years") when
+    either period has fewer than ENOUGH_EVENTS such days (or wet spells), else the engine's rate. No rows when
+    neither period saw it: `never` says so instead.
     """
     few = min(check["recent"]["count"], check["baseline"]["count"]) < ENOUGH_EVENTS
+    never = _events(check) == 0
     periods = [(f"Now ({result['recent_label']})", check["recent"], check["recent_text"]),
                (result["baseline_label"], check["baseline"], check["baseline_text"])]
-    top = max(p["per_year"] for _, p, _ in periods)
-    rows = [{"label": label, "per_year": p["per_year"], "width": (p["per_year"] / top) if top else 0.0,
-             "words": _count_text(p["count"], p["years"], words) if few else words}
-            for label, p, words in periods]
-    return {"check": check, "rows": rows, "name": check["name"], "counts": few,
-            "title": f"{THEN_AND_NOW_TITLE[check['key']]}: {_then_and_now_value(check)}",
+    rows = [] if never else [
+        {"label": label, "per_year": p["per_year"], "width": 0.0,
+         "words": _count_text(p["count"], p["years"], words) if few else words}
+        for label, p, words in periods]
+    return {"check": check, "key": check["key"], "name": check["name"], "title": THEN_AND_NOW_TITLE[check["key"]],
+            "chip": None if check["level"] == "Typical" else check["level"],
+            "value": amount(check["value"], check["unit"]), "value_note": _value_note(check),
+            "counts": few, "rows": rows,
+            "never": NEVER_SEEN.format(noun=NOUN[check["key"]]) if never else None,
             "rarer_now": RARER_NOW.format(noun=NOUN[check["key"]])
             if less_common_now(check) and _events(check) >= ENOUGH_EVENTS else None}
 
 
-def then_and_now(result):
-    """The "Then and now" blocks (0, 1 or 2).
+def card_checks(result):
+    """The checks shown as cards, worst level first, then rarest first (engine order on a tie).
 
-    Typical: the rarest check, only when it happens fewer than 5 times a year now (else none: the section is
-    hidden). Raised: the check that set the level; when it has fewer than 5 such days in both periods together,
-    also the next raised check (rarest first) that has 5 or more. Not enough data: none.
+    Every check at Elevated or higher (also on a Not enough data day, so a raised reading is never hidden).
+    On a Typical day: only checks that happen fewer than THEN_AND_NOW_TYPICAL_BELOW_PER_YEAR times a year now.
     """
-    check = deciding_check(result)
-    if check is None:
-        return []
-    if result["level"] == "Typical" and check["recent"]["per_year"] >= THEN_AND_NOW_TYPICAL_BELOW_PER_YEAR:
-        return []
-    blocks = [_then_and_now_block(check, result)]
-    if result["level"] != "Typical" and _events(check) < ENOUGH_EVENTS:
-        others = [c for c in result["checks"] if c is not check and c["level"] in risk.LEVELS[1:] and "recent" in c
-                  and _events(c) >= ENOUGH_EVENTS]
-        if others:
-            blocks.append(_then_and_now_block(min(others, key=lambda c: c["recent"]["per_year"]), result))
-    return blocks
+    checks = [c for c in result["checks"] if "recent" in c]
+    if result["level"] == "Typical":
+        chosen = [c for c in checks if c["recent"]["per_year"] < THEN_AND_NOW_TYPICAL_BELOW_PER_YEAR]
+    else:
+        chosen = [c for c in checks if c["level"] in risk.LEVELS[1:]]
+    return sorted(chosen, key=lambda c: (-risk.LEVELS.index(c["level"]), c["recent"]["per_year"]))
+
+
+def then_and_now(result):
+    """The "Then and now" cards (none: the section is hidden).
+
+    The bars share one scale across the section: the most frequent row gets width 1.0, every other row its
+    rate divided by that one.
+    """
+    cards = [_card(c, result) for c in card_checks(result)]
+    top = max((r["per_year"] for card in cards for r in card["rows"]), default=0)
+    for card in cards:
+        for r in card["rows"]:
+            r["width"] = r["per_year"] / top if top else 0.0
+    return cards
+
+
+# ---- "Normal for here" ------------------------------------------------------------
+
+def normal_lines(result):
+    """"Normal for here": (key, label, value) for each check not shown as a card, in the engine's order.
+
+    A check that happens fewer than NORMAL_FROM_PER_YEAR times a year keeps its rate after the value.
+    Checks with not enough data are in not_enough_lines instead.
+    """
+    shown = {id(c) for c in card_checks(result)}
+    lines = []
+    for c in result["checks"]:
+        if id(c) in shown or c["level"] == risk.NOT_ENOUGH:
+            continue
+        label = NORMAL_LABEL[c["key"]]
+        if c["key"] in NONE_FORECAST and c["value"] == 0:
+            lines.append((c["key"], label, "none forecast"))
+            continue
+        value = amount(c["value"], c["unit"])
+        if c["key"] == "gust_max_kmh":
+            value = f"up to {value}"
+        if c["key"] == risk.RECENT_RAIN_KEY and _rain_source(c) != "forecast" and c.get("before_total") is not None:
+            value += f" ({_rain_parts(c)})"
+        if c["recent"]["per_year"] < NORMAL_FROM_PER_YEAR:
+            value += f" · {c['recent_text']}"
+        lines.append((c["key"], label, value))
+    return lines
+
+
+def not_enough_lines(result):
+    """"Gusts: not enough data." for each check the engine couldn't run."""
+    return [f"{NORMAL_LABEL[c['key']]}: not enough data." for c in result["checks"] if c["level"] == risk.NOT_ENOUGH]
+
+
+def data_notes(result):
+    """The engine's notes about the data: each check's own, then the result's (not the always-shown ones)."""
+    return [n for c in result["checks"] for n in c["notes"]] \
+        + result["notes"][: len(result["notes"]) - len(risk.ALWAYS_NOTES)]
 
 
 def _ascii(text):

@@ -26,7 +26,7 @@ Nothing calls Open-Meteo or Claude: it only uses the saved data in `data/` and t
      "Not checked" box,
    - adds **"Level changes since the last run"** (or "None."),
    - adds **"Full output per case"**, in screen order: everything code writes on the page (the level box, the
-     headline, the lines under it, then and now, the numbers), the text message (kept in code, not on the page),
+     hero line, the headline, the lines under it, the Then and now cards, Normal for here), the text message (kept in code, not on the page),
      and, for reference only, Claude's saved headline (Claude is switched off on the page; kept for Phase 2)
      with how many tries it took and whether it still passes the guardrail.
 3. Read the new sections of TESTLOG.md and tell the user, in plain language:
