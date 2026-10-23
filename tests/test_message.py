@@ -460,7 +460,11 @@ def about_cases():
     assert (risk.TYPICAL_IF_MORE_OFTEN_THAN_YEARS, risk.ELEVATED_IF_MORE_OFTEN_THAN_YEARS,
             risk.HIGH_IF_MORE_OFTEN_THAN_YEARS) == (1, 5, 20)
     assert risk.NOT_ENOUGH == "Not enough data"
-    print("ok: About this tool (wording and numbers match risk.py)")
+    # The line under the "Then and now" heading: both periods, the numbers from the settings.
+    assert message.THEN_AND_NOW_CAPTION == (
+        "How often days like this happen here: in the 30 years before this date, and in 1951–1980, the period "
+        "scientists use as a baseline for measuring warming."), message.THEN_AND_NOW_CAPTION
+    print("ok: About this tool and the Then and now line (wording and numbers match risk.py)")
 
 
 def hourly_cases():
