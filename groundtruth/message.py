@@ -71,7 +71,9 @@ THEN_AND_NOW_TYPICAL_BELOW_PER_YEAR = 5
 # not rates. Fewer in both periods together: the next raised check is shown too, and no "rarer here now".
 ENOUGH_EVENTS = 5
 # Under the "Then and now" heading.
-THEN_AND_NOW_CAPTION = "How often days like this happen here."
+THEN_AND_NOW_CAPTION = (f"How often days like this happen here: in the {risk.RECENT_WINDOW_YEARS} years before this "
+                        f"date, and in {risk.baseline_label()}, the period scientists use as a baseline for measuring "
+                        "warming.")
 # Added to the level box when a danger line, not how rare the day is here, set the level.
 HOWEVER_OFTEN = ", however often it happens here"
 # "Normal for here": a check that happens fewer than this many times a year now keeps its rate after the value.

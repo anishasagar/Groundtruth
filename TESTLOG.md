@@ -301,7 +301,7 @@ On the page (every word written by code):
 - Headline: "Extreme risk of heavy rain."
 - Line under the headline: "→ Avoid underpasses, low roads and riverbanks."
 - Line under the headline: "Not checked: thunderstorms, landslides, glacier collapse. Follow official weather and storm warnings."
-- Then and now: "How often days like this happen here."
+- Then and now: "How often days like this happen here: in the 30 years before this date, and in 1951–1980, the period scientists use as a baseline for measuring warming."
   - Rain in 24 hours [Extreme] — 202 mm forecast — "Rain like this was never seen here in either period."
   - Rain over 6 days [Extreme] — 257 mm 54.9 mm measured + the day's forecast — "A wet spell like this was never seen here in either period."
 - Normal for here (4) (collapsed):
@@ -322,7 +322,7 @@ On the page (every word written by code):
 - Headline: "High risk of heavy rain."
 - Line under the headline: "→ Avoid underpasses, low roads and riverbanks."
 - Line under the headline: "Not checked: thunderstorms, landslides, glacier collapse. Follow official weather and storm warnings."
-- Then and now: "How often days like this happen here."
+- Then and now: "How often days like this happen here: in the 30 years before this date, and in 1951–1980, the period scientists use as a baseline for measuring warming."
   - Rain in 24 hours [High] — 107 mm forecast — Now (1995–2025): 2 times in 30 years (bar 0.29); 1951–1980: 2 times in 30 years (bar 0.29)
   - Rain over 6 days [Elevated] — 144 mm 36.7 mm measured + the day's forecast — Now (1995–2025): 7 times in 30 years (bar 1.00); 1951–1980: 2 times in 30 years (bar 0.29)
 - Normal for here (4) (collapsed):
@@ -343,7 +343,7 @@ On the page (every word written by code):
 - Headline: "High risk of dangerous feels-like heat."
 - Line under the headline: "→ Avoid heavy exertion outdoors, drink water, and check on older or vulnerable people."
 - Line under the headline: "Not checked: thunderstorms, landslides, glacier collapse. Follow official weather and storm warnings."
-- Then and now: "How often days like this happen here."
+- Then and now: "How often days like this happen here: in the 30 years before this date, and in 1951–1980, the period scientists use as a baseline for measuring warming."
   - Feels-like heat [High] — 41 °C forecast — Now (1992–2022): about 48 times a year (bar 1.00); 1951–1980: about 34 times a year (bar 0.70)
 - Normal for here (5) (collapsed):
   - Rain in 24 hours  8.2 mm, normal for here
@@ -472,7 +472,7 @@ On the page (every word written by code):
 - Headline: none (Typical days have none)
 - Line under the headline: "Roads may be icy; ice itself isn't checked."
 - Line under the headline: "Not checked: thunderstorms, landslides, glacier collapse. Follow official weather and storm warnings."
-- Then and now: "How often days like this happen here."
+- Then and now: "How often days like this happen here: in the 30 years before this date, and in 1951–1980, the period scientists use as a baseline for measuring warming."
   - Snow in 24 hours — 3.0 cm forecast — Now (1996–2026): about 1.1 times a year (bar 0.85); 1951–1980: about 1.3 times a year (bar 1.00) — "Snow like this is rarer here now, so people and places may be less prepared for it."
 - Normal for here (5) (collapsed):
   - Rain in 24 hours  5.1 mm, normal for here
