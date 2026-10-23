@@ -1,5 +1,7 @@
 """Checks on the page itself, every replay rendered with Streamlit's test runner (no Open-Meteo, no Claude).
 
+Every word on the page is written by code: app.py never uses Claude (groundtruth/claude_text.py, kept for Phase 2).
+
 Run from the project folder:  python tests/test_page.py
 """
 
@@ -71,16 +73,29 @@ def render(name):
     return at
 
 
+def no_claude_in_app():
+    """app.py doesn't import or call Claude (CLAUDE.md rule 9: any Claude text must be marked; there is none)."""
+    source = (ROOT / "app.py").read_text()
+    code = "\n".join(line for line in source.splitlines() if not line.lstrip().startswith("#"))
+    assert "claude_text" not in code and "anthropic" not in code, "app.py uses Claude"
+    print("ok: app.py doesn't use Claude")
+
+
 def main():
+    no_claude_in_app()
     for case in replays.load_replays():
         name = case["name"]
         at = render(name)
         warnings = texts(at.warning)
         with weather.offline():
             result = risk.assess(float(case["latitude"]), float(case["longitude"]), dt.date.fromisoformat(case["date"]))
-        # Yellow boxes: the ice line (on ice days) and the storm line on every result.
+        # Yellow boxes: the ice box (on ice days) and the "Not checked" box on every result.
+        special = replays.SPECIAL_NOTES.get(name)
         ice = [message.ICE_SMS] if message.ice_note(result) else []
-        assert warnings == ice + [message.STORM_LINE], f"{name}: yellow boxes: {warnings}"
+        assert warnings == ice + [message.not_checked(result, special)], f"{name}: yellow boxes: {warnings}"
+        # The headline is written by code: "<Level> risk of <hazard>." on raised days, none on Typical days.
+        title = message.headline(result)
+        assert [h.value for h in at.markdown if h.value.startswith("### ")] == ([f"### {title}"] if title else []), name
         shown = visible_text(at)
         # The yellow line is the one visible pointer to official warnings.
         assert message.OFFICIAL_LINE not in shown and "Check your official weather warnings" not in shown, name
@@ -92,6 +107,8 @@ def main():
         how_sure = next(e for e in at.expander if e.label == "How sure are we")
         assert [m.value for m in how_sure.markdown] == ["\n".join(f"- {x}" for x in message.HOW_SURE_LINES)], name
         assert "Written by Claude" not in everything and "The detailed numbers" not in everything, name
+        assert "Template mode" not in everything and "how often days" not in everything.replace(
+            message.THEN_AND_NOW_CAPTION, ""), f"{name}: template notes and per-block captions are gone"
         assert "are ignored" not in everything, f"{name}: the old replay note"
         said = sentences(all_text(at))
         twice = sorted({x for x in said if said.count(x) > 1})
@@ -99,13 +116,20 @@ def main():
         # The replay fills the place and date fields.
         assert at.text_input(key="query").value == replays.place_of(case), name
         assert at.date_input(key="date").value == dt.date.fromisoformat(case["date"]), name
-        assert ("Then and now" in texts(at.subheader)) == bool(message.then_and_now(result)), f"{name}: then and now"
-        assert "standard wording" not in shown, f"{name}: the Typical caption moved to About this tool"
+        blocks = message.then_and_now(result)
+        assert ("Then and now" in texts(at.subheader)) == bool(blocks), f"{name}: then and now"
+        assert (message.THEN_AND_NOW_CAPTION in texts(at.caption)) == bool(blocks), name
+        for block in blocks:
+            assert f"**{block['title']}**" in texts(at.markdown), f"{name}: {block['title']}"
         about = next(e for e in at.expander if e.label == "About this tool")
-        assert "same standard wording every time" in about.markdown[0].value, name
+        assert "fixed wording written by code" in about.markdown[0].value, name
+        assert any(c.value.startswith("Forecast: ") for c in about.caption), f"{name}: sources in About this tool"
+        numbers = next(e for e in at.expander if e.label == "The numbers")
+        assert not any(c.value.startswith("Forecast: ") for c in numbers.caption), f"{name}: sources moved"
         assert "Next 48 hours" not in shown, f"{name}: no hourly strip on a replay"
-        geological = replays.SPECIAL_NOTES.get(name) == "geological"
-        assert (message.GEOLOGICAL_NOTE in shown) == geological, f"{name}: geological note"
+        geological = special == "geological"
+        assert (message.NOT_CHECKED_GEOLOGICAL in shown) == geological, f"{name}: geological sentence"
+        assert message.GEOLOGICAL_NOTE not in shown, f"{name}: the separate geological note is gone"
         assert shown.count("Phase 2") == 2, f"{name}: the two Phase 2 cards"
         print(f"ok: {name}")
 

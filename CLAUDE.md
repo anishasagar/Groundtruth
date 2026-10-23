@@ -15,12 +15,13 @@ A web app that tells a person, in one plain sentence, how unusual today's weathe
 6. Say what the data can't see: the history data is a ~25 km grid and misses very local storms. Groundtruth covers weather-driven hazards only. For geological hazards (landslides, glacier collapse, earthquakes), point people to local civil protection and geological authorities.
 7. Never claim climate change caused an event or made it "X times more likely". That is attribution, which needs climate models. Say only what the data shows: "days like this are X times more common here than in 1951–1980".
 8. 'Normal' may only describe what a check measures, compared with the recent 30 years. It never means safe.
+9. Any text written by Claude that appears on the page must be shown in purple with a small "written by Claude" label, so AI-written text is always visible.
 
 ## How we build
 - Python + Streamlit. Keep it small: streamlit, pandas, requests, anthropic. No other frameworks.
 - Data: Open-Meteo (forecast, historical weather, historical forecast, geocoding). No key. Footer: "Weather data by Open-Meteo.com".
 - The Claude key is read from st.secrets or the environment variable GROUNDTRUTH_CLAUDE_KEY. Never write keys into files.
-- If the Claude call or the guardrail check fails, show the template sentence labelled "template mode".
+- Every word on the page is fixed wording written by code. Claude is switched off on the page (it kept drifting towards reassurance); `claude_text.py`, the guardrail, its tests and the saved replies are kept for Phase 2. If Claude text comes back, follow rule 9, and if the Claude call or the guardrail check fails, show the code-written wording.
 - Test cases live in tests/cases.csv. After any change to the risk logic or the prompt, run the replay check and update TESTLOG.md.
 - Never lower a level just to make a test case pass. Explain why first.
 - Time periods (provisional, may change before the demo): the comparison line uses 1951–1980; the level uses the most recent 30 years before the date. Both live in one settings section in the risk engine.

@@ -1,6 +1,6 @@
 # Test log
 
-Last run: 2026-10-22 with `python scripts/replay.py`.
+Last run: 2026-10-23 with `python scripts/replay.py`.
 1 case(s) pending: their test day hasn't been picked yet.
 Settings: comparison period 1951–1980; the level uses the 30 years before this date; recent rain = 5 days before + the date.
 
@@ -20,9 +20,9 @@ Each check cell shows the wording the app shows, then that check's level. Typica
 | Paris snow and cold | 2026-01-07 | **Typical** | Rain (24 h), Feels-like heat, Feels-like cold, Snowfall (24 h), Wind gust, Recent rain (6-day total) | Normal rain for here (5.1 mm) → Typical | Normal highs for here (feels like up to -1 °C) → Typical | Normal lows for here (feels like down to -6 °C) → Typical | Normal snowfall for here (3.0 cm) → Typical | Normal wind for here (gusts up to 36 km/h; the data misses sudden local storm gusts) → Typical | Normal rain for the last 6 days (10.6 mm) → Typical | Typical. Honest limit: the danger came from snow falling on freezing, unprepared roads. Ice risk and local preparedness aren't checked yet. | yes |
 | Ordinary snow, Montreal | — | pending | — | — | — | — | — | — | — | Pending: day not picked yet (scripts/save_replay_data.py picks it). Expect Typical: snow is routine here. | — |
 
-## Claude text (saved replies)
+## Claude text (saved replies, kept for Phase 2)
 
-Each replay shows Claude's saved text (claude-sonnet-5-5) only if its fingerprint still matches the facts, prompt and model, and it passes the guardrail check again. Otherwise the app shows the template sentence. Refill with `python scripts/save_claude_replies.py`.
+The app doesn't use Claude: every word on the page is written by code. These saved replies (claude-sonnet-5-5) are kept for Phase 2 and still checked: each is valid only if its fingerprint matches the facts, prompt and model, and it passes the guardrail again. Refill with `python scripts/save_claude_replies.py`.
 
 | Replay | Level | Text shown | Claude's headline |
 |---|---|---|---|
@@ -269,21 +269,21 @@ Each replay shows Claude's saved text (claude-sonnet-5-5) only if its fingerprin
 
 ## Replay check: date, level and sentence
 
-Added by the replay-check skill on 2026-10-22. "Previous level" is the level in TESTLOG.md before this run.
+Added by the replay-check skill on 2026-10-23. "Previous level" is the level in TESTLOG.md before this run.
 
-| Case | Date | Level | Previous level | Sentence shown | Template sentence | Claude tries |
-|---|---|---|---|---|---|---|
-| Valencia flash flood | 2024-10-29 | **Extreme** | Extreme | Claude: Extreme risk of heavy rain. | Risk here on this day is extremely high. Avoid underpasses, low roads and riverbanks. | 1 |
-| Texas Hill Country flood | 2025-07-04 | **High** | High | Claude: High risk of heavy rain. | Risk here on this day is unusually high. Avoid underpasses, low roads and riverbanks. | 1 |
-| Kolkata heat (KK concert) | 2022-05-31 | **High** | High | Claude: High risk of dangerous feels-like heat. | Risk here on this day is unusually high. Avoid heavy exertion outdoors, drink water, and check on older or vulnerable people. | 1 |
-| Bayesian sinking | 2024-08-19 | **Typical** | Typical | fixed wording: Typical for rain, temperature, snow and wind. These checks can't see ice on roads, landslides or glacier collapse. | Typical rain, temperature, snow and wind for here. These checks can't see thunderstorms, ice on roads, or landslides and glacier collapse. | — |
-| Nepal-Tibet glacier-collapse flood | 2026-08-26 | **Typical** | Typical | fixed wording: Typical for rain, temperature, snow and wind. These checks can't see ice on roads, landslides or glacier collapse. | Typical rain, temperature, snow and wind for here. These checks can't see thunderstorms, ice on roads, or landslides and glacier collapse. | — |
-| Calm control 1, Paiporta | 2024-05-15 | **Typical** | Typical | fixed wording: Typical for rain, temperature, snow and wind. These checks can't see ice on roads, landslides or glacier collapse. | Typical rain, temperature, snow and wind for here. These checks can't see thunderstorms, ice on roads, or landslides and glacier collapse. | — |
-| Calm control 2, Kolkata | 2022-01-15 | **Typical** | Typical | fixed wording: Typical for rain, temperature, snow and wind. These checks can't see ice on roads, landslides or glacier collapse. | Typical rain, temperature, snow and wind for here. These checks can't see thunderstorms, ice on roads, or landslides and glacier collapse. | — |
-| Ordinary rain 1, Paiporta (winter) | 2018-02-27 | **Typical** | Typical | fixed wording: Typical for rain, temperature, snow and wind. These checks can't see ice on roads, landslides or glacier collapse. | Typical rain, temperature, snow and wind for here. These checks can't see thunderstorms, ice on roads, or landslides and glacier collapse. | — |
-| Ordinary rain 2, Paiporta (autumn) | 2024-09-18 | **Typical** | Typical | fixed wording: Typical for rain, temperature, snow and wind. These checks can't see ice on roads, landslides or glacier collapse. | Typical rain, temperature, snow and wind for here. These checks can't see thunderstorms, ice on roads, or landslides and glacier collapse. | — |
-| Paris snow and cold | 2026-01-07 | **Typical** | Typical | fixed wording: Typical for rain, temperature, snow and wind. These checks can't see ice on roads, landslides or glacier collapse. | Typical rain, temperature, snow and wind for here. These checks can't see thunderstorms, ice on roads, or landslides and glacier collapse. Snow or rain on freezing ground can make roads icy, and ice isn't checked. | — |
-| Ordinary snow, Montreal | — | pending | pending | — | — | — |
+| Case | Date | Level | Previous level | Headline shown (code) | Not checked box |
+|---|---|---|---|---|---|
+| Valencia flash flood | 2024-10-29 | **Extreme** | Extreme | Extreme risk of heavy rain. | Not checked: thunderstorms, landslides, glacier collapse. Follow official weather and storm warnings. |
+| Texas Hill Country flood | 2025-07-04 | **High** | High | High risk of heavy rain. | Not checked: thunderstorms, landslides, glacier collapse. Follow official weather and storm warnings. |
+| Kolkata heat (KK concert) | 2022-05-31 | **High** | High | High risk of dangerous feels-like heat. | Not checked: thunderstorms, landslides, glacier collapse. Follow official weather and storm warnings. |
+| Bayesian sinking | 2024-08-19 | **Typical** | Typical | (no headline) Typical for rain, temperature, snow and wind | Not checked: thunderstorms, landslides, glacier collapse. Follow official weather and storm warnings. |
+| Nepal-Tibet glacier-collapse flood | 2026-08-26 | **Typical** | Typical | (no headline) Typical for rain, temperature, snow and wind | Not checked: thunderstorms, landslides, glacier collapse. Follow official weather and storm warnings. For glacier collapse and landslides, check civil protection and geological authorities. |
+| Calm control 1, Paiporta | 2024-05-15 | **Typical** | Typical | (no headline) Typical for rain, temperature, snow and wind | Not checked: thunderstorms, landslides, glacier collapse. Follow official weather and storm warnings. |
+| Calm control 2, Kolkata | 2022-01-15 | **Typical** | Typical | (no headline) Typical for rain, temperature, snow and wind | Not checked: thunderstorms, landslides, glacier collapse. Follow official weather and storm warnings. |
+| Ordinary rain 1, Paiporta (winter) | 2018-02-27 | **Typical** | Typical | (no headline) Typical for rain, temperature, snow and wind | Not checked: thunderstorms, ice on roads, landslides, glacier collapse. Follow official weather and storm warnings. |
+| Ordinary rain 2, Paiporta (autumn) | 2024-09-18 | **Typical** | Typical | (no headline) Typical for rain, temperature, snow and wind | Not checked: thunderstorms, landslides, glacier collapse. Follow official weather and storm warnings. |
+| Paris snow and cold | 2026-01-07 | **Typical** | Typical | (no headline) Typical for rain, temperature, snow and wind | Not checked: thunderstorms, landslides, glacier collapse. Follow official weather and storm warnings. |
+| Ordinary snow, Montreal | — | pending | pending | — | — |
 
 ### Level changes since the last run
 
@@ -291,16 +291,18 @@ None.
 
 ### Full output per case
 
-The actual text a person would see, in screen order: what code writes on every day (level box, the lines under it, then and now, the yellow line, the numbers), the template headline on raised days (shown whenever Claude or the guardrail fails), and Claude's saved headline (Claude writes only the headline) with how many tries it took. The text message is kept in code for Phase 2 but no longer shown on the page.
+The actual text a person would see, in screen order. Every word on the page is written by code; Claude is switched off (kept for Phase 2), and its saved headline is listed only for reference.
 
 #### Valencia flash flood — 2024-10-29 — Extreme
 
-Written by code, shown on the page in every mode:
+On the page (every word written by code):
 
 - Level box: "Paiporta, Valencia, Spain · 29 Oct 2024" / **Extreme** / "202 mm of rain forecast in 24 h, above the 150 mm danger line; 257 mm of rain over 6 days"
-- Line under the level box: "→ Avoid underpasses, low roads and riverbanks."
-- Then and now (Rain (24 h)): Now (1994–2024): not seen in those 30 years; 1951–1980: not seen in 1951–1980
-- Yellow line: "Thunderstorms aren't checked. Follow official weather and storm warnings."
+- Headline: "Extreme risk of heavy rain."
+- Line under the headline: "→ Avoid underpasses, low roads and riverbanks."
+- Line under the headline: "Not checked: thunderstorms, landslides, glacier collapse. Follow official weather and storm warnings."
+- Then and now: "How often days like this happen here."
+  - Rain in 24 hours: 202 mm forecast — Now (1994–2024): not seen in those 30 years; 1951–1980: not seen in 1951–1980
 - The numbers (collapsed):
   - "Rain on 29 Oct 2024: 202 mm forecast, above the 150 mm danger line. Rain like this was not seen in the 30 years before the day or in 1951–1980."
   - "Feels-like high: 20 °C forecast, normal for here."
@@ -311,24 +313,19 @@ Written by code, shown on the page in every mode:
 
 Text message (not shown on the page; kept for Phase 2): "Groundtruth Paiporta, Valencia, Spain 29 Oct 2024: Extreme risk. Rain 202 mm forecast. Avoid low roads and riverbanks. Check official warnings."
 
-Template mode (when Claude's text isn't used):
-
-- Headline: "Risk here on this day is extremely high."
-- Then the lines under the level box above (action: "Avoid underpasses, low roads and riverbanks.")
-
-Claude's saved reply (1 try) — passes the guardrail (shown in the app):
-
-- Headline: "Extreme risk of heavy rain."
+Claude's saved headline (kept for Phase 2, not shown on the page; 1 try; passes the guardrail): "Extreme risk of heavy rain."
 
 #### Texas Hill Country flood — 2025-07-04 — High
 
-Written by code, shown on the page in every mode:
+On the page (every word written by code):
 
 - Level box: "Texas Hill Country, USA · 4 Jul 2025" / **High** / "107 mm of rain forecast in 24 h"
-- Line under the level box: "→ Avoid underpasses, low roads and riverbanks."
-- Then and now (Rain (24 h)): Now (1995–2025): about once every 15 years; 1951–1980: about once every 15 years — "Too few days like this in either period to say whether it has changed."
-- Then and now (Recent rain (6-day total)): Now (1995–2025): about once every 4.3 years; 1951–1980: about once every 15 years — "Based on only a few events, so treat this as a rough sign."
-- Yellow line: "Thunderstorms aren't checked. Follow official weather and storm warnings."
+- Headline: "High risk of heavy rain."
+- Line under the headline: "→ Avoid underpasses, low roads and riverbanks."
+- Line under the headline: "Not checked: thunderstorms, landslides, glacier collapse. Follow official weather and storm warnings."
+- Then and now: "How often days like this happen here."
+  - Rain in 24 hours: 107 mm forecast — Now (1995–2025): 2 times in 30 years; 1951–1980: 2 times in 30 years
+  - Rain over 6 days: 144 mm (36.7 mm measured plus the day's forecast) — Now (1995–2025): 7 times in 30 years; 1951–1980: 2 times in 30 years
 - The numbers (collapsed):
   - "Rain on 4 Jul 2025: 107 mm forecast. About once every 15 years here, about the same as in 1951–1980."
   - "Feels-like high: 29 °C forecast, normal for here."
@@ -339,23 +336,18 @@ Written by code, shown on the page in every mode:
 
 Text message (not shown on the page; kept for Phase 2): "Groundtruth Texas Hill Country, USA 4 Jul 2025: High risk. Rain 107 mm forecast. Avoid low roads and riverbanks. Check official warnings."
 
-Template mode (when Claude's text isn't used):
-
-- Headline: "Risk here on this day is unusually high."
-- Then the lines under the level box above (action: "Avoid underpasses, low roads and riverbanks.")
-
-Claude's saved reply (1 try) — passes the guardrail (shown in the app):
-
-- Headline: "High risk of heavy rain."
+Claude's saved headline (kept for Phase 2, not shown on the page; 1 try; passes the guardrail): "High risk of heavy rain."
 
 #### Kolkata heat (KK concert) — 2022-05-31 — High
 
-Written by code, shown on the page in every mode:
+On the page (every word written by code):
 
-- Level box: "Kolkata, India · 31 May 2022" / **High** / "Feels like 41 °C forecast, above the 40 °C danger line"
-- Line under the level box: "→ Avoid heavy exertion outdoors, drink water, and check on older or vulnerable people."
-- Then and now (Feels-like heat): Now (1992–2022): about 48 times a year; 1951–1980: about 34 times a year — "This is at or above the danger line, so it matters however often it happens here."
-- Yellow line: "Thunderstorms aren't checked. Follow official weather and storm warnings."
+- Level box: "Kolkata, India · 31 May 2022" / **High** / "Feels like 41 °C forecast, above the 40 °C danger line, however often it happens here"
+- Headline: "High risk of dangerous feels-like heat."
+- Line under the headline: "→ Avoid heavy exertion outdoors, drink water, and check on older or vulnerable people."
+- Line under the headline: "Not checked: thunderstorms, landslides, glacier collapse. Follow official weather and storm warnings."
+- Then and now: "How often days like this happen here."
+  - Feels-like heat: 41 °C forecast — Now (1992–2022): about 48 times a year; 1951–1980: about 34 times a year
 - The numbers (collapsed):
   - "Rain on 31 May 2022: 8.2 mm forecast, normal for here."
   - "Feels-like high: 41 °C forecast, above the 40 °C danger line. About 48 days a year here, 1.4 times more often than in 1951–1980."
@@ -366,23 +358,16 @@ Written by code, shown on the page in every mode:
 
 Text message (not shown on the page; kept for Phase 2): "Groundtruth Kolkata, India 31 May 2022: High risk. Feels-like 41 C forecast. Avoid exertion, drink water, check on older people. Check official warnings."
 
-Template mode (when Claude's text isn't used):
-
-- Headline: "Risk here on this day is unusually high."
-- Then the lines under the level box above (action: "Avoid heavy exertion outdoors, drink water, and check on older or vulnerable people.")
-
-Claude's saved reply (1 try) — passes the guardrail (shown in the app):
-
-- Headline: "High risk of dangerous feels-like heat."
+Claude's saved headline (kept for Phase 2, not shown on the page; 1 try; passes the guardrail): "High risk of dangerous feels-like heat."
 
 #### Bayesian sinking — 2024-08-19 — Typical
 
-Written by code, shown on the page in every mode:
+On the page (every word written by code):
 
 - Level box: "Porticello, Sicily, Italy · 19 Aug 2024" / **Typical** / "for rain, temperature, snow and wind"
-- Line under the level box: "These checks can't see landslides or glacier collapse."
+- Headline: none (Typical days have none)
+- Line under the headline: "Not checked: thunderstorms, landslides, glacier collapse. Follow official weather and storm warnings."
 - Then and now: not shown
-- Yellow line: "Thunderstorms aren't checked. Follow official weather and storm warnings."
 - The numbers (collapsed):
   - "Rain on 19 Aug 2024: 2.5 mm forecast, normal for here."
   - "Feels-like high: 33 °C forecast, normal for here."
@@ -393,17 +378,14 @@ Written by code, shown on the page in every mode:
 
 Text message (not shown on the page; kept for Phase 2): "Groundtruth Porticello, Sicily, Italy 19 Aug 2024: Typical rain, temperature, snow and wind. Storms, ice, landslides not checked. Check official warnings."
 
-Claude: not asked on Typical days (fixed wording).
-
 #### Nepal-Tibet glacier-collapse flood — 2026-08-26 — Typical
 
-Written by code, shown on the page in every mode:
+On the page (every word written by code):
 
 - Level box: "Nepal–Tibet border area · 26 Aug 2026" / **Typical** / "for rain, temperature, snow and wind"
-- Line under the level box: "These checks can't see landslides or glacier collapse."
-- Line under the level box: "Groundtruth covers weather-driven hazards only. For geological hazards (landslides, glacier collapse, earthquakes), check local civil protection and geological authorities."
+- Headline: none (Typical days have none)
+- Line under the headline: "Not checked: thunderstorms, landslides, glacier collapse. Follow official weather and storm warnings. For glacier collapse and landslides, check civil protection and geological authorities."
 - Then and now: not shown
-- Yellow line: "Thunderstorms aren't checked. Follow official weather and storm warnings."
 - The numbers (collapsed):
   - "Rain on 26 Aug 2026: 6.1 mm forecast, normal for here."
   - "Feels-like high: 30 °C forecast, normal for here."
@@ -414,16 +396,14 @@ Written by code, shown on the page in every mode:
 
 Text message (not shown on the page; kept for Phase 2): "Groundtruth Nepal-Tibet bo. 26 Aug 2026: Typical rain, temperature, snow and wind. Storms, ice, landslides, glacier floods not checked. Check official warnings."
 
-Claude: not asked on Typical days (fixed wording).
-
 #### Calm control 1, Paiporta — 2024-05-15 — Typical
 
-Written by code, shown on the page in every mode:
+On the page (every word written by code):
 
 - Level box: "Paiporta, Valencia, Spain · 15 May 2024" / **Typical** / "for rain, temperature, snow and wind"
-- Line under the level box: "These checks can't see landslides or glacier collapse."
+- Headline: none (Typical days have none)
+- Line under the headline: "Not checked: thunderstorms, landslides, glacier collapse. Follow official weather and storm warnings."
 - Then and now: not shown
-- Yellow line: "Thunderstorms aren't checked. Follow official weather and storm warnings."
 - The numbers (collapsed):
   - "Rain on 15 May 2024: 0.1 mm forecast, normal for here."
   - "Feels-like high: 22 °C forecast, normal for here."
@@ -434,16 +414,14 @@ Written by code, shown on the page in every mode:
 
 Text message (not shown on the page; kept for Phase 2): "Groundtruth Paiporta, Valencia, Spain 15 May 2024: Typical rain, temperature, snow and wind. Storms, ice, landslides not checked. Check official warnings."
 
-Claude: not asked on Typical days (fixed wording).
-
 #### Calm control 2, Kolkata — 2022-01-15 — Typical
 
-Written by code, shown on the page in every mode:
+On the page (every word written by code):
 
 - Level box: "Kolkata, India · 15 Jan 2022" / **Typical** / "for rain, temperature, snow and wind"
-- Line under the level box: "These checks can't see landslides or glacier collapse."
+- Headline: none (Typical days have none)
+- Line under the headline: "Not checked: thunderstorms, landslides, glacier collapse. Follow official weather and storm warnings."
 - Then and now: not shown
-- Yellow line: "Thunderstorms aren't checked. Follow official weather and storm warnings."
 - The numbers (collapsed):
   - "Rain on 15 Jan 2022: 0.2 mm forecast, normal for here."
   - "Feels-like high: 24 °C forecast, normal for here."
@@ -454,16 +432,14 @@ Written by code, shown on the page in every mode:
 
 Text message (not shown on the page; kept for Phase 2): "Groundtruth Kolkata, India 15 Jan 2022: Typical rain, temperature, snow and wind. Storms, ice, landslides not checked. Check official warnings."
 
-Claude: not asked on Typical days (fixed wording).
-
 #### Ordinary rain 1, Paiporta (winter) — 2018-02-27 — Typical
 
-Written by code, shown on the page in every mode:
+On the page (every word written by code):
 
 - Level box: "39.43, -0.42 · 27 Feb 2018" / **Typical** / "for rain, temperature, snow and wind"
-- Line under the level box: "These checks can't see ice on roads, landslides or glacier collapse."
+- Headline: none (Typical days have none)
+- Line under the headline: "Not checked: thunderstorms, ice on roads, landslides, glacier collapse. Follow official weather and storm warnings."
 - Then and now: not shown
-- Yellow line: "Thunderstorms aren't checked. Follow official weather and storm warnings."
 - The numbers (collapsed):
   - "Rain on 27 Feb 2018: 15 mm forecast, normal for here."
   - "Feels-like high: 7.1 °C forecast, normal for here."
@@ -474,16 +450,14 @@ Written by code, shown on the page in every mode:
 
 Text message (not shown on the page; kept for Phase 2): "Groundtruth 39.43, -0.42 27 Feb 2018: Typical rain, temperature, snow and wind. Storms, ice, landslides not checked. Check official warnings."
 
-Claude: not asked on Typical days (fixed wording).
-
 #### Ordinary rain 2, Paiporta (autumn) — 2024-09-18 — Typical
 
-Written by code, shown on the page in every mode:
+On the page (every word written by code):
 
 - Level box: "39.43, -0.42 · 18 Sep 2024" / **Typical** / "for rain, temperature, snow and wind"
-- Line under the level box: "These checks can't see landslides or glacier collapse."
+- Headline: none (Typical days have none)
+- Line under the headline: "Not checked: thunderstorms, landslides, glacier collapse. Follow official weather and storm warnings."
 - Then and now: not shown
-- Yellow line: "Thunderstorms aren't checked. Follow official weather and storm warnings."
 - The numbers (collapsed):
   - "Rain on 18 Sep 2024: 16 mm forecast, normal for here."
   - "Feels-like high: 24 °C forecast, normal for here."
@@ -494,17 +468,16 @@ Written by code, shown on the page in every mode:
 
 Text message (not shown on the page; kept for Phase 2): "Groundtruth 39.43, -0.42 18 Sep 2024: Typical rain, temperature, snow and wind. Storms, ice, landslides not checked. Check official warnings."
 
-Claude: not asked on Typical days (fixed wording).
-
 #### Paris snow and cold — 2026-01-07 — Typical
 
-Written by code, shown on the page in every mode:
+On the page (every word written by code):
 
 - Level box: "Paris, France · 7 Jan 2026" / **Typical** / "for rain, temperature, snow and wind"
-- Line under the level box: "Roads may be icy; ice itself isn't checked."
-- Line under the level box: "These checks can't see landslides or glacier collapse."
-- Then and now (Snowfall (24 h)): Now (1996–2026): about 1.1 times a year; 1951–1980: about 1.3 times a year — "Snow like this is rarer here now, so people and places may be less prepared for it."
-- Yellow line: "Thunderstorms aren't checked. Follow official weather and storm warnings."
+- Headline: none (Typical days have none)
+- Line under the headline: "Roads may be icy; ice itself isn't checked."
+- Line under the headline: "Not checked: thunderstorms, landslides, glacier collapse. Follow official weather and storm warnings."
+- Then and now: "How often days like this happen here."
+  - Snow in 24 hours: 3.0 cm forecast — Now (1996–2026): about 1.1 times a year; 1951–1980: about 1.3 times a year — "Snow like this is rarer here now, so people and places may be less prepared for it."
 - The numbers (collapsed):
   - "Rain on 7 Jan 2026: 5.1 mm forecast, normal for here."
   - "Feels-like high: -0.6 °C forecast, normal for here."
@@ -514,7 +487,5 @@ Written by code, shown on the page in every mode:
   - "Rain over 6 days: 11 mm (5.5 mm measured before the day, plus the day's forecast), normal for here."
 
 Text message (not shown on the page; kept for Phase 2): "Groundtruth Paris, France 7 Jan 2026: Typical rain, temperature, snow and wind. Roads may be icy; ice, storms, landslides not checked. Check official warnings."
-
-Claude: not asked on Typical days (fixed wording).
 
 Weather data by Open-Meteo.com

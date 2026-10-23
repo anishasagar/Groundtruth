@@ -46,42 +46,31 @@ def saved_tries(case):
 
 
 def full_output(case, result, place):
-    """The text written by code, the template sentence, and Claude's full saved reply, as Markdown lines."""
+    """The page text (all written by code), in screen order, and Claude's saved reply (kept for Phase 2, not shown)."""
     special = replays.SPECIAL_NOTES.get(case["name"])
-    action = message.action_line(result)
-    *lines_under, storm_line = message.summary_lines(result, special)
     blocks = message.then_and_now(result)
+    title = message.headline(result)
     lines = [f"#### {case['name']} — {case['date']} — {result['level']}", "",
-             "Written by code, shown on the page in every mode:", "",
+             "On the page (every word written by code):", "",
              f"- Level box: \"{place} · {message.day_text(result['date'])}\" / **{result['level']}** / "
              f"\"{message.level_line(result)}\"",
-             *[f"- Line under the level box: \"{line}\"" for line in lines_under],
-             *[f"- Then and now ({b['name']}): " + "; ".join(f"{r['label']}: {r['words']}" for r in b["rows"])
-               + "".join(f" — \"{x}\"" for x in (b["too_few"], b["rough"], b["danger_note"], b["rarer_now"]) if x)
-               for b in blocks],
-             *([] if blocks else ["- Then and now: not shown"]),
-             f"- Yellow line: \"{storm_line}\"",
+             f"- Headline: \"{title}\"" if title else "- Headline: none (Typical days have none)",
+             *[f"- Line under the headline: \"{line}\"" for line in message.summary_lines(result, special)],
+             *([f"- Then and now: \"{message.THEN_AND_NOW_CAPTION}\""] if blocks else ["- Then and now: not shown"]),
+             *[f"  - {b['title']} — " + "; ".join(f"{r['label']}: {r['words']}" for r in b["rows"])
+               + (f" — \"{b['rarer_now']}\"" if b["rarer_now"] else "") for b in blocks],
              "- The numbers (collapsed):", *[f"  - \"{line}\"" for line in message.number_lines(result)], "",
              f"Text message (not shown on the page; kept for Phase 2): \"{message.sms_text(result, place, special)}\"",
              ""]
-    if result["level"] == "Typical":
-        return lines + ["Claude: not asked on Typical days (fixed wording).", ""]
-    lines += ["Template mode (when Claude's text isn't used):", "",
-              f"- Headline: \"{message.template_headline(result)}\"",
-              "- Then the lines under the level box above" + (f' (action: "{action}")' if action else ""), ""]
     path = replays.claude_reply_file(case["name"])
-    if case["name"] not in replays.REPLAY_PLACES or not path.exists():
-        return lines + ["Claude: no saved Claude reply — template mode only.", ""]
+    if result["level"] == "Typical" or case["name"] not in replays.REPLAY_PLACES or not path.exists():
+        return lines
     facts = claude_text.facts(result, place, dt.date.today(), special)
     passed, problems = claude_text.saved_reply(path, facts)
-    status = "passes the guardrail (shown in the app)" if passed else \
-        f"does NOT pass, so the app shows template mode: {'; '.join(problems)}"
     reply = json.loads(path.read_text())["reply"]
-    lines += [f"Claude's saved reply ({saved_tries(case)} {'try' if saved_tries(case) == '1' else 'tries'}) — "
-              f"{status}:", "",
-              f"- Headline: \"{reply.get('headline')}\"",
-              *[f"- {k} (old format, not shown): \"{v}\"" for k, v in reply.items() if k != "headline"], ""]
-    return lines
+    status = "passes the guardrail" if passed else f"does NOT pass the guardrail: {'; '.join(problems)}"
+    return lines + [f"Claude's saved headline (kept for Phase 2, not shown on the page; {saved_tries(case)} "
+                    f"{'try' if saved_tries(case) == '1' else 'tries'}; {status}): \"{reply.get('headline')}\"", ""]
 
 
 def main():
@@ -93,29 +82,21 @@ def main():
     for _, case in cases.iterrows():
         previous = before.get(case["name"], "—")
         if not case["date"]:
-            rows.append(f"| {case['name']} | — | pending | {previous} | — | — | — |")
+            rows.append(f"| {case['name']} | — | pending | {previous} | — | — |")
             continue
         try:
             with weather.offline():
                 result = risk.assess(float(case["latitude"]), float(case["longitude"]),
                                      dt.date.fromisoformat(case["date"]))
         except Exception as e:  # replay.py already logged why; keep the row
-            rows.append(f"| {case['name']} | {case['date']} | not run | {previous} | — | — | — |")
+            rows.append(f"| {case['name']} | {case['date']} | not run | {previous} | — | — |")
             full += [f"#### {case['name']} — {case['date']}", "", f"Not run: {e}", ""]
             continue
         place = replays.place_of(case)
-        template = message.template_sentence(result)
-        shown = f"template mode: {template}"
-        if result["level"] == "Typical":
-            shown = f"fixed wording: Typical {message.TYPICAL_LEVEL_LINE}. {message.TYPICAL_LIMITS}"
-        elif case["name"] in replays.REPLAY_PLACES:
-            facts = claude_text.facts(result, place, dt.date.today(), replays.SPECIAL_NOTES.get(case["name"]))
-            reply, _ = claude_text.saved_reply(replays.claude_reply_file(case["name"]), facts)
-            if reply:
-                shown = f"Claude: {reply['headline']}"
+        shown = message.headline(result) or f"(no headline) {result['level']} {message.level_line(result)}"
         level = result["level"]
-        rows.append(f"| {case['name']} | {case['date']} | **{level}** | {previous} | {shown} | {template} "
-                    f"| {saved_tries(case)} |")
+        rows.append(f"| {case['name']} | {case['date']} | **{level}** | {previous} | {shown} "
+                    f"| {message.not_checked(result, replays.SPECIAL_NOTES.get(case['name']))} |")
         if previous not in ("—", "pending", level):
             changes.append(f"- {case['name']}: {previous} → **{level}**")
         full += full_output(case, result, place)
@@ -126,8 +107,8 @@ def main():
         f"Added by the replay-check skill on {dt.date.today().isoformat()}. "
         "\"Previous level\" is the level in TESTLOG.md before this run.",
         "",
-        "| Case | Date | Level | Previous level | Sentence shown | Template sentence | Claude tries |",
-        "|---|---|---|---|---|---|---|",
+        "| Case | Date | Level | Previous level | Headline shown (code) | Not checked box |",
+        "|---|---|---|---|---|---|",
         *rows,
         "",
         "### Level changes since the last run",
@@ -136,11 +117,8 @@ def main():
         "",
         "### Full output per case",
         "",
-        "The actual text a person would see, in screen order: what code writes on every day (level box, the "
-        "lines under it, then and now, the yellow line, the numbers), the template headline on raised days (shown "
-        "whenever Claude or the guardrail fails), and Claude's saved headline (Claude writes only the headline) "
-        "with how many tries it took. The text message is kept in code for Phase 2 "
-        "but no longer shown on the page.",
+        "The actual text a person would see, in screen order. Every word on the page is written by code; Claude is "
+        "switched off (kept for Phase 2), and its saved headline is listed only for reference.",
         "",
         *full,
     ]
