@@ -23,19 +23,11 @@ python scripts/save_replay_data.py
 
 Checks on the wording: `python tests/test_message.py`. Checks on the page itself (every replay): `python tests/test_page.py`.
 
-## Claude text
+## Claude text (switched off, kept for Phase 2)
 
-On raised days Claude (`claude-sonnet-5-5`) writes only the headline ("High risk of dangerous feels-like heat."), from the computed facts (`groundtruth/claude_text.py`). Code checks it: the level word, no numbers, banned words, "normal". Code writes everything else: the value in the level box, the action line, the ice and geological notes, the yellow storm line, "Then and now", the numbers and "How sure are we". If anything fails, or Claude times out or errors, the app shows the template headline labelled "template mode". The text message (`message.sms_text`) is kept in code for Phase 2 but not shown on the page. "Not enough data" days never go to Claude.
+Every word on the page is written by code (`groundtruth/message.py`), including the raised-day headline ("High risk of dangerous feels-like heat."). Claude (`groundtruth/claude_text.py`) was tested for the headline and switched off because its wording kept drifting towards reassurance; the app never calls it. If Claude text comes back, it must be shown in purple with a small "written by Claude" label (CLAUDE.md rule 9).
 
-The key comes from `st.secrets` or the environment variable `GROUNDTRUTH_CLAUDE_KEY`. Never write it into a file.
-
-Replays never call Claude: they use the saved replies in `data/claude_replies/`, checked again every time. Each one carries a fingerprint of the facts, the prompt and the model; when any of those change, it is out of date and the replay shows template mode until you refill:
-
-```
-python scripts/save_claude_replies.py
-```
-
-Checks on the Claude text (no API calls): `python tests/test_claude_text.py`.
+The prompt, the guardrail (`claude_text.check_reply`), its tests and the saved replies in `data/claude_replies/` are kept for Phase 2. The tests still check them (no API calls): `python tests/test_claude_text.py`. To refill the saved replies (needs `GROUNDTRUTH_CLAUDE_KEY`): `python scripts/save_claude_replies.py`.
 
 ## Test cases
 

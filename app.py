@@ -5,13 +5,13 @@ Run:  streamlit run app.py
 
 import datetime as dt
 import html
-import os
-import re
 
 import requests
 import streamlit as st
 
-from groundtruth import claude_text, geocode, message, replays, risk, weather
+# Every word on the page is written by code. Claude (groundtruth/claude_text.py) is switched off and kept for
+# Phase 2; any Claude text that comes back must be shown in purple, labelled "written by Claude" (CLAUDE.md rule 9).
+from groundtruth import geocode, message, replays, risk, weather
 
 EARLIEST_DATE = dt.date(2017, 1, 1)  # the past-forecast archive goes back about this far
 NO_REPLAY = "— none, use the search above —"
@@ -20,18 +20,11 @@ REPLAY_MISSING = "Replay data for this event isn't saved yet. Please try again l
 
 SUBTITLE = ("How unusual is today's weather for this place, compared with how it used to be, "
             "and what does it mean?")
-TEMPLATE_FAILED = "Template mode: Claude's text didn't pass the checks."
-TEMPLATE_UNREACHED = "Template mode: Claude couldn't be reached."
-# claude_text.write() reasons that mean Claude never answered (anything else: its text didn't pass the checks).
-UNREACHED = ("Claude took too long", "Claude couldn't be reached", "Claude returned an error", "no Claude key",
-             "something went wrong asking Claude")
 ABOUT_LINES = [
-    "Code computes every number and sets the level. Claude writes only the headline, and code checks it: if it "
-    "changes the level, adds a number or plays the risk down, the page shows fixed template wording instead.",
+    "Every sentence on this page is fixed wording written by code, from numbers computed by code.",
+    "AI wording (Claude) was tested and switched off because it kept drifting towards reassurance.",
     "The level is the worse of how rare the day is here and fixed danger lines, so it leans toward warning. "
     "Recent rain, cold and snow can only raise it.",
-    "On Typical days Claude isn't asked: they get the same standard wording every time, so no AI wording can "
-    "play the day down.",
     message.NO_COLD_SNOW_LINES,
 ]
 # Level colours. Never green: a green box could read as "all fine".
@@ -52,7 +45,7 @@ WEATHER_ICONS = [
     (65, "🌧️", "🌧️", "Rain"), (77, "🌨️", "🌨️", "Snow"), (82, "🌧️", "🌧️", "Rain showers"),
     (86, "🌨️", "🌨️", "Snow showers"), (95, "⛈️", "⛈️", "Thunderstorm"), (99, "⛈️", "⛈️", "Thunderstorm with hail"),
 ]
-STRIP_CAPTION = "Raw forecast, not checked by Groundtruth. No storm icon doesn't mean no storm."
+STRIP_CAPTION = "No storm icon doesn't mean no storm."
 
 
 # ---- data (cached) ----------------------------------------------------------
@@ -82,48 +75,6 @@ def cached_replay(lat, lon, date):
 def cached_hourly(lat, lon, date, hour):
     """`hour` (the current hour) only makes the strip move on as the day goes on."""
     return weather.get_hourly(lat, lon, date)
-
-
-def claude_key():
-    """From st.secrets, else the environment. Never shown or saved."""
-    try:
-        key = st.secrets.get("GROUNDTRUTH_CLAUDE_KEY")
-    except Exception:  # no secrets file
-        key = None
-    return key or os.environ.get("GROUNDTRUTH_CLAUDE_KEY")
-
-
-def claude_live(facts):
-    """Claude's reply for a live search, kept for this visitor so reruns don't ask again. Failures aren't kept."""
-    kept = st.session_state.setdefault("claude_replies", {})
-    fingerprint = claude_text.fingerprint(facts)
-    if fingerprint in kept:
-        return kept[fingerprint], []
-    reply, problems = claude_text.write(facts, claude_text.make_client(claude_key()))
-    if reply is not None:
-        kept[fingerprint] = reply
-    return reply, problems
-
-
-def claude_reply(result, place, replay_name):
-    """(reply, problems). A replay only uses its saved reply; it never calls Claude."""
-    facts = claude_text.facts(result, place, dt.date.today(), replays.SPECIAL_NOTES.get(replay_name))
-    if replay_name is not None:
-        return claude_text.saved_reply(replays.claude_reply_file(replay_name), facts)
-    if result["level"] not in risk.LEVELS:
-        return claude_text.write(facts, None)  # "Not enough data" never goes to Claude
-    with st.spinner("Writing the summary…"):
-        return claude_live(facts)
-
-
-def template_caption(problems):
-    last = problems[-1] if problems else ""
-    return TEMPLATE_UNREACHED if last.startswith(UNREACHED) else TEMPLATE_FAILED
-
-
-def plain(text):
-    """Claude's text shown as written: no markdown formatting, no maths."""
-    return re.sub(r"([\\`*_\[\]<>#$~|])", r"\\\1", text)
 
 
 # ---- pieces of the screen -----------------------------------------------------
@@ -222,29 +173,17 @@ def then_and_now(result):
     if not blocks:  # e.g. a Typical day where every check happens 5 or more times a year
         return
     st.subheader("Then and now")
+    st.caption(message.THEN_AND_NOW_CAPTION)
     for block in blocks:
         st.markdown(f"**{block['title']}**")
-        st.caption(block["caption"])
         rarity_lines(block["rows"], LEVEL_STYLE[result["level"]][0])
-        for line in (block["too_few"], block["rough"]):
-            if line:
-                st.markdown(line)
-        for line in (block["danger_note"], block["rarer_now"]):
-            if line:
-                st.markdown(f"**{line}**")
+        if block["rarer_now"]:
+            st.markdown(f"**{block['rarer_now']}**")
 
 
 def numbers_section(result):
     with st.expander("The numbers"):  # written by code, never by Claude
         st.markdown("\n".join(f"- {line}" for line in message.number_lines(result)))
-        fc, hist = result.get("forecast_grid_point"), result.get("history_grid_point")
-        if fc and hist:
-            st.caption(
-                f"Forecast: {result['forecast_source']} (grid point {fc['latitude']:.2f}, {fc['longitude']:.2f}). "
-                f"History: {result['history_source']} (grid point {hist['latitude']:.2f}, "
-                f"{hist['longitude']:.2f}). Compared with {result['baseline_label']}; the level uses "
-                f"{result['recent_label']} ({result['recent_phrase']})."
-            )
 
 
 def how_sure_section():
@@ -252,9 +191,17 @@ def how_sure_section():
         st.markdown("\n".join(f"- {line}" for line in message.HOW_SURE_LINES))
 
 
-def about_section():
+def about_section(result):
     with st.expander("About this tool"):
         st.markdown("\n".join(f"- {line}" for line in ABOUT_LINES))
+        fc, hist = result.get("forecast_grid_point"), result.get("history_grid_point")
+        if fc and hist:  # the sources
+            st.caption(
+                f"Forecast: {result['forecast_source']} (grid point {fc['latitude']:.2f}, {fc['longitude']:.2f}). "
+                f"History: {result['history_source']} (grid point {hist['latitude']:.2f}, "
+                f"{hist['longitude']:.2f}). Compared with {result['baseline_label']}; the level uses "
+                f"{result['recent_label']} ({result['recent_phrase']})."
+            )
 
 
 def phase2_cards():
@@ -274,20 +221,16 @@ def phase2_cards():
 def show_assessment(result, place, replay_name=None, lat=None, lon=None):
     level_box(result, place)
     special = replays.SPECIAL_NOTES.get(replay_name)
-    level = result["level"]
-    raised = level in risk.LEVELS[1:]
-    reply, problems = claude_reply(result, place, replay_name) if raised else (None, [])
-    *lines, storm_line = message.summary_lines(result, special)  # written by code, never by Claude
-
-    if raised:
-        st.markdown(f"### {plain(reply['headline']) if reply is not None else message.template_headline(result)}")
-    for line in lines:
+    title = message.headline(result)  # raised days only; written by code
+    if title:
+        st.markdown(f"### {title}")
+    for line in message.summary_lines(result, special):
         if line == message.ICE_SMS:
-            st.warning(line, icon="🧊")  # the same yellow style as the storm line
+            st.warning(line, icon="🧊")
+        elif line == message.not_checked(result, special):
+            st.warning(line, icon="⚠️")  # the page's visible pointer to official warnings
         else:
-            st.markdown(f"**{line}**" if line == message.GEOLOGICAL_NOTE else line)
-    if raised and reply is None:
-        st.caption(template_caption(problems))
+            st.markdown(line)  # the action line
 
     today = dt.date.today()
     if replay_name is None and result["date"] >= today:  # never on past dates or replays
@@ -300,11 +243,10 @@ def show_assessment(result, place, replay_name=None, lat=None, lon=None):
             hourly_strip(slots, title)
 
     then_and_now(result)
-    st.warning(storm_line, icon="⚡")
 
     numbers_section(result)
     how_sure_section()
-    about_section()
+    about_section(result)
 
 
 # ---- the page -----------------------------------------------------------------

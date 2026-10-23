@@ -152,11 +152,12 @@ def main():
         "|---|---|---|---|" + "---|" * len(COLUMNS) + "---|---|",
         *summary,
         "",
-        "## Claude text (saved replies)",
+        "## Claude text (saved replies, kept for Phase 2)",
         "",
-        f"Each replay shows Claude's saved text ({claude_text.MODEL}) only if its fingerprint still matches the facts, "
-        "prompt and model, and it passes the guardrail check again. Otherwise the app shows the template sentence. "
-        "Refill with `python scripts/save_claude_replies.py`.",
+        f"The app doesn't use Claude: every word on the page is written by code. These saved replies "
+        f"({claude_text.MODEL}) are kept for Phase 2 and still checked: each is valid only if its fingerprint matches "
+        "the facts, prompt and model, and it passes the guardrail again. Refill with "
+        "`python scripts/save_claude_replies.py`.",
         "",
         "| Replay | Level | Text shown | Claude's headline |",
         "|---|---|---|---|",
