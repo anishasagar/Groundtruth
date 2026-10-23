@@ -277,7 +277,7 @@ Added by the replay-check skill on 2026-10-23. "Previous level" is the level in 
 | Texas Hill Country flood | 2025-07-04 | **High** | High | High risk of heavy rain. | Not checked: thunderstorms, landslides, glacier collapse. Follow official weather and storm warnings. |
 | Kolkata heat (KK concert) | 2022-05-31 | **High** | High | High risk of dangerous feels-like heat. | Not checked: thunderstorms, landslides, glacier collapse. Follow official weather and storm warnings. |
 | Bayesian sinking | 2024-08-19 | **Typical** | Typical | (no headline) Typical for rain, temperature, snow and wind | Not checked: thunderstorms, landslides, glacier collapse. Follow official weather and storm warnings. |
-| Nepal-Tibet glacier-collapse flood | 2026-08-26 | **Typical** | Typical | (no headline) Typical for rain, temperature, snow and wind | Not checked: thunderstorms, landslides, glacier collapse. Follow official weather and storm warnings. For glacier collapse and landslides, check civil protection and geological authorities. |
+| Nepal-Tibet glacier-collapse flood | 2026-08-26 | **Typical** | Typical | (no headline) Typical for rain, temperature, snow and wind | Not checked: thunderstorms, landslides, glacier collapse. Follow official weather and storm warnings, and civil protection and geological authorities. |
 | Calm control 1, Paiporta | 2024-05-15 | **Typical** | Typical | (no headline) Typical for rain, temperature, snow and wind | Not checked: thunderstorms, landslides, glacier collapse. Follow official weather and storm warnings. |
 | Calm control 2, Kolkata | 2022-01-15 | **Typical** | Typical | (no headline) Typical for rain, temperature, snow and wind | Not checked: thunderstorms, landslides, glacier collapse. Follow official weather and storm warnings. |
 | Ordinary rain 1, Paiporta (winter) | 2018-02-27 | **Typical** | Typical | (no headline) Typical for rain, temperature, snow and wind | Not checked: thunderstorms, ice on roads, landslides, glacier collapse. Follow official weather and storm warnings. |
@@ -297,19 +297,18 @@ The actual text a person would see, in screen order. Every word on the page is w
 
 On the page (every word written by code):
 
-- Level box: "Paiporta, Valencia, Spain · 29 Oct 2024" / **Extreme** / "202 mm of rain forecast in 24 h, above the 150 mm danger line; 257 mm of rain over 6 days"
+- Level box: "Paiporta, Valencia, Spain · 29 Oct 2024" / **Extreme** / **"About 45% of a year's rain, forecast in one day"** / "202 mm of rain forecast in 24 h, above the 150 mm danger line; 257 mm of rain over 6 days"
 - Headline: "Extreme risk of heavy rain."
 - Line under the headline: "→ Avoid underpasses, low roads and riverbanks."
 - Line under the headline: "Not checked: thunderstorms, landslides, glacier collapse. Follow official weather and storm warnings."
 - Then and now: "How often days like this happen here."
-  - Rain in 24 hours: 202 mm forecast — Now (1994–2024): not seen in those 30 years; 1951–1980: not seen in 1951–1980
-- The numbers (collapsed):
-  - "Rain on 29 Oct 2024: 202 mm forecast, above the 150 mm danger line. Rain like this was not seen in the 30 years before the day or in 1951–1980."
-  - "Feels-like high: 20 °C forecast, normal for here."
-  - "Feels-like low: 17 °C forecast, normal for here."
-  - "Snow: none forecast."
-  - "Gusts: up to 61 km/h forecast, normal for here."
-  - "Rain over 6 days: 257 mm (54.9 mm measured before the day, plus the day's forecast). A wet spell like this was not seen in the 30 years before the day or in 1951–1980."
+  - Rain in 24 hours [Extreme] — 202 mm forecast — "Rain like this was never seen here in either period."
+  - Rain over 6 days [Extreme] — 257 mm 54.9 mm measured + the day's forecast — "A wet spell like this was never seen here in either period."
+- Normal for here (4) (collapsed):
+  - Feels-like high  20 °C, normal for here
+  - Feels-like low  17 °C, normal for here
+  - Snow  none forecast
+  - Gusts  up to 61 km/h, normal for here
 
 Text message (not shown on the page; kept for Phase 2): "Groundtruth Paiporta, Valencia, Spain 29 Oct 2024: Extreme risk. Rain 202 mm forecast. Avoid low roads and riverbanks. Check official warnings."
 
@@ -319,20 +318,18 @@ Claude's saved headline (kept for Phase 2, not shown on the page; 1 try; passes 
 
 On the page (every word written by code):
 
-- Level box: "Texas Hill Country, USA · 4 Jul 2025" / **High** / "107 mm of rain forecast in 24 h"
+- Level box: "Texas Hill Country, USA · 4 Jul 2025" / **High** / **"About 16% of a year's rain, forecast in one day"** / "107 mm of rain forecast in 24 h"
 - Headline: "High risk of heavy rain."
 - Line under the headline: "→ Avoid underpasses, low roads and riverbanks."
 - Line under the headline: "Not checked: thunderstorms, landslides, glacier collapse. Follow official weather and storm warnings."
 - Then and now: "How often days like this happen here."
-  - Rain in 24 hours: 107 mm forecast — Now (1995–2025): 2 times in 30 years; 1951–1980: 2 times in 30 years
-  - Rain over 6 days: 144 mm (36.7 mm measured plus the day's forecast) — Now (1995–2025): 7 times in 30 years; 1951–1980: 2 times in 30 years
-- The numbers (collapsed):
-  - "Rain on 4 Jul 2025: 107 mm forecast. About once every 15 years here, about the same as in 1951–1980."
-  - "Feels-like high: 29 °C forecast, normal for here."
-  - "Feels-like low: 23 °C forecast, normal for here."
-  - "Snow: none forecast."
-  - "Gusts: up to 50 km/h forecast, normal for here."
-  - "Rain over 6 days: 144 mm (36.7 mm measured before the day, plus the day's forecast). About once every 4.3 years here, 3.5 times more often than in 1951–1980."
+  - Rain in 24 hours [High] — 107 mm forecast — Now (1995–2025): 2 times in 30 years (bar 0.29); 1951–1980: 2 times in 30 years (bar 0.29)
+  - Rain over 6 days [Elevated] — 144 mm 36.7 mm measured + the day's forecast — Now (1995–2025): 7 times in 30 years (bar 1.00); 1951–1980: 2 times in 30 years (bar 0.29)
+- Normal for here (4) (collapsed):
+  - Feels-like high  29 °C, normal for here
+  - Feels-like low  23 °C, normal for here
+  - Snow  none forecast
+  - Gusts  up to 50 km/h, normal for here
 
 Text message (not shown on the page; kept for Phase 2): "Groundtruth Texas Hill Country, USA 4 Jul 2025: High risk. Rain 107 mm forecast. Avoid low roads and riverbanks. Check official warnings."
 
@@ -347,14 +344,13 @@ On the page (every word written by code):
 - Line under the headline: "→ Avoid heavy exertion outdoors, drink water, and check on older or vulnerable people."
 - Line under the headline: "Not checked: thunderstorms, landslides, glacier collapse. Follow official weather and storm warnings."
 - Then and now: "How often days like this happen here."
-  - Feels-like heat: 41 °C forecast — Now (1992–2022): about 48 times a year; 1951–1980: about 34 times a year
-- The numbers (collapsed):
-  - "Rain on 31 May 2022: 8.2 mm forecast, normal for here."
-  - "Feels-like high: 41 °C forecast, above the 40 °C danger line. About 48 days a year here, 1.4 times more often than in 1951–1980."
-  - "Feels-like low: 34 °C forecast, normal for here."
-  - "Snow: none forecast."
-  - "Gusts: up to 28 km/h forecast, normal for here."
-  - "Rain over 6 days: 16 mm (8.3 mm measured before the day, plus the day's forecast), normal for here."
+  - Feels-like heat [High] — 41 °C forecast — Now (1992–2022): about 48 times a year (bar 1.00); 1951–1980: about 34 times a year (bar 0.70)
+- Normal for here (5) (collapsed):
+  - Rain in 24 hours  8.2 mm, normal for here
+  - Feels-like low  34 °C, normal for here
+  - Snow  none forecast
+  - Gusts  up to 28 km/h, normal for here
+  - Rain over 6 days  16 mm (8.3 mm measured + the day's forecast), normal for here
 
 Text message (not shown on the page; kept for Phase 2): "Groundtruth Kolkata, India 31 May 2022: High risk. Feels-like 41 C forecast. Avoid exertion, drink water, check on older people. Check official warnings."
 
@@ -368,13 +364,13 @@ On the page (every word written by code):
 - Headline: none (Typical days have none)
 - Line under the headline: "Not checked: thunderstorms, landslides, glacier collapse. Follow official weather and storm warnings."
 - Then and now: not shown
-- The numbers (collapsed):
-  - "Rain on 19 Aug 2024: 2.5 mm forecast, normal for here."
-  - "Feels-like high: 33 °C forecast, normal for here."
-  - "Feels-like low: 28 °C forecast, normal for here."
-  - "Snow: none forecast."
-  - "Gusts: up to 45 km/h forecast, normal for here."
-  - "Rain over 6 days: 14 mm (11.3 mm measured before the day, plus the day's forecast), normal for here."
+- Normal for here (6) (collapsed):
+  - Rain in 24 hours  2.5 mm, normal for here
+  - Feels-like high  33 °C, normal for here
+  - Feels-like low  28 °C, normal for here
+  - Snow  none forecast
+  - Gusts  up to 45 km/h, normal for here
+  - Rain over 6 days  14 mm (11.3 mm measured + the day's forecast), normal for here
 
 Text message (not shown on the page; kept for Phase 2): "Groundtruth Porticello, Sicily, Italy 19 Aug 2024: Typical rain, temperature, snow and wind. Storms, ice, landslides not checked. Check official warnings."
 
@@ -384,15 +380,15 @@ On the page (every word written by code):
 
 - Level box: "Nepal–Tibet border area · 26 Aug 2026" / **Typical** / "for rain, temperature, snow and wind"
 - Headline: none (Typical days have none)
-- Line under the headline: "Not checked: thunderstorms, landslides, glacier collapse. Follow official weather and storm warnings. For glacier collapse and landslides, check civil protection and geological authorities."
+- Line under the headline: "Not checked: thunderstorms, landslides, glacier collapse. Follow official weather and storm warnings, and civil protection and geological authorities."
 - Then and now: not shown
-- The numbers (collapsed):
-  - "Rain on 26 Aug 2026: 6.1 mm forecast, normal for here."
-  - "Feels-like high: 30 °C forecast, normal for here."
-  - "Feels-like low: 23 °C forecast, normal for here."
-  - "Snow: none forecast."
-  - "Gusts: up to 31 km/h forecast, normal for here."
-  - "Rain over 6 days: 66 mm (59.5 mm measured before the day, plus the day's forecast), normal for here."
+- Normal for here (6) (collapsed):
+  - Rain in 24 hours  6.1 mm, normal for here
+  - Feels-like high  30 °C, normal for here
+  - Feels-like low  23 °C, normal for here
+  - Snow  none forecast
+  - Gusts  up to 31 km/h, normal for here
+  - Rain over 6 days  66 mm (59.5 mm measured + the day's forecast), normal for here
 
 Text message (not shown on the page; kept for Phase 2): "Groundtruth Nepal-Tibet bo. 26 Aug 2026: Typical rain, temperature, snow and wind. Storms, ice, landslides, glacier floods not checked. Check official warnings."
 
@@ -404,13 +400,13 @@ On the page (every word written by code):
 - Headline: none (Typical days have none)
 - Line under the headline: "Not checked: thunderstorms, landslides, glacier collapse. Follow official weather and storm warnings."
 - Then and now: not shown
-- The numbers (collapsed):
-  - "Rain on 15 May 2024: 0.1 mm forecast, normal for here."
-  - "Feels-like high: 22 °C forecast, normal for here."
-  - "Feels-like low: 14 °C forecast, normal for here."
-  - "Snow: none forecast."
-  - "Gusts: up to 34 km/h forecast, normal for here."
-  - "Rain over 6 days: 0.3 mm (0.2 mm measured before the day, plus the day's forecast), normal for here."
+- Normal for here (6) (collapsed):
+  - Rain in 24 hours  0.1 mm, normal for here
+  - Feels-like high  22 °C, normal for here
+  - Feels-like low  14 °C, normal for here
+  - Snow  none forecast
+  - Gusts  up to 34 km/h, normal for here
+  - Rain over 6 days  0.3 mm (0.2 mm measured + the day's forecast), normal for here
 
 Text message (not shown on the page; kept for Phase 2): "Groundtruth Paiporta, Valencia, Spain 15 May 2024: Typical rain, temperature, snow and wind. Storms, ice, landslides not checked. Check official warnings."
 
@@ -422,13 +418,13 @@ On the page (every word written by code):
 - Headline: none (Typical days have none)
 - Line under the headline: "Not checked: thunderstorms, landslides, glacier collapse. Follow official weather and storm warnings."
 - Then and now: not shown
-- The numbers (collapsed):
-  - "Rain on 15 Jan 2022: 0.2 mm forecast, normal for here."
-  - "Feels-like high: 24 °C forecast, normal for here."
-  - "Feels-like low: 14 °C forecast, normal for here."
-  - "Snow: none forecast."
-  - "Gusts: up to 24 km/h forecast, normal for here."
-  - "Rain over 6 days: 17 mm (16.8 mm measured before the day, plus the day's forecast), normal for here."
+- Normal for here (6) (collapsed):
+  - Rain in 24 hours  0.2 mm, normal for here
+  - Feels-like high  24 °C, normal for here
+  - Feels-like low  14 °C, normal for here
+  - Snow  none forecast
+  - Gusts  up to 24 km/h, normal for here
+  - Rain over 6 days  17 mm (16.8 mm measured + the day's forecast), normal for here
 
 Text message (not shown on the page; kept for Phase 2): "Groundtruth Kolkata, India 15 Jan 2022: Typical rain, temperature, snow and wind. Storms, ice, landslides not checked. Check official warnings."
 
@@ -440,13 +436,13 @@ On the page (every word written by code):
 - Headline: none (Typical days have none)
 - Line under the headline: "Not checked: thunderstorms, ice on roads, landslides, glacier collapse. Follow official weather and storm warnings."
 - Then and now: not shown
-- The numbers (collapsed):
-  - "Rain on 27 Feb 2018: 15 mm forecast, normal for here."
-  - "Feels-like high: 7.1 °C forecast, normal for here."
-  - "Feels-like low: 1.8 °C forecast, normal for here."
-  - "Snow: none forecast."
-  - "Gusts: up to 58 km/h forecast, normal for here."
-  - "Rain over 6 days: 16 mm (0.3 mm measured before the day, plus the day's forecast), normal for here."
+- Normal for here (6) (collapsed):
+  - Rain in 24 hours  15 mm, normal for here
+  - Feels-like high  7.1 °C, normal for here
+  - Feels-like low  1.8 °C, normal for here
+  - Snow  none forecast
+  - Gusts  up to 58 km/h, normal for here
+  - Rain over 6 days  16 mm (0.3 mm measured + the day's forecast), normal for here
 
 Text message (not shown on the page; kept for Phase 2): "Groundtruth 39.43, -0.42 27 Feb 2018: Typical rain, temperature, snow and wind. Storms, ice, landslides not checked. Check official warnings."
 
@@ -458,13 +454,13 @@ On the page (every word written by code):
 - Headline: none (Typical days have none)
 - Line under the headline: "Not checked: thunderstorms, landslides, glacier collapse. Follow official weather and storm warnings."
 - Then and now: not shown
-- The numbers (collapsed):
-  - "Rain on 18 Sep 2024: 16 mm forecast, normal for here."
-  - "Feels-like high: 24 °C forecast, normal for here."
-  - "Feels-like low: 20 °C forecast, normal for here."
-  - "Snow: none forecast."
-  - "Gusts: up to 24 km/h forecast, normal for here."
-  - "Rain over 6 days: 16 mm (0.3 mm measured before the day, plus the day's forecast), normal for here."
+- Normal for here (6) (collapsed):
+  - Rain in 24 hours  16 mm, normal for here
+  - Feels-like high  24 °C, normal for here
+  - Feels-like low  20 °C, normal for here
+  - Snow  none forecast
+  - Gusts  up to 24 km/h, normal for here
+  - Rain over 6 days  16 mm (0.3 mm measured + the day's forecast), normal for here
 
 Text message (not shown on the page; kept for Phase 2): "Groundtruth 39.43, -0.42 18 Sep 2024: Typical rain, temperature, snow and wind. Storms, ice, landslides not checked. Check official warnings."
 
@@ -477,14 +473,13 @@ On the page (every word written by code):
 - Line under the headline: "Roads may be icy; ice itself isn't checked."
 - Line under the headline: "Not checked: thunderstorms, landslides, glacier collapse. Follow official weather and storm warnings."
 - Then and now: "How often days like this happen here."
-  - Snow in 24 hours: 3.0 cm forecast — Now (1996–2026): about 1.1 times a year; 1951–1980: about 1.3 times a year — "Snow like this is rarer here now, so people and places may be less prepared for it."
-- The numbers (collapsed):
-  - "Rain on 7 Jan 2026: 5.1 mm forecast, normal for here."
-  - "Feels-like high: -0.6 °C forecast, normal for here."
-  - "Feels-like low: -6.5 °C forecast, normal for here."
-  - "Snow: 3.0 cm forecast. About 1.1 days a year here, down from about 1.3 days a year in 1951–1980."
-  - "Gusts: up to 36 km/h forecast, normal for here."
-  - "Rain over 6 days: 11 mm (5.5 mm measured before the day, plus the day's forecast), normal for here."
+  - Snow in 24 hours — 3.0 cm forecast — Now (1996–2026): about 1.1 times a year (bar 0.85); 1951–1980: about 1.3 times a year (bar 1.00) — "Snow like this is rarer here now, so people and places may be less prepared for it."
+- Normal for here (5) (collapsed):
+  - Rain in 24 hours  5.1 mm, normal for here
+  - Feels-like high  -0.6 °C, normal for here
+  - Feels-like low  -6.5 °C, normal for here
+  - Gusts  up to 36 km/h, normal for here
+  - Rain over 6 days  11 mm (5.5 mm measured + the day's forecast), normal for here
 
 Text message (not shown on the page; kept for Phase 2): "Groundtruth Paris, France 7 Jan 2026: Typical rain, temperature, snow and wind. Roads may be icy; ice, storms, landslides not checked. Check official warnings."
 

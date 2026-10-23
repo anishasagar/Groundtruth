@@ -48,18 +48,30 @@ def saved_tries(case):
 def full_output(case, result, place):
     """The page text (all written by code), in screen order, and Claude's saved reply (kept for Phase 2, not shown)."""
     special = replays.SPECIAL_NOTES.get(case["name"])
-    blocks = message.then_and_now(result)
+    cards = message.then_and_now(result)
     title = message.headline(result)
+    with weather.offline():
+        history = weather.get_history(float(case["latitude"]), float(case["longitude"]),
+                                      *message.hero_history_range(result["date"]))["data"]
+    hero = message.hero_line(result, history)
+    normal = message.normal_lines(result)
+
+    def card_text(c):
+        rows = "; ".join(f"{r['label']}: {r['words']} (bar {r['width']:.2f})" for r in c["rows"])
+        return (f"  - {c['title']}" + (f" [{c['chip']}]" if c["chip"] else "") + f" — {c['value']} {c['value_note']}"
+                + (f" — {rows}" if rows else "") + "".join(f" — \"{x}\"" for x in (c["never"], c["rarer_now"]) if x))
+
     lines = [f"#### {case['name']} — {case['date']} — {result['level']}", "",
              "On the page (every word written by code):", "",
              f"- Level box: \"{place} · {message.day_text(result['date'])}\" / **{result['level']}** / "
-             f"\"{message.level_line(result)}\"",
+             + (f"**\"{hero}\"** / " if hero else "") + f"\"{message.level_line(result)}\"",
              f"- Headline: \"{title}\"" if title else "- Headline: none (Typical days have none)",
              *[f"- Line under the headline: \"{line}\"" for line in message.summary_lines(result, special)],
-             *([f"- Then and now: \"{message.THEN_AND_NOW_CAPTION}\""] if blocks else ["- Then and now: not shown"]),
-             *[f"  - {b['title']} — " + "; ".join(f"{r['label']}: {r['words']}" for r in b["rows"])
-               + (f" — \"{b['rarer_now']}\"" if b["rarer_now"] else "") for b in blocks],
-             "- The numbers (collapsed):", *[f"  - \"{line}\"" for line in message.number_lines(result)], "",
+             *([f"- Then and now: \"{message.THEN_AND_NOW_CAPTION}\""] if cards else ["- Then and now: not shown"]),
+             *[card_text(c) for c in cards],
+             f"- Normal for here ({len(normal)}) (collapsed):",
+             *[f"  - {label}  {value}" for _, label, value in normal],
+             *[f"  - \"{line}\"" for line in message.not_enough_lines(result) + message.data_notes(result)], "",
              f"Text message (not shown on the page; kept for Phase 2): \"{message.sms_text(result, place, special)}\"",
              ""]
     path = replays.claude_reply_file(case["name"])

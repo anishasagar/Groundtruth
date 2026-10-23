@@ -22,10 +22,10 @@ sys.path.insert(0, str(ROOT))
 from groundtruth import geocode, message, replays, risk, weather  # noqa: E402
 
 FORBIDDEN = re.compile(r"\bsafe\b|\bsafely\b|\bsafety\b|\bno risk\b|\ball clear\b|\bcaused\b", re.I)
-# "Normal" may only describe what a check measures (CLAUDE.md rule 8): "Normal rain for here", or right after a
-# check's value in "The numbers" ("Gusts: up to 28 km/h forecast, normal for here.").
+# "Normal" may only describe what a check measures (CLAUDE.md rule 8): "Normal rain for here" (the engine's text), or
+# right after a check's value in "Other checks" / "All checks" ("Gusts up to 28 km/h, normal for here").
 ALLOWED_NORMAL = re.compile(r"Normal (rain for here|rain for the last|temperatures for here|highs for here|"
-                            r"lows for here|snowfall for here|wind for here)|normal for here\.$")
+                            r"lows for here|snowfall for here|wind for here)|normal for here$")
 
 
 def check_text(label, result, texts):
@@ -36,7 +36,9 @@ def check_text(label, result, texts):
 def check_result(label, result, place="Somewhere, Far Away Land", special=None):
     today = dt.date.today()
     title = message.headline(result)
-    numbers = message.number_lines(result, today)
+    normal = message.normal_lines(result)
+    numbers = [f"{label} {value}" for _, label, value in normal] + message.not_enough_lines(result) \
+        + message.data_notes(result)
     sms = message.sms_text(result, place, special)
     meaning = message.what_it_means(result, special)
     check_text(label, result, [title or "", sms, meaning, message.level_line(result), *numbers])
@@ -45,13 +47,27 @@ def check_result(label, result, place="Somewhere, Far Away Land", special=None):
             assert ALLOWED_NORMAL.match(t, m.start()), f"{label}: 'normal' used outside a check: {t}"
         # Less common than in the past must not sound reassuring.
         assert "less common" not in t, f"{label}: reassuring 'less common' wording: {t}"
-    # "The numbers": one plain line per check, in the engine's order, each starting with its label.
-    for c, line in zip(result["checks"], numbers):
-        assert line.startswith(message.NUMBER_LABEL[c["key"]].split(" {")[0]), f"{label}: {line}"
-        if c.get("crosses_danger_line"):
-            assert f"the {c['danger_line']} {c['unit']} danger line" in line, f"{label}: {line}"
-        assert "**" not in line and "ERA5" not in line, f"{label}: {line}"
-    assert len(numbers) >= len(result["checks"]), f"{label}: a check is missing from the numbers"
+    # "Normal for here": every check is either a card or a quiet line (or "not enough data"), never both.
+    cards = message.then_and_now(result)
+    carded = [card["key"] for card in cards]
+    quiet = [key for key, _, _ in normal]
+    assert not set(carded) & set(quiet), f"{label}: a check is both a card and a normal line"
+    enough = [c["key"] for c in result["checks"] if c["level"] != risk.NOT_ENOUGH]
+    assert sorted(carded + quiet) == sorted(enough), f"{label}: a check is missing: {carded} {quiet}"
+    assert len(message.not_enough_lines(result)) == len(result["checks"]) - len(enough), label
+    for key, name, value in normal:
+        c = check(result, key)
+        assert c["level"] not in risk.LEVELS[1:], f"{label}: a raised check among the normal lines"
+        assert name == message.NORMAL_LABEL[key] and "**" not in value and "ERA5" not in value, (name, value)
+        assert (c["recent"]["per_year"] < message.NORMAL_FROM_PER_YEAR) == (c["recent_text"] in value), value
+        if value != "none forecast":  # "normal for here" exactly where the check happens 5+ times a year
+            assert (c["recent"]["per_year"] >= message.NORMAL_FROM_PER_YEAR) == value.endswith(", normal for here")
+    # The heading: "Other checks (n)" under cards, "All checks (n)" when there are none; n counts every line.
+    n = len(normal) + len(message.not_enough_lines(result))
+    assert message.checks_heading(result) == f"{'Other' if cards else 'All'} checks ({n})", label
+    # The hero line: only on raised days (Typical and Not enough data have none, whatever the history).
+    if result["level"] not in risk.LEVELS[1:]:
+        assert message.hero_line(result, fake_history()) is None, f"{label}: a hero line on a {result['level']} day"
 
     # The yellow "Not checked" box is last on every result, and the page's one visible pointer to official warnings.
     lines = message.summary_lines(result, special)
@@ -59,8 +75,8 @@ def check_result(label, result, place="Somewhere, Far Away Land", special=None):
     low = message._value(result, "feels_like_min_c")
     cold = low is None or low <= message.ICE_MENTION_AT_OR_BELOW_C
     box = message.NOT_CHECKED.format(ice=message.NOT_CHECKED_ICE if cold and not ice else "")
-    if special == "geological":
-        box += " " + message.NOT_CHECKED_GEOLOGICAL
+    if special == "geological":  # one sentence: official warnings and the geological authorities together
+        box = box[:-1] + ", and civil protection and geological authorities."
     assert lines[-1] == box == message.not_checked(result, special), f"{label}: {lines}"
     assert " ".join(lines).lower().count("official") == 1, f"{label}: official warnings said more than once: {lines}"
     assert message.OFFICIAL_LINE not in " ".join(lines), label
@@ -112,43 +128,63 @@ def check_result(label, result, place="Somewhere, Far Away Land", special=None):
                         assert f"{c['danger_line']} {c['unit']} danger line" in message.level_line(result), label
             assert ("however often it happens here" in message.level_line(result)) == any(
                 message.danger_line_set_level(c) for c in result["checks"] if c["name"] in result["decided_by"])
-        # "Then and now": the check that set the level (Typical: only if it happens < 5 times a year now).
-        blocks = message.then_and_now(result)
-        deciding = message.deciding_check(result)
-        shown = not typical or deciding["recent"]["per_year"] < message.THEN_AND_NOW_TYPICAL_BELOW_PER_YEAR
-        assert bool(blocks) == shown, f"{label}: then and now shown {bool(blocks)}"
-        assert not blocks or blocks[0]["check"] is deciding, label
-        assert len(blocks) <= (1 if typical else 2), label
-        for block in blocks:
-            c = block["check"]
-            assert [r["label"] for r in block["rows"]] == [f"Now ({result['recent_label']})", result["baseline_label"]]
-            assert max(r["width"] for r in block["rows"]) in (0.0, 1.0)
-            events = c["recent"]["count"] + c["baseline"]["count"]
-            few = min(c["recent"]["count"], c["baseline"]["count"]) < message.ENOUGH_EVENTS
-            assert block["counts"] == few, label
-            for r, period, never in ((block["rows"][0], c["recent"], c["recent_text"]),
-                                     (block["rows"][1], c["baseline"], c["baseline_text"])):
-                if not period["count"]:  # "not seen in …" stays as the engine says it
-                    assert r["words"] == never, r
-                elif few:  # few events: counts, not rates
-                    assert re.fullmatch(r"(once|\d+ times) in \d+ years", r["words"]), r
-                else:
-                    assert r["words"] == never, r  # the engine's rate
-            assert (block["rarer_now"] is not None) == (message.less_common_now(c) and events >= message.ENOUGH_EVENTS)
-            # The title names the check and carries its value.
-            assert block["title"].startswith(message.THEN_AND_NOW_TITLE[c["key"]] + ": "), block["title"]
-            if c["key"] == risk.RECENT_RAIN_KEY:  # part measured, part forecast: never just "forecast"
-                assert block["title"].endswith("plus the day's forecast)"), block["title"]
-            else:
-                assert block["title"].endswith(f": {message.amount(c['value'], c['unit'])} forecast"), block["title"]
-        if len(blocks) == 2:  # only when the first has too few, and only a raised check with enough
-            first, second = blocks[0]["check"], blocks[1]["check"]
-            assert first["recent"]["count"] + first["baseline"]["count"] < message.ENOUGH_EVENTS, label
-            assert second["level"] in risk.LEVELS[1:], label
+        check_cards(label, result)
     else:
         assert message.headline(result) is None and "official sources" in message.level_line(result), label
         assert risk.NOT_ENOUGH_TEXT.replace("—", "-") in sms
-        assert message.then_and_now(result) == []
+        check_cards(label, result)
+
+
+def check_cards(label, result):
+    """"Then and now": one card per raised check, worst first; Typical days: only checks under 5 times a year."""
+    cards = message.then_and_now(result)
+    checks = [c for c in result["checks"] if "recent" in c]
+    if result["level"] == "Typical":
+        expect = [c for c in checks if c["recent"]["per_year"] < message.THEN_AND_NOW_TYPICAL_BELOW_PER_YEAR]
+    else:
+        expect = [c for c in checks if c["level"] in risk.LEVELS[1:]]
+    assert sorted(id(c) for c in expect) == sorted(id(card["check"]) for card in cards), f"{label}: card checks"
+    order = [(-risk.LEVELS.index(card["check"]["level"]), card["check"]["recent"]["per_year"]) for card in cards]
+    assert order == sorted(order), f"{label}: cards not worst first"
+    rows = [r for card in cards for r in card["rows"]]
+    if rows:  # one shared scale: the most frequent row on the page is 1.0, the rest in proportion
+        top = max(r["per_year"] for r in rows)
+        assert sum(r["width"] == 1.0 for r in rows) >= 1, label
+        for r in rows:
+            assert abs(r["width"] - (r["per_year"] / top if top else 0.0)) < 1e-9, (label, r)
+    for card in cards:
+        c = card["check"]
+        assert card["title"] == message.THEN_AND_NOW_TITLE[c["key"]], card["title"]
+        assert card["chip"] == (None if c["level"] == "Typical" else c["level"]), f"{label}: chip {card['chip']}"
+        assert card["value"] == message.amount(c["value"], c["unit"]), card["value"]
+        if c["key"] == risk.RECENT_RAIN_KEY:  # part measured, part forecast: never just "forecast"
+            assert card["value_note"] != "forecast" and "forecast" in card["value_note"], card["value_note"]
+        else:
+            assert card["value_note"].startswith("forecast"), card["value_note"]
+        # The danger line is said once: in the level box for the checks it names, else on the card.
+        named = c["name"] in (result.get("decided_by") or [])
+        assert ("danger line" in card["value_note"]) == (bool(c.get("crosses_danger_line")) and not named), \
+            f"{label}: {card['value_note']}"
+        events = c["recent"]["count"] + c["baseline"]["count"]
+        if not events:  # never seen in either period: no bars, the line names the check
+            assert card["rows"] == [] and card["never"] == message.NEVER_SEEN.format(noun=message.NOUN[c["key"]])
+            continue
+        assert card["never"] is None, label
+        assert [r["label"] for r in card["rows"]] == [f"Now ({result['recent_label']})", result["baseline_label"]]
+        few = min(c["recent"]["count"], c["baseline"]["count"]) < message.ENOUGH_EVENTS
+        assert card["counts"] == few, label
+        for r, period, never in ((card["rows"][0], c["recent"], c["recent_text"]),
+                                 (card["rows"][1], c["baseline"], c["baseline_text"])):
+            if not period["count"]:  # "not seen in …" stays as the engine says it
+                assert r["words"] == never, r
+            elif few:  # few events: counts, not rates
+                assert re.fullmatch(r"(once|\d+ times) in \d+ years", r["words"]), r
+            else:
+                assert r["words"] == never, r  # the engine's rate
+        assert (card["rarer_now"] is not None) == (message.less_common_now(c) and events >= message.ENOUGH_EVENTS)
+    # No sentence twice across the cards.
+    said = [x for card in cards for x in (card["never"], card["rarer_now"]) if x]
+    assert len(said) == len(set(said)), f"{label}: a card sentence twice: {said}"
 
 
 def assert_headline(label, result):
@@ -210,6 +246,14 @@ def fake_assess(**forecast):
         risk.get_forecast_day, risk.get_history = old
 
 
+# The hero line each replay gets (computed from the saved history; Typical replays get none).
+REPLAY_HEROES = {
+    "Valencia flash flood": "About 45% of a year's rain, forecast in one day",
+    "Texas Hill Country flood": "About 16% of a year's rain, forecast in one day",
+    # Kolkata: a feels-like high of 41.3 °C or more last happened the day before (30 May 2022): no hero line.
+}
+
+
 def check(result, key):
     return next(c for c in result["checks"] if c["key"] == key)
 
@@ -218,17 +262,18 @@ def made_up_cases():
     # Everything ordinary: the Typical headline, one merged temperature line, "No snow forecast".
     r, _ = fake_assess()
     check_result("made up: ordinary", r)
-    numbers = message.number_lines(r, dt.date(2026, 1, 1))
+    normal = message.normal_lines(r)
     assert r["level"] == "Typical", r["level"]
     assert message.headline(r) is None  # Typical days have no headline
     assert message.level_line(r) == "for rain, temperature, snow and wind"
     assert message.ice_note(r) is None and message.ice_line(r) is None  # 1 mm of rain, above freezing
-    assert "Snow: none forecast." in numbers, numbers
-    assert numbers[0] == "Rain on 15 Dec 2024: 1.0 mm forecast, normal for here.", numbers[0]
-    assert numbers[1] == "Feels-like high: 12 °C forecast, normal for here.", numbers[1]
-    assert numbers[2] == "Feels-like low: 3.0 °C forecast, normal for here.", numbers[2]
-    assert numbers[5].startswith("Rain over 6 days: ") and numbers[5].endswith(", normal for here."), numbers[5]
-    assert message.number_lines(r, FAKE_DATE)[0] == "Rain today: 1.0 mm forecast, normal for here.", "today's wording"
+    assert normal[:5] == [("rain_mm", "Rain in 24 hours", "1.0 mm, normal for here"),
+                          ("feels_like_max_c", "Feels-like high", "12 °C, normal for here"),
+                          ("feels_like_min_c", "Feels-like low", "3.0 °C, normal for here"),
+                          ("snow_cm", "Snow", "none forecast"),
+                          ("gust_max_kmh", "Gusts", "up to 25 km/h, normal for here")], normal
+    assert message.checks_heading(r) == "All checks (6)", message.checks_heading(r)
+    assert normal[5][:2] == ("recent_rain_mm", "Rain over 6 days") and "measured" in normal[5][2], normal[5]
     assert message.then_and_now(r) == []  # every check happens 5 or more times a year: no Then and now
     assert message.summary_lines(r) == [  # feels-like low 3 °C: ice on roads is listed
         "Not checked: thunderstorms, ice on roads, landslides, glacier collapse. Follow official weather and storm "
@@ -245,11 +290,12 @@ def made_up_cases():
     assert cold["ratio"] is not None and cold["ratio"] < 1, cold["ratio_text"]
     assert message.summary_lines(r)[0] == message.ARROW + message.ACTIONS["cold"]
     assert message.headline(r) == f"{r['level']} risk of extreme cold.", message.headline(r)
-    first = message.number_lines(r)[2]
-    assert first.startswith("Feels-like low: ") and ", down from about " in first and " in 1951–1980." in first, first
+    assert "feels_like_min_c" not in [key for key, _, _ in message.normal_lines(r)], "a card, not a normal line"
     assert message.level_line(r).startswith("Feels as cold as "), message.level_line(r)
     rarity = message.then_and_now(r)[0]
-    assert rarity["name"] == "Feels-like cold" and rarity["title"].startswith("Feels-like cold: "), rarity
+    assert rarity["name"] == "Feels-like cold" and rarity["title"] == "Feels-like cold", rarity
+    assert rarity["chip"] == r["level"] and rarity["value_note"] == "forecast", rarity
+    first = rarity["rows"][0]["words"]
     assert rarity["rarer_now"] == ("Cold like this is rarer here now, so people and places may be less prepared "
                                    "for it."), rarity
     print(f"ok: made up: rare cold -> {r['level']}\n    {first}")
@@ -266,7 +312,7 @@ def made_up_cases():
     r, _ = fake_assess(snow_cm=2.0)
     check_result("made up: routine snow", r)
     assert check(r, "snow_cm")["level"] == "Typical" and r["level"] == "Typical", check(r, "snow_cm")
-    assert message.number_lines(r)[3] == "Snow: 2.0 cm forecast, normal for here.", message.number_lines(r)[3]
+    assert ("snow_cm", "Snow", "2.0 cm, normal for here") in message.normal_lines(r), message.normal_lines(r)
     print("ok: made up: routine snow -> Typical")
 
     # Snow far beyond the record: Extreme, snow action line, snow "how often" caption.
@@ -274,7 +320,8 @@ def made_up_cases():
     check_result("made up: record snow", r)
     assert r["level"] == "Extreme" and message.summary_lines(r)[0] == message.ARROW + message.ACTIONS["snow"]
     assert message.headline(r) == "Extreme risk of heavy snow."
-    assert message.then_and_now(r)[0]["title"] == "Snow in 24 hours: 30 cm forecast", message.then_and_now(r)[0]
+    [card] = message.then_and_now(r)
+    assert (card["title"], card["value"], card["value_note"]) == ("Snow in 24 hours", "30 cm", "forecast"), card
     print("ok: made up: record snow -> Extreme")
 
     # The ice note uses the lower of the day's lowest air temperature and its feels-like low, at +1 °C or below.
@@ -312,18 +359,6 @@ def made_up_cases():
         assert len(text) <= 160 and "glacier floods" in text and "icy" in text, text
     print("ok: made up: ice note (lower of air and feels-like low, +1 °C margin)")
 
-    # A danger-line day that was more frequent in 1951–1980: "down from", never "less common".
-    c = {"key": "feels_like_max_c", "name": "Feels-like heat", "unit": "°C", "value": 41.0, "danger_line": 40,
-         "crosses_danger_line": True, "relative_level": "Typical", "level": "High", "ratio": 0.8,
-         "recent": {"count": 600, "per_year": 20.0}, "baseline": {"count": 750, "per_year": 25.0},
-         "recent_text": "about 20 times a year", "baseline_text": "about 25 times a year",
-         "ratio_text": "1.2 times less common here than in 1951–1980", "notes": []}
-    line = message.number_lines({"date": FAKE_DATE, "checks": [c], "baseline_label": "1951–1980",
-                                 "notes": list(risk.ALWAYS_NOTES)}, FAKE_DATE)[0]
-    assert line == ("Feels-like high: 41 °C forecast, above the 40 °C danger line. About 20 days a year here, "
-                    "down from about 25 days a year in 1951–1980."), line
-    print("ok: danger-line number line when it was more frequent before")
-
     # The scope line names what we don't check.
     for word in ("thunderstorms", "hail", "freezing rain", "wildfire", "air quality", "coastal flooding",
                  "geological"):
@@ -334,6 +369,98 @@ def made_up_cases():
     assert "Thunderstorms are not checked" in message.STORM_NOTE
     assert message.OFFICIAL_LINE == "Check your official weather warnings. Groundtruth never replaces them."
     print("ok: scope line, storm note and How sure are we")
+
+
+def hero_cases():
+    """The hero line from made-up history: share of a year (rain, 6-day rain, snow) or the last year (heat,
+    cold, wind), the "more than a year" and "since 1951" cases, and none when the last such day was recent."""
+    hist = fake_history()
+    years = hist[(hist["date"].dt.year >= 1951) & (hist["date"].dt.year < FAKE_DATE.year)]
+    rain_year = years.groupby(years["date"].dt.year)["rain_mm"].sum().mean()
+    snow_year = years.groupby(years["date"].dt.year)["snow_cm"].sum().mean()
+
+    def raised(key, value, level="High", **extra):
+        c = {"key": key, "name": key, "unit": "", "value": value, "level": level, "notes": [],
+             "lower_is_worse": key == "feels_like_min_c", "recent": {"count": 1, "per_year": 0.03},
+             "baseline": {"count": 1, "per_year": 0.03}, **extra}
+        return {"level": level, "date": FAKE_DATE, "checks": [c], "decided_by": [key]}
+
+    # Rain, 6-day rain and snow: the share of an average year here, rounded to a whole percent.
+    v = round(rain_year * 0.453, 1)
+    assert message.hero_line(raised("rain_mm", v), hist) == \
+        f"About {round(100 * v / rain_year)}% of a year's rain, forecast in one day"
+    assert message.hero_line(raised("recent_rain_mm", v), hist) == \
+        f"About {round(100 * v / rain_year)}% of a year's rain in 6 days, including the day's forecast"
+    assert message.hero_line(raised("snow_cm", round(snow_year / 4, 1)), hist) == \
+        f"About {round(100 * round(snow_year / 4, 1) / snow_year)}% of a year's snow, forecast in one day"
+    # 100% or more, just under 100% (never shown as 100%).
+    assert message.hero_line(raised("rain_mm", rain_year * 1.2), hist) == \
+        "More than a year's rain, forecast in one day"
+    assert message.hero_line(raised("rain_mm", rain_year * 0.996), hist) == \
+        "About 99% of a year's rain, forecast in one day"
+    # Under 10% of a year: no hero line (a small share could sound mild on a raised day); 10% exactly is shown.
+    for share in (0.004, 0.04, 0.0999):
+        assert message.hero_line(raised("rain_mm", rain_year * share), hist) is None, share
+        assert message.hero_line(raised("snow_cm", snow_year * share), hist) is None, share
+        assert message.hero_line(raised("recent_rain_mm", rain_year * share), hist) is None, share
+    assert message.hero_line(raised("rain_mm", rain_year * 0.1), hist) == \
+        "About 10% of a year's rain, forecast in one day"
+    # An average year here has no snow at all: more than any day since the record began.
+    dry = hist.assign(snow_cm=0.0)
+    assert message.hero_line(raised("snow_cm", 5.0), dry) == "More snow than any day here since 1951"
+
+    # Heat, cold, wind: the last year a day at least this extreme happened here.
+    marked = hist.copy()
+    when = marked["date"] == pd.Timestamp("2008-07-01")
+    marked.loc[when, ["feels_like_max_c", "gust_max_kmh"]] = [60.0, 300.0]
+    marked.loc[when, "feels_like_min_c"] = -60.0
+    assert message.hero_line(raised("feels_like_max_c", 55.0), marked) == "The hottest feels-like day here since 2008"
+    assert message.hero_line(raised("feels_like_min_c", -55.0), marked) == \
+        "The coldest feels-like day here since 2008"  # checked in the cold direction
+    assert message.hero_line(raised("gust_max_kmh", 250.0), marked) == "The strongest gusts here since 2008"
+    # Never this extreme since the record began.
+    assert message.hero_line(raised("feels_like_max_c", 70.0), marked) == "Hotter than any day here since 1951"
+    assert message.hero_line(raised("feels_like_min_c", -70.0), marked) == "Colder than any day here since 1951"
+    assert message.hero_line(raised("gust_max_kmh", 400.0), marked) == "Stronger gusts than any day here since 1951"
+    # The last such day less than a year before the date: no hero line ("since 2024" on a 2024 date says nothing).
+    recent = marked.copy()
+    recent.loc[recent["date"] == pd.Timestamp("2024-06-01"), "feels_like_max_c"] = 60.0
+    assert message.hero_line(raised("feels_like_max_c", 55.0), recent) is None
+    # Typical, Not enough data and too little history: none.
+    assert message.hero_line(raised("rain_mm", rain_year * 0.5, level="Typical"), hist) is None
+    assert message.hero_line({**raised("rain_mm", 50.0), "level": risk.NOT_ENOUGH}, hist) is None
+    short = hist[hist["date"].dt.year >= 2000]  # 24 full years: fewer than 30
+    assert message.hero_line(raised("rain_mm", 50.0), short) is None
+    assert message.hero_line(raised("rain_mm", 50.0), None) is None
+    # Through the real engine: a record snow day gets a hero line; an ordinary day none.
+    r, hist = fake_assess(snow_cm=30.0)
+    assert message.hero_line(r, hist) == f"About {round(100 * 30 / snow_year)}% of a year's snow, forecast in one day"
+    r, hist = fake_assess()
+    assert message.hero_line(r, hist) is None
+    print("ok: hero line (share of a year, last year, more than a year, since 1951, recent, Typical)")
+
+
+def about_cases():
+    """"About this tool": the user's wording, every number matching the risk.py settings."""
+    assert message.HOW_LEVEL_SET == (
+        "For each check (rain in 24 hours, rain over 6 days, heat, cold, snow and wind), we count how often a day at "
+        "least this extreme happened at this spot in the last 30 years. Three danger lines (150 mm of rain in 24 "
+        "hours, feels-like 40 °C, gusts of 100 km/h) mean at least High, however often they happen here. The page "
+        "shows the worst level of all the checks. The 1951–1980 figures are only for comparison; they don't change "
+        "the level."), message.HOW_LEVEL_SET
+    assert message.LEVELS_MEAN == [
+        "Typical: happens more than once a year here.",
+        "Elevated: about once every 1 to 5 years.",
+        "High: about once every 5 to 20 years, or past a danger line.",
+        "Extreme: rarer than once every 20 years, or never seen here.",
+        "Not enough data: we couldn't check reliably; follow official sources."], message.LEVELS_MEAN
+    # The same numbers, straight from the settings.
+    assert (risk.RECENT_WINDOW_YEARS, risk.RECENT_RAIN_DAYS_BEFORE + 1, risk.baseline_label()) == (30, 6, "1951–1980")
+    assert risk.DANGER_LINES == {"rain_mm": 150, "feels_like_max_c": 40, "gust_max_kmh": 100}
+    assert (risk.TYPICAL_IF_MORE_OFTEN_THAN_YEARS, risk.ELEVATED_IF_MORE_OFTEN_THAN_YEARS,
+            risk.HIGH_IF_MORE_OFTEN_THAN_YEARS) == (1, 5, 20)
+    assert risk.NOT_ENOUGH == "Not enough data"
+    print("ok: About this tool (wording and numbers match risk.py)")
 
 
 def hourly_cases():
@@ -397,28 +524,31 @@ def main():
                 continue
             special = replays.SPECIAL_NOTES.get(c["name"])
             check_result(c["name"], result, replays.place_of(c), special)
+            history = weather.get_history(float(c["latitude"]), float(c["longitude"]),
+                                          *message.hero_history_range(result["date"]))["data"]
+            hero = message.hero_line(result, history)
+            assert hero == REPLAY_HEROES.get(c["name"]), f"{c['name']}: hero line {hero}"
             if c["name"].startswith("Kolkata heat"):
-                assert message.number_lines(result)[1] == (
-                    "Feels-like high: 41 °C forecast, above the 40 °C danger line. About 48 days a year here, "
-                    "1.4 times more often than in 1951–1980."), message.number_lines(result)[1]
                 assert message.sms_text(result, "Kolkata, India") == (
                     "Groundtruth Kolkata, India 31 May 2022: High risk. Feels-like 41 C forecast. Avoid exertion, "
                     "drink water, check on older people. Check official warnings.")
             if c["name"].startswith("Texas"):  # the user's two examples
-                numbers = message.number_lines(result)
-                assert numbers[0] == ("Rain on 4 Jul 2025: 107 mm forecast. About once every 15 years here, about "
-                                      "the same as in 1951–1980."), numbers[0]
-                assert numbers[5] == ("Rain over 6 days: 144 mm (36.7 mm measured before the day, plus the day's "
-                                      "forecast). About once every 4.3 years here, 3.5 times more often than in "
-                                      "1951–1980."), numbers[5]
                 assert message.level_line(result) == "107 mm of rain forecast in 24 h"
                 assert message.headline(result) == "High risk of heavy rain."
-                first, second = message.then_and_now(result)  # 24 h rain (2 + 2), then the 6-day rain (7 + 2)
-                assert first["title"] == "Rain in 24 hours: 107 mm forecast", first["title"]
-                assert second["title"] == "Rain over 6 days: 144 mm (36.7 mm measured plus the day's forecast)"
+                first, second = message.then_and_now(result)  # 24 h rain (High), then the 6-day rain (Elevated)
+                assert (first["title"], first["chip"], first["value"], first["value_note"]) == (
+                    "Rain in 24 hours", "High", "107 mm", "forecast"), first
+                assert (second["title"], second["chip"], second["value"], second["value_note"]) == (
+                    "Rain over 6 days", "Elevated", "144 mm", "36.7 mm measured + the day's forecast"), second
                 assert [r["words"] for r in first["rows"]] == ["2 times in 30 years", "2 times in 30 years"]
                 assert [r["words"] for r in second["rows"]] == ["7 times in 30 years", "2 times in 30 years"]
                 assert second["rarer_now"] is None
+                # One shared scale: "7 times" is the longest bar; every "2 times" bar is 2/7 of it, in both cards.
+                assert second["rows"][0]["width"] == 1.0
+                for r in (*first["rows"], second["rows"][1]):
+                    assert abs(r["width"] - 2 / 7) < 0.01, r
+                assert [key for key, _, _ in message.normal_lines(result)] == [
+                    "feels_like_max_c", "feels_like_min_c", "snow_cm", "gust_max_kmh"]
             if c["name"] == "Paris snow and cold":  # no air temperature saved: the feels-like low (-6.5 °C) is used
                 assert result.get("air_min_c") is None and message.ice_note(result) == message.ICE_NOTE
                 assert message.ice_line(result) == "Roads may be icy; ice itself isn't checked."
@@ -433,28 +563,35 @@ def main():
                 assert message.level_line(result) == ("Feels like 41 °C forecast, above the 40 °C danger line, "
                                                       "however often it happens here"), message.level_line(result)
                 assert message.headline(result) == "High risk of dangerous feels-like heat."
-                [block] = message.then_and_now(result)
+                [block] = message.then_and_now(result)  # many such days: rates, not counts
                 assert not block["counts"] and [r["words"] for r in block["rows"]] == ["about 48 times a year",
                                                                                        "about 34 times a year"]
+                assert block["value_note"] == "forecast", block["value_note"]  # the level box names the 40 °C line
                 assert message.not_checked(result) == ("Not checked: thunderstorms, landslides, glacier collapse. "
                                                        "Follow official weather and storm warnings.")  # 34 °C low
-                assert message.number_lines(result)[0] == "Rain on 31 May 2022: 8.2 mm forecast, normal for here."
+                assert message.normal_lines(result)[0] == ("rain_mm", "Rain in 24 hours", "8.2 mm, normal for here")
+                assert message.checks_heading(result) == "Other checks (5)", message.checks_heading(result)
             if c["name"] == "Valencia flash flood":
                 assert message.level_line(result) == ("202 mm of rain forecast in 24 h, above the 150 mm danger "
                                                       "line; 257 mm of rain over 6 days"), message.level_line(result)
                 assert message.headline(result) == "Extreme risk of heavy rain."  # the 24 h rain: first of the tie
-                [block] = message.then_and_now(result)  # not seen in either period: the rows say so
-                assert [r["words"] for r in block["rows"]] == ["not seen in those 30 years", "not seen in 1951–1980"]
+                first, second = message.then_and_now(result)  # neither seen in either period: no bars
+                assert first["rows"] == [] == second["rows"]
+                assert first["never"] == "Rain like this was never seen here in either period.", first["never"]
+                assert second["never"] == "A wet spell like this was never seen here in either period."
+                assert first["value_note"] == "forecast", first["value_note"]  # the level box names the 150 mm line
             if c["name"] == "Paris snow and cold":  # ice first, then what the checks can't see; snow is rarer now
                 assert message.summary_lines(result) == [  # the ice box, then "Not checked" without ice on roads
                     message.ICE_SMS, "Not checked: thunderstorms, landslides, glacier collapse. Follow official weather "
                                      "and storm warnings."], message.summary_lines(result)
-                [rarity] = message.then_and_now(result)
+                [rarity] = message.then_and_now(result)  # a Typical card: snow, about 1.1 times a year, no chip
                 assert rarity["name"] == "Snowfall (24 h)" and rarity["rarer_now"].startswith("Snow like this"), rarity
-                numbers = message.number_lines(result)  # snow (1.1 a year) keeps its rate; cold (12 a year) is normal
-                assert numbers[3] == ("Snow: 3.0 cm forecast. About 1.1 days a year here, down from about 1.3 days a "
-                                      "year in 1951–1980."), numbers[3]
-                assert numbers[2] == "Feels-like low: -6.5 °C forecast, normal for here.", numbers[2]
+                assert rarity["chip"] is None and [r["words"] for r in rarity["rows"]] == [
+                    "about 1.1 times a year", "about 1.3 times a year"], rarity
+                normal = message.normal_lines(result)  # snow is a card; cold (12 a year) is a normal line
+                assert "snow_cm" not in [key for key, _, _ in normal], normal
+                assert ("feels_like_min_c", "Feels-like low", "-6.5 °C, normal for here") in normal, normal
+                assert message.checks_heading(result) == "Other checks (5)", message.checks_heading(result)
             if result["level"] == "Typical" and c["name"] != "Paris snow and cold":  # every check 5+ times a year
                 assert message.then_and_now(result) == [], c["name"]
                 warm = message._value(result, "feels_like_min_c") > message.ICE_MENTION_AT_OR_BELOW_C
@@ -464,10 +601,11 @@ def main():
             if c["name"].startswith("Nepal-Tibet"):
                 assert message.not_checked(result, special) == (
                     "Not checked: thunderstorms, landslides, glacier collapse. Follow official weather and storm "
-                    "warnings. For glacier collapse and landslides, check civil protection and geological "
-                    "authorities."), message.not_checked(result, special)
+                    "warnings, and civil protection and geological authorities."), message.not_checked(result, special)
             print("ok:", c["name"], "->", result["level"])
     made_up_cases()
+    hero_cases()
+    about_cases()
     hourly_cases()
     geocode_cases()
     check_result("Not enough data", not_enough_result())

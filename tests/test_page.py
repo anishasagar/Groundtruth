@@ -6,6 +6,7 @@ Run from the project folder:  python tests/test_page.py
 """
 
 import datetime as dt
+import html
 import re
 import sys
 from pathlib import Path
@@ -17,7 +18,7 @@ sys.path.insert(0, str(ROOT))
 
 from groundtruth import geocode, message, replays, risk, weather  # noqa: E402
 
-FOLDED = ["The numbers", "How sure are we", "About this tool"]
+FOLDED = ["How sure are we", "About this tool"]  # after "Other checks (n)" / "All checks (n)"
 NO_REPLAY = "— none, use the search above —"
 
 
@@ -48,6 +49,20 @@ def all_text(at):
     def walk(node):
         value = getattr(node, "value", None)
         if isinstance(value, str) and not value.lstrip().startswith(("<div", "<style")):
+            out.append(value)
+        for child in getattr(node, "children", {}).values():
+            walk(child)
+    walk(at.main)
+    return out
+
+
+def page_strings(at):
+    """Every text on the page, HTML blocks (level box, bars) and collapsed sections included."""
+    out = []
+
+    def walk(node):
+        value = getattr(node, "value", None)
+        if isinstance(value, str) and not value.lstrip().startswith("<style"):
             out.append(value)
         for child in getattr(node, "children", {}).values():
             walk(child)
@@ -87,12 +102,26 @@ def main():
         name = case["name"]
         at = render(name)
         warnings = texts(at.warning)
+        used = []
         with weather.offline():
             result = risk.assess(float(case["latitude"]), float(case["longitude"]), dt.date.fromisoformat(case["date"]))
         # Yellow boxes: the ice box (on ice days) and the "Not checked" box on every result.
         special = replays.SPECIAL_NOTES.get(name)
         ice = [message.ICE_SMS] if message.ice_note(result) else []
         assert warnings == ice + [message.not_checked(result, special)], f"{name}: yellow boxes: {warnings}"
+        assert [w.icon for w in at.warning] == ["🧊"] * len(ice) + [":material/thunderstorm:"], name
+        # The level box: place · date, the level word, the hero line (raised days only), the value line.
+        history = weather.get_history(float(case["latitude"]), float(case["longitude"]),
+                                      *message.hero_history_range(result["date"]))["data"]
+        hero = message.hero_line(result, history)
+        box = next(m.value for m in at.markdown if 'role="status"' in m.value)
+        assert hero is None or result["level"] in risk.LEVELS[1:], f"{name}: a hero line on a Typical day"
+        if hero:
+            shown_hero = html.escape(hero)
+            assert f"font-weight:700;line-height:1.3;margin:0.15rem 0 0.2rem 0\">{shown_hero}</div>" in box, name
+            assert box.index(result["level"]) < box.index(shown_hero) < box.index(message.level_line(result)), name
+        else:
+            assert "line-height:1.3" not in box, f"{name}: a hero line where there should be none"
         # The headline is written by code: "<Level> risk of <hazard>." on raised days, none on Typical days.
         title = message.headline(result)
         assert [h.value for h in at.markdown if h.value.startswith("### ")] == ([f"### {title}"] if title else []), name
@@ -100,7 +129,13 @@ def main():
         # The yellow line is the one visible pointer to official warnings.
         assert message.OFFICIAL_LINE not in shown and "Check your official weather warnings" not in shown, name
         assert "Text message" not in shown and "We check rain, heat" not in shown, f"{name}: removed sections"
-        assert [e.label for e in at.expander] == FOLDED, f"{name}: {[e.label for e in at.expander]}"
+        n = len(message.normal_lines(result)) + len(message.not_enough_lines(result))
+        heading = f"{'Other' if message.then_and_now(result) else 'All'} checks ({n})"
+        assert [e.label for e in at.expander] == [heading, *FOLDED], f"{name}: {[e.label for e in at.expander]}"
+        assert "Normal for here" not in [e.label for e in at.expander], name
+        # Each danger line is named once on the page (level box or card, never both).
+        lines_said = re.findall(r"\b\d+ (?:mm|°C|km/h) danger line", "\n".join(page_strings(at)))
+        assert len(lines_said) == len(set(lines_said)), f"{name}: a danger line said twice: {lines_said}"
         assert not any(e.proto.expanded for e in at.expander), f"{name}: sections must start collapsed"
         everything = "\n".join(all_text(at))
         assert message.OFFICIAL_LINE in everything, f"{name}: official warnings missing from How sure are we"
@@ -116,19 +151,37 @@ def main():
         # The replay fills the place and date fields.
         assert at.text_input(key="query").value == replays.place_of(case), name
         assert at.date_input(key="date").value == dt.date.fromisoformat(case["date"]), name
-        blocks = message.then_and_now(result)
-        assert ("Then and now" in texts(at.subheader)) == bool(blocks), f"{name}: then and now"
-        assert (message.THEN_AND_NOW_CAPTION in texts(at.caption)) == bool(blocks), name
-        for block in blocks:
-            assert f"**{block['title']}**" in texts(at.markdown), f"{name}: {block['title']}"
+        cards = message.then_and_now(result)
+        assert ("Then and now" in texts(at.subheader)) == bool(cards), f"{name}: then and now"
+        assert (message.THEN_AND_NOW_CAPTION in texts(at.markdown)) == bool(cards), name
+        # One card per check, each with its icon, title and (raised checks only) its level chip.
+        headers = [m.value for m in at.markdown if m.value.startswith(":material/") and "**" in m.value]
+        assert len(headers) == len(cards), f"{name}: {len(headers)} card headers for {len(cards)} cards"
+        for header, card in zip(headers, cards):
+            assert header.startswith(f"{message.ICONS[card['key']]} **{card['title']}**"), header
+            assert (f">{card['chip']}</span>" in header) == bool(card["chip"]), header
+            for line in (card["never"], card["rarer_now"]):
+                if line:
+                    assert f"**{line}**" in texts(at.markdown), f"{name}: {line}"
+            if card["rows"]:  # the bars: label, words, width on the shared scale
+                bars = next(m.value for m in at.markdown if m.value.startswith('<div class="gt-rows">')
+                            and card["rows"][0]["label"] in m.value and m.value not in used)
+                used.append(bars)
+            assert not card["rows"] or "gt-bar" in bars, name
         about = next(e for e in at.expander if e.label == "About this tool")
-        assert "fixed wording written by code" in about.markdown[0].value, name
+        about_text = [m.value for m in about.markdown]
+        assert about_text[0] == f"**How the level is set:** {message.HOW_LEVEL_SET}", about_text[0]
+        assert about_text[1] == "**What the levels mean:**\n" + "\n".join(f"- {x}" for x in message.LEVELS_MEAN)
+        assert "fixed wording written by code" in about_text[2], name
         assert any(c.value.startswith("Forecast: ") for c in about.caption), f"{name}: sources in About this tool"
-        numbers = next(e for e in at.expander if e.label == "The numbers")
-        assert not any(c.value.startswith("Forecast: ") for c in numbers.caption), f"{name}: sources moved"
+        normal = next(e for e in at.expander if e.label == heading)
+        assert not any(c.value.startswith("Forecast: ") for c in normal.caption), f"{name}: sources moved"
+        assert [c.value for c in normal.caption] == [message.NORMAL_SMALL_PRINT], name
+        for key, label, value in message.normal_lines(result):
+            assert f"{message.ICONS[key]}&nbsp; {label} &nbsp;·&nbsp; {value}" in normal.markdown[0].value, label
         assert "Next 48 hours" not in shown, f"{name}: no hourly strip on a replay"
         geological = special == "geological"
-        assert (message.NOT_CHECKED_GEOLOGICAL in shown) == geological, f"{name}: geological sentence"
+        assert (message.NOT_CHECKED_GEOLOGICAL_END in shown) == geological, f"{name}: geological authorities"
         assert message.GEOLOGICAL_NOTE not in shown, f"{name}: the separate geological note is gone"
         assert shown.count("Phase 2") == 2, f"{name}: the two Phase 2 cards"
         print(f"ok: {name}")

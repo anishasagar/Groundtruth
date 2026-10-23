@@ -23,8 +23,6 @@ SUBTITLE = ("How unusual is today's weather for this place, compared with how it
 ABOUT_LINES = [
     "Every sentence on this page is fixed wording written by code, from numbers computed by code.",
     "AI wording (Claude) was tested and switched off because it kept drifting towards reassurance.",
-    "The level is the worse of how rare the day is here and fixed danger lines, so it leans toward warning. "
-    "Recent rain, cold and snow can only raise it.",
     message.NO_COLD_SNOW_LINES,
 ]
 # Level colours. Never green: a green box could read as "all fine".
@@ -72,6 +70,16 @@ def cached_replay(lat, lon, date):
 
 
 @st.cache_data(ttl=3600, show_spinner=False)
+def cached_history(lat, lon, date, replay):
+    """The history at this spot, for the hero line (already saved by risk.assess, so no new download)."""
+    start, end = message.hero_history_range(date)
+    if replay:
+        with weather.offline():
+            return weather.get_history(lat, lon, start, end)["data"]
+    return weather.get_history(lat, lon, start, end)["data"]
+
+
+@st.cache_data(ttl=3600, show_spinner=False)
 def cached_hourly(lat, lon, date, hour):
     """`hour` (the current hour) only makes the strip move on as the day goes on."""
     return weather.get_hourly(lat, lon, date)
@@ -79,16 +87,19 @@ def cached_hourly(lat, lon, date, hour):
 
 # ---- pieces of the screen -----------------------------------------------------
 
-def level_box(result, place):
+def level_box(result, place, hero=None):
+    """Place · date, the level word, the hero line (raised days only, bold), then the value line (smaller)."""
     level = result["level"]
     background, colour = LEVEL_STYLE[level]
     where = f"{place} · {message.day_text(result['date'])}"
+    hero_html = (f'<div style="font-size:1.15rem;font-weight:700;line-height:1.3;margin:0.15rem 0 0.2rem 0">'
+                 f'{html.escape(hero)}</div>') if hero else ""
     st.markdown(
         f'<div style="background:{background};color:{colour};padding:0.9rem 1.25rem;border-radius:0.5rem;'
         f'margin:0.5rem 0 1rem 0" role="status">'
         f'<div style="font-size:0.85rem;opacity:0.9">{html.escape(where)}</div>'
-        f'<div style="font-size:2.2rem;font-weight:700;line-height:1.2">{html.escape(level)}</div>'
-        f'<div style="font-size:0.95rem;opacity:0.95">{html.escape(message.level_line(result))}</div></div>',
+        f'<div style="font-size:2.2rem;font-weight:700;line-height:1.2">{html.escape(level)}</div>{hero_html}'
+        f'<div style="font-size:0.85rem;opacity:0.95">{html.escape(message.level_line(result))}</div></div>',
         unsafe_allow_html=True,
     )
 
@@ -136,54 +147,71 @@ def hourly_strip(slots, title):
     st.caption(STRIP_CAPTION)
 
 
-LONGEST_BAR = 0.6  # the more frequent period's line, as a share of the track
+LONGEST_BAR = 0.9  # the most frequent row in the whole section, as a share of the width
 OLDER_COLOUR = "#8a929c"
+# Card backgrounds: a light tint of the check's level colour; Typical cards neutral grey.
+CARD_TINT = {"Elevated": "rgba(242,176,30,0.16)", "High": "rgba(194,65,12,0.12)",
+             "Extreme": "rgba(155,28,28,0.14)", "Typical": "rgba(128,128,128,0.10)"}
 
 
-def rarity_lines(rows, accent):
-    """Two plain rows: period, a thin line, the engine's words. No axes, grid or scale numbers.
+def card_rows(rows, accent):
+    """Two rows: period and its words on one line, a thin rounded bar under it (no track, no axes).
 
-    On phones each row is "period …… words" on one line, with the line under it.
-    """
-    out = [
-        "<style>.gt-rows{margin-bottom:1rem}.gt-row{display:grid;grid-template-columns:8.5rem 3fr 2fr;"
-        "gap:0.3rem 0.9rem;align-items:center;margin-bottom:0.6rem}.gt-track{height:0.55rem}"
-        ".gt-bar{height:100%;border-radius:0.3rem}"
-        "@media (max-width:600px){.gt-row{grid-template-columns:1fr auto;grid-template-areas:'label words' "
-        "'track track'}.gt-label{grid-area:label}.gt-words{grid-area:words;text-align:right}"
-        ".gt-track{grid-area:track}}</style><div class=\"gt-rows\">"
-    ]
+    Widths share one scale across the whole section (message.then_and_now)."""
+    out = ['<div class="gt-rows">']
     for i, r in enumerate(rows):
         colour = accent if i == 0 else OLDER_COLOUR  # the first row is now
         width = r["width"] * LONGEST_BAR * 100
         if r["per_year"] > 0:
-            width = max(width, 0.5)  # a tiny but real rate still shows
+            width = max(width, 1.0)  # a tiny but real rate still shows
         out.append(
-            f'<div class="gt-row"><div class="gt-label"><strong>{html.escape(r["label"])}</strong></div>'
-            f'<div class="gt-track" aria-hidden="true"><div class="gt-bar" '
-            f'style="width:{width:.1f}%;background:{colour}"></div></div>'
-            f'<div class="gt-words">{html.escape(r["words"])}</div></div>'
+            f'<div class="gt-row"><div class="gt-line"><strong>{html.escape(r["label"])}</strong>'
+            f'<span>{html.escape(r["words"])}</span></div>'
+            f'<div class="gt-bar" aria-hidden="true" style="width:{width:.1f}%;background:{colour}"></div></div>'
         )
     out.append("</div>")
-    st.markdown("".join(out), unsafe_allow_html=True)
+    return "".join(out)
 
 
 def then_and_now(result):
-    blocks = message.then_and_now(result)
-    if not blocks:  # e.g. a Typical day where every check happens 5 or more times a year
+    cards = message.then_and_now(result)
+    if not cards:  # e.g. a Typical day where every check happens 5 or more times a year
         return
     st.subheader("Then and now")
-    st.caption(message.THEN_AND_NOW_CAPTION)
-    for block in blocks:
-        st.markdown(f"**{block['title']}**")
-        rarity_lines(block["rows"], LEVEL_STYLE[result["level"]][0])
-        if block["rarer_now"]:
-            st.markdown(f"**{block['rarer_now']}**")
+    st.markdown(message.THEN_AND_NOW_CAPTION)
+    style = ["<style>.gt-rows{margin:0.2rem 0 0.4rem 0}.gt-row{margin-bottom:0.55rem}"
+             ".gt-line{display:flex;justify-content:space-between;gap:0.8rem;font-size:0.9rem;margin-bottom:0.2rem}"
+             ".gt-bar{height:6px;border-radius:3px}"
+             ".gt-chip{font-size:0.75rem;font-weight:700;border-radius:1rem;padding:0.1rem 0.55rem;"
+             "margin-left:0.4rem;vertical-align:middle}"
+             ".gt-value{font-size:1.9rem;font-weight:700;line-height:1.2}.gt-note{font-size:0.85rem;opacity:0.8}"]
+    for i, card in enumerate(cards):
+        style.append(f".st-key-gt-card-{i}{{background:{CARD_TINT[card['check']['level']]}}}")
+    st.markdown("".join(style) + "</style>", unsafe_allow_html=True)
+    for i, card in enumerate(cards):
+        level = card["check"]["level"]
+        accent, ink = LEVEL_STYLE[level]
+        with st.container(border=True, key=f"gt-card-{i}"):
+            chip = (f' <span class="gt-chip" style="background:{accent};color:{ink}">{html.escape(card["chip"])}'
+                    '</span>') if card["chip"] else ""
+            st.markdown(f"{message.ICONS[card['key']]} **{card['title']}**{chip}", unsafe_allow_html=True)
+            st.markdown(f'<span class="gt-value">{html.escape(card["value"])}</span> '
+                        f'<span class="gt-note">{html.escape(card["value_note"])}</span>', unsafe_allow_html=True)
+            if card["rows"]:
+                st.markdown(card_rows(card["rows"], accent), unsafe_allow_html=True)
+            for line in (card["never"], card["rarer_now"]):
+                if line:
+                    st.markdown(f"**{line}**")
 
 
-def numbers_section(result):
-    with st.expander("The numbers"):  # written by code, never by Claude
-        st.markdown("\n".join(f"- {line}" for line in message.number_lines(result)))
+def normal_section(result):
+    lines = message.normal_lines(result)
+    with st.expander(message.checks_heading(result)):  # written by code, never by Claude
+        quiet = [f"{message.ICONS[key]}&nbsp; {label} &nbsp;·&nbsp; {value}" for key, label, value in lines]
+        extra = message.not_enough_lines(result) + message.data_notes(result)
+        if quiet or extra:
+            st.markdown("  \n".join(quiet + extra))
+        st.caption(message.NORMAL_SMALL_PRINT)
 
 
 def how_sure_section():
@@ -193,6 +221,8 @@ def how_sure_section():
 
 def about_section(result):
     with st.expander("About this tool"):
+        st.markdown(f"**How the level is set:** {message.HOW_LEVEL_SET}")
+        st.markdown("**What the levels mean:**\n" + "\n".join(f"- {line}" for line in message.LEVELS_MEAN))
         st.markdown("\n".join(f"- {line}" for line in ABOUT_LINES))
         fc, hist = result.get("forecast_grid_point"), result.get("history_grid_point")
         if fc and hist:  # the sources
@@ -219,7 +249,13 @@ def phase2_cards():
 
 
 def show_assessment(result, place, replay_name=None, lat=None, lon=None):
-    level_box(result, place)
+    hero = None
+    if result["level"] in risk.LEVELS[1:]:  # raised days only
+        try:
+            hero = message.hero_line(result, cached_history(lat, lon, result["date"], replay_name is not None))
+        except Exception:  # no hero line rather than an error
+            hero = None
+    level_box(result, place, hero)
     special = replays.SPECIAL_NOTES.get(replay_name)
     title = message.headline(result)  # raised days only; written by code
     if title:
@@ -228,7 +264,7 @@ def show_assessment(result, place, replay_name=None, lat=None, lon=None):
         if line == message.ICE_SMS:
             st.warning(line, icon="🧊")
         elif line == message.not_checked(result, special):
-            st.warning(line, icon="⚠️")  # the page's visible pointer to official warnings
+            st.warning(line, icon=":material/thunderstorm:")  # the page's visible pointer to official warnings
         else:
             st.markdown(line)  # the action line
 
@@ -244,7 +280,7 @@ def show_assessment(result, place, replay_name=None, lat=None, lon=None):
 
     then_and_now(result)
 
-    numbers_section(result)
+    normal_section(result)
     how_sure_section()
     about_section(result)
 
