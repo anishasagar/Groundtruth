@@ -27,6 +27,13 @@ A web app that tells a person, in one plain sentence, how unusual today's weathe
 - Time periods (provisional, may change before the demo): the comparison line uses 1951–1980; the level uses the most recent 30 years before the date. Both live in one settings section in the risk engine.
 - I'm not a programmer: explain changes in plain language and keep each change small.
 
+## UI decisions
+- Every sentence on the page is fixed wording written by code. No language model writes page text.
+- Any text written by Claude that appears on the page must be shown in purple with a small "written by Claude" label (safety rule 9).
+- No sentence may appear twice on the page (tests/test_page.py checks every replay).
+- One yellow "Not checked" box near the top, on every result: what the checks can't see, and the pointer to official warnings. No separate notes that repeat it.
+- When events are few (fewer than 5 in either period), "Then and now" shows counts ("7 times in 30 years"), not extra caveat sentences.
+
 ## Phase 2 (don't build yet)
 - Top priority — Storm heads-up: flag thunderstorm and hail conditions from the forecast (weather codes, CAPE), as an absolute flag because history can't measure storm rarity. Test on the Bayesian and Valencia replays and on ordinary summer storm days. It must use both weather codes and CAPE: the Bayesian forecast showed high CAPE with no thunderstorm codes.
 - Ice-risk heads-up: an absolute flag when precipitation falls at or below freezing (Paris 2026-01-07 as the test case).
