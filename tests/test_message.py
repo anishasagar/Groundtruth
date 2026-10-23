@@ -22,9 +22,10 @@ sys.path.insert(0, str(ROOT))
 from groundtruth import geocode, message, replays, risk, weather  # noqa: E402
 
 FORBIDDEN = re.compile(r"\bsafe\b|\bsafely\b|\bsafety\b|\bno risk\b|\ball clear\b|\bcaused\b", re.I)
-# "Normal" may only describe what a check measures (CLAUDE.md rule 8): "Normal rain for here" (the engine's text).
+# "Normal" may only describe what a check measures (CLAUDE.md rule 8): "Normal rain for here" (the engine's text), or
+# right after a check's value in "Other checks" / "All checks" ("Gusts up to 28 km/h, normal for here").
 ALLOWED_NORMAL = re.compile(r"Normal (rain for here|rain for the last|temperatures for here|highs for here|"
-                            r"lows for here|snowfall for here|wind for here)")
+                            r"lows for here|snowfall for here|wind for here)|normal for here$")
 
 
 def check_text(label, result, texts):
@@ -59,6 +60,11 @@ def check_result(label, result, place="Somewhere, Far Away Land", special=None):
         assert c["level"] not in risk.LEVELS[1:], f"{label}: a raised check among the normal lines"
         assert name == message.NORMAL_LABEL[key] and "**" not in value and "ERA5" not in value, (name, value)
         assert (c["recent"]["per_year"] < message.NORMAL_FROM_PER_YEAR) == (c["recent_text"] in value), value
+        if value != "none forecast":  # "normal for here" exactly where the check happens 5+ times a year
+            assert (c["recent"]["per_year"] >= message.NORMAL_FROM_PER_YEAR) == value.endswith(", normal for here")
+    # The heading: "Other checks (n)" under cards, "All checks (n)" when there are none; n counts every line.
+    n = len(normal) + len(message.not_enough_lines(result))
+    assert message.checks_heading(result) == f"{'Other' if cards else 'All'} checks ({n})", label
     # The hero line: only on raised days (Typical and Not enough data have none, whatever the history).
     if result["level"] not in risk.LEVELS[1:]:
         assert message.hero_line(result, fake_history()) is None, f"{label}: a hero line on a {result['level']} day"
@@ -155,8 +161,10 @@ def check_cards(label, result):
             assert card["value_note"] != "forecast" and "forecast" in card["value_note"], card["value_note"]
         else:
             assert card["value_note"].startswith("forecast"), card["value_note"]
-        if c.get("crosses_danger_line"):
-            assert f"the {c['danger_line']} {c['unit']} danger line" in card["value_note"], card["value_note"]
+        # The danger line is said once: in the level box for the checks it names, else on the card.
+        named = c["name"] in (result.get("decided_by") or [])
+        assert ("danger line" in card["value_note"]) == (bool(c.get("crosses_danger_line")) and not named), \
+            f"{label}: {card['value_note']}"
         events = c["recent"]["count"] + c["baseline"]["count"]
         if not events:  # never seen in either period: no bars, the line names the check
             assert card["rows"] == [] and card["never"] == message.NEVER_SEEN.format(noun=message.NOUN[c["key"]])
@@ -259,9 +267,12 @@ def made_up_cases():
     assert message.headline(r) is None  # Typical days have no headline
     assert message.level_line(r) == "for rain, temperature, snow and wind"
     assert message.ice_note(r) is None and message.ice_line(r) is None  # 1 mm of rain, above freezing
-    assert normal[:5] == [("rain_mm", "Rain in 24 hours", "1.0 mm"), ("feels_like_max_c", "Feels-like high", "12 °C"),
-                          ("feels_like_min_c", "Feels-like low", "3.0 °C"), ("snow_cm", "Snow", "none forecast"),
-                          ("gust_max_kmh", "Gusts", "up to 25 km/h")], normal
+    assert normal[:5] == [("rain_mm", "Rain in 24 hours", "1.0 mm, normal for here"),
+                          ("feels_like_max_c", "Feels-like high", "12 °C, normal for here"),
+                          ("feels_like_min_c", "Feels-like low", "3.0 °C, normal for here"),
+                          ("snow_cm", "Snow", "none forecast"),
+                          ("gust_max_kmh", "Gusts", "up to 25 km/h, normal for here")], normal
+    assert message.checks_heading(r) == "All checks (6)", message.checks_heading(r)
     assert normal[5][:2] == ("recent_rain_mm", "Rain over 6 days") and "measured" in normal[5][2], normal[5]
     assert message.then_and_now(r) == []  # every check happens 5 or more times a year: no Then and now
     assert message.summary_lines(r) == [  # feels-like low 3 °C: ice on roads is listed
@@ -301,7 +312,7 @@ def made_up_cases():
     r, _ = fake_assess(snow_cm=2.0)
     check_result("made up: routine snow", r)
     assert check(r, "snow_cm")["level"] == "Typical" and r["level"] == "Typical", check(r, "snow_cm")
-    assert ("snow_cm", "Snow", "2.0 cm") in message.normal_lines(r), message.normal_lines(r)
+    assert ("snow_cm", "Snow", "2.0 cm, normal for here") in message.normal_lines(r), message.normal_lines(r)
     print("ok: made up: routine snow -> Typical")
 
     # Snow far beyond the record: Extreme, snow action line, snow "how often" caption.
@@ -382,13 +393,18 @@ def hero_cases():
         f"About {round(100 * v / rain_year)}% of a year's rain in 6 days, including the day's forecast"
     assert message.hero_line(raised("snow_cm", round(snow_year / 4, 1)), hist) == \
         f"About {round(100 * round(snow_year / 4, 1) / snow_year)}% of a year's snow, forecast in one day"
-    # 100% or more, just under 100% (never shown as 100%), under 1%.
+    # 100% or more, just under 100% (never shown as 100%).
     assert message.hero_line(raised("rain_mm", rain_year * 1.2), hist) == \
         "More than a year's rain, forecast in one day"
     assert message.hero_line(raised("rain_mm", rain_year * 0.996), hist) == \
         "About 99% of a year's rain, forecast in one day"
-    assert message.hero_line(raised("rain_mm", rain_year * 0.004), hist) == \
-        "Less than 1% of a year's rain, forecast in one day"
+    # Under 10% of a year: no hero line (a small share could sound mild on a raised day); 10% exactly is shown.
+    for share in (0.004, 0.04, 0.0999):
+        assert message.hero_line(raised("rain_mm", rain_year * share), hist) is None, share
+        assert message.hero_line(raised("snow_cm", snow_year * share), hist) is None, share
+        assert message.hero_line(raised("recent_rain_mm", rain_year * share), hist) is None, share
+    assert message.hero_line(raised("rain_mm", rain_year * 0.1), hist) == \
+        "About 10% of a year's rain, forecast in one day"
     # An average year here has no snow at all: more than any day since the record began.
     dry = hist.assign(snow_cm=0.0)
     assert message.hero_line(raised("snow_cm", 5.0), dry) == "More snow than any day here since 1951"
@@ -550,10 +566,11 @@ def main():
                 [block] = message.then_and_now(result)  # many such days: rates, not counts
                 assert not block["counts"] and [r["words"] for r in block["rows"]] == ["about 48 times a year",
                                                                                        "about 34 times a year"]
-                assert block["value_note"] == "forecast, above the 40 °C danger line", block["value_note"]
+                assert block["value_note"] == "forecast", block["value_note"]  # the level box names the 40 °C line
                 assert message.not_checked(result) == ("Not checked: thunderstorms, landslides, glacier collapse. "
                                                        "Follow official weather and storm warnings.")  # 34 °C low
-                assert message.normal_lines(result)[0] == ("rain_mm", "Rain in 24 hours", "8.2 mm")
+                assert message.normal_lines(result)[0] == ("rain_mm", "Rain in 24 hours", "8.2 mm, normal for here")
+                assert message.checks_heading(result) == "Other checks (5)", message.checks_heading(result)
             if c["name"] == "Valencia flash flood":
                 assert message.level_line(result) == ("202 mm of rain forecast in 24 h, above the 150 mm danger "
                                                       "line; 257 mm of rain over 6 days"), message.level_line(result)
@@ -562,7 +579,7 @@ def main():
                 assert first["rows"] == [] == second["rows"]
                 assert first["never"] == "Rain like this was never seen here in either period.", first["never"]
                 assert second["never"] == "A wet spell like this was never seen here in either period."
-                assert first["value_note"] == "forecast, above the 150 mm danger line", first["value_note"]
+                assert first["value_note"] == "forecast", first["value_note"]  # the level box names the 150 mm line
             if c["name"] == "Paris snow and cold":  # ice first, then what the checks can't see; snow is rarer now
                 assert message.summary_lines(result) == [  # the ice box, then "Not checked" without ice on roads
                     message.ICE_SMS, "Not checked: thunderstorms, landslides, glacier collapse. Follow official weather "
@@ -573,7 +590,8 @@ def main():
                     "about 1.1 times a year", "about 1.3 times a year"], rarity
                 normal = message.normal_lines(result)  # snow is a card; cold (12 a year) is a normal line
                 assert "snow_cm" not in [key for key, _, _ in normal], normal
-                assert ("feels_like_min_c", "Feels-like low", "-6.5 °C") in normal, normal
+                assert ("feels_like_min_c", "Feels-like low", "-6.5 °C, normal for here") in normal, normal
+                assert message.checks_heading(result) == "Other checks (5)", message.checks_heading(result)
             if result["level"] == "Typical" and c["name"] != "Paris snow and cold":  # every check 5+ times a year
                 assert message.then_and_now(result) == [], c["name"]
                 warm = message._value(result, "feels_like_min_c") > message.ICE_MENTION_AT_OR_BELOW_C

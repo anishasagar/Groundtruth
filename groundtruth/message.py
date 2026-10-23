@@ -94,6 +94,9 @@ HERO_SINCE = {"feels_like_max_c": ("The hottest feels-like day here since {year}
               "gust_max_kmh": ("The strongest gusts here since {year}", "Stronger gusts than any day here since {year}")}
 # No hero line when the last such day was this recent ("the hottest since 2022" on a 2022 date says nothing).
 HERO_RECENT_DAYS = 365
+# The share-of-a-year line is shown only at this share or more: a small share ("About 4% of a year's rain") could
+# sound mild in the boldest line of a raised level box. Below it, no hero line.
+HERO_MIN_SHARE_PERCENT = 10
 # The "Not checked" box mentions ice on roads only when the day's feels-like low is at or below this.
 ICE_MENTION_AT_OR_BELOW_C = 5
 ARROW = "→ "
@@ -317,7 +320,8 @@ def _average_year(history, column, date):
 def hero_line(result, history):
     """The bold line in the level box on raised days (Elevated, High, Extreme), from the check that set the level.
 
-    Rain (24 h or 6 days) and snow: the value as a share of an average year's total here. Heat, cold and wind:
+    Rain (24 h or 6 days) and snow: the value as a share of an average year's total here, only when it is
+    HERO_MIN_SHARE_PERCENT or more (else None). Heat, cold and wind:
     the last year a day at least this extreme happened here. None on Typical and Not enough data days, when the
     history is too thin, or when the last such day was less than HERO_RECENT_DAYS before the date.
     """
@@ -342,8 +346,8 @@ def hero_line(result, history):
         share = 100 * value / average
         if share >= 100:
             return f"More than a year's {noun}{tail}"
-        if share < 1:
-            return f"Less than 1% of a year's {noun}{tail}"
+        if share < HERO_MIN_SHARE_PERCENT:  # a small share could sound mild on a raised day: no hero line
+            return None
         return f"About {min(round(share), 99)}% of a year's {noun}{tail}"
     since, never = HERO_SINCE[key]
     values = known[key]
@@ -376,11 +380,13 @@ def _rain_parts(rain):
     return f"{rain['before_total']:.1f} mm {_rain_source(rain)} + the day's forecast"
 
 
-def _value_note(c):
-    """The small words after a card's value: "forecast", with its danger line when crossed."""
+def _value_note(c, result):
+    """The small words after a card's value: "forecast", with its danger line when crossed, unless the level box
+    already names this check (and so its danger line): never said twice on a page."""
     if c["key"] == risk.RECENT_RAIN_KEY:
         return _rain_parts(c)
-    return "forecast" + _danger_text(c)
+    named = c["name"] in (result.get("decided_by") or [])
+    return "forecast" + ("" if named else _danger_text(c))
 
 
 def less_common_now(c):
@@ -417,7 +423,7 @@ def _card(check, result):
         for label, p, words in periods]
     return {"check": check, "key": check["key"], "name": check["name"], "title": THEN_AND_NOW_TITLE[check["key"]],
             "chip": None if check["level"] == "Typical" else check["level"],
-            "value": amount(check["value"], check["unit"]), "value_note": _value_note(check),
+            "value": amount(check["value"], check["unit"]), "value_note": _value_note(check, result),
             "counts": few, "rows": rows,
             "never": NEVER_SEEN.format(noun=NOUN[check["key"]]) if never else None,
             "rarer_now": RARER_NOW.format(noun=NOUN[check["key"]])
@@ -452,13 +458,19 @@ def then_and_now(result):
     return cards
 
 
-# ---- "Normal for here" ------------------------------------------------------------
+# ---- "Other checks" / "All checks" ---------------------------------------------------
+
+def checks_heading(result):
+    """"Other checks (4)" under the cards, "All checks (6)" when there are none. n counts every check line."""
+    n = len(normal_lines(result)) + len(not_enough_lines(result))
+    return f"{'Other' if card_checks(result) else 'All'} checks ({n})"
+
 
 def normal_lines(result):
-    """"Normal for here": (key, label, value) for each check not shown as a card, in the engine's order.
+    """(key, label, value) for each check not shown as a card, in the engine's order.
 
-    A check that happens fewer than NORMAL_FROM_PER_YEAR times a year keeps its rate after the value.
-    Checks with not enough data are in not_enough_lines instead.
+    "normal for here" after the value when the check happens at least NORMAL_FROM_PER_YEAR times a year now;
+    a rarer one keeps its rate instead. Checks with not enough data are in not_enough_lines.
     """
     shown = {id(c) for c in card_checks(result)}
     lines = []
@@ -476,6 +488,8 @@ def normal_lines(result):
             value += f" ({_rain_parts(c)})"
         if c["recent"]["per_year"] < NORMAL_FROM_PER_YEAR:
             value += f" · {c['recent_text']}"
+        else:
+            value += ", normal for here"
         lines.append((c["key"], label, value))
     return lines
 

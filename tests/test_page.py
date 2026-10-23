@@ -18,7 +18,7 @@ sys.path.insert(0, str(ROOT))
 
 from groundtruth import geocode, message, replays, risk, weather  # noqa: E402
 
-FOLDED = ["Normal for here ({n})", "How sure are we", "About this tool"]
+FOLDED = ["How sure are we", "About this tool"]  # after "Other checks (n)" / "All checks (n)"
 NO_REPLAY = "— none, use the search above —"
 
 
@@ -49,6 +49,20 @@ def all_text(at):
     def walk(node):
         value = getattr(node, "value", None)
         if isinstance(value, str) and not value.lstrip().startswith(("<div", "<style")):
+            out.append(value)
+        for child in getattr(node, "children", {}).values():
+            walk(child)
+    walk(at.main)
+    return out
+
+
+def page_strings(at):
+    """Every text on the page, HTML blocks (level box, bars) and collapsed sections included."""
+    out = []
+
+    def walk(node):
+        value = getattr(node, "value", None)
+        if isinstance(value, str) and not value.lstrip().startswith("<style"):
             out.append(value)
         for child in getattr(node, "children", {}).values():
             walk(child)
@@ -115,9 +129,13 @@ def main():
         # The yellow line is the one visible pointer to official warnings.
         assert message.OFFICIAL_LINE not in shown and "Check your official weather warnings" not in shown, name
         assert "Text message" not in shown and "We check rain, heat" not in shown, f"{name}: removed sections"
-        n = len(message.normal_lines(result))
-        assert [e.label for e in at.expander] == [FOLDED[0].format(n=n), *FOLDED[1:]], \
-            f"{name}: {[e.label for e in at.expander]}"
+        n = len(message.normal_lines(result)) + len(message.not_enough_lines(result))
+        heading = f"{'Other' if message.then_and_now(result) else 'All'} checks ({n})"
+        assert [e.label for e in at.expander] == [heading, *FOLDED], f"{name}: {[e.label for e in at.expander]}"
+        assert "Normal for here" not in [e.label for e in at.expander], name
+        # Each danger line is named once on the page (level box or card, never both).
+        lines_said = re.findall(r"\b\d+ (?:mm|°C|km/h) danger line", "\n".join(page_strings(at)))
+        assert len(lines_said) == len(set(lines_said)), f"{name}: a danger line said twice: {lines_said}"
         assert not any(e.proto.expanded for e in at.expander), f"{name}: sections must start collapsed"
         everything = "\n".join(all_text(at))
         assert message.OFFICIAL_LINE in everything, f"{name}: official warnings missing from How sure are we"
@@ -156,7 +174,7 @@ def main():
         assert about_text[1] == "**What the levels mean:**\n" + "\n".join(f"- {x}" for x in message.LEVELS_MEAN)
         assert "fixed wording written by code" in about_text[2], name
         assert any(c.value.startswith("Forecast: ") for c in about.caption), f"{name}: sources in About this tool"
-        normal = next(e for e in at.expander if e.label.startswith("Normal for here"))
+        normal = next(e for e in at.expander if e.label == heading)
         assert not any(c.value.startswith("Forecast: ") for c in normal.caption), f"{name}: sources moved"
         assert [c.value for c in normal.caption] == [message.NORMAL_SMALL_PRINT], name
         for key, label, value in message.normal_lines(result):

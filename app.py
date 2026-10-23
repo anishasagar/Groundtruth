@@ -206,7 +206,7 @@ def then_and_now(result):
 
 def normal_section(result):
     lines = message.normal_lines(result)
-    with st.expander(f"Normal for here ({len(lines)})"):  # written by code, never by Claude
+    with st.expander(message.checks_heading(result)):  # written by code, never by Claude
         quiet = [f"{message.ICONS[key]}&nbsp; {label} &nbsp;·&nbsp; {value}" for key, label, value in lines]
         extra = message.not_enough_lines(result) + message.data_notes(result)
         if quiet or extra:
